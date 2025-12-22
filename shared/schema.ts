@@ -1,12 +1,21 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+});
+
+export const games = pgTable("games", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  title: text("title").notNull(),
+  status: text("status", { enum: ["active", "completed", "backlog"] }).notNull().default("backlog"),
+  coverUrl: text("cover_url").notNull(),
+  playtime: integer("playtime").default(0),
+  platform: text("platform").default("PC"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -14,5 +23,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export const insertGameSchema = createInsertSchema(games).omit({ 
+  id: true, 
+  userId: true 
+});
+
 export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Game = typeof games.$inferSelect;
+export type InsertGame = z.infer<typeof insertGameSchema>;
