@@ -38,7 +38,7 @@ export default function Landing() {
           >
             <h1 className="text-5xl md:text-7xl lg:text-9xl font-display font-black leading-tight tracking-tighter mb-4">
               SYNC YOUR <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent animate-gradient-x">GAMING PULSE</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent animate-gradient-x">GAMING PROGRESS</span>
             </h1>
           </motion.div>
           
