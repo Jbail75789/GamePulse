@@ -1,15 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-console.log("DEBUG: supabaseUrl =", supabaseUrl);
-console.log("DEBUG: supabaseAnonKey =", supabaseAnonKey ? "***" : "undefined");
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    `Missing Supabase secrets. URL: ${supabaseUrl ? "found" : "missing"}, Key: ${supabaseAnonKey ? "found" : "missing"}. Make sure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in Secrets.`
-  );
-}
+// We are putting these here directly to ensure the app can "see" them 
+const supabaseUrl = 'https://oatcjvxsinqrvwuidhgp.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hdGNqdnhzaW5xcnZ3dWlkaGdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0MjUwMTQsImV4cCI6MjA4MjAwMTAxNH0.4RF9wwAsyDl0wU-XggnLBBKmL6RuJ9Om8UC6Vx3t4xE';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
