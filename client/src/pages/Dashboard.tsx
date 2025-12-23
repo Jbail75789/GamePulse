@@ -151,6 +151,14 @@ export default function Dashboard() {
               Mission Control
             </h1>
             <p className="text-muted-foreground font-mono">Manage your gaming operations.</p>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-xl font-display font-bold text-primary">
+                {games?.length || 0}
+              </span>
+              <span className="text-sm font-mono text-muted-foreground">
+                Total Games in Collection
+              </span>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
