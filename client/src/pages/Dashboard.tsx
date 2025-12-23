@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { useToast } from "@/hooks/use-toast";
+
 interface SearchResult {
   id: number;
   name: string;
@@ -21,11 +23,14 @@ interface SearchResult {
 }
 
 export default function Dashboard() {
-  const { games, isLoading, deleteGame, updateGame } = useGames();
+  const { games, isLoading, deleteGame, updateGame, createGame } = useGames();
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog">("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [selectedGame, setSelectedGame] = useState<SearchResult | null>(null);
+  const [showPlatformModal, setShowPlatformModal] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -62,6 +67,42 @@ export default function Dashboard() {
       }
     };
   }, [searchQuery]);
+
+  const handleGameSelect = (game: SearchResult) => {
+    setSelectedGame(game);
+    setShowPlatformModal(true);
+  };
+
+  const handlePlatformSelect = async (platform: string) => {
+    if (!selectedGame) return;
+
+    try {
+      await createGame({
+        title: selectedGame.name,
+        coverUrl: selectedGame.background_image || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80",
+        platform,
+        status: "backlog",
+        playtime: 0,
+      });
+
+      toast({
+        title: "Game Added",
+        description: `${selectedGame.name} added to your library!`,
+        className: "border-primary text-primary font-mono",
+      });
+
+      setShowPlatformModal(false);
+      setSelectedGame(null);
+      setSearchQuery("");
+      setSearchResults([]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add game to library",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredGames = games?.filter(game => game.status === activeTab) || [];
 
@@ -109,6 +150,7 @@ export default function Dashboard() {
               {searchResults.slice(0, 8).map((result) => (
                 <div
                   key={result.id}
+                  onClick={() => handleGameSelect(result)}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-primary/20 transition-colors cursor-pointer group border-b border-border/30 last:border-b-0"
                   data-testid={`result-game-${result.id}`}
                 >
@@ -131,6 +173,58 @@ export default function Dashboard() {
             </motion.div>
           )}
         </div>
+
+        {/* Platform Selection Modal */}
+        {showPlatformModal && selectedGame && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+            onClick={() => {
+              setShowPlatformModal(false);
+              setSelectedGame(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-card border border-border rounded-lg p-6 max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-display font-bold text-foreground mb-2">
+                {selectedGame.name}
+              </h2>
+              <p className="text-muted-foreground font-mono text-sm mb-6">
+                Which platform do you own this on?
+              </p>
+
+              <div className="space-y-3">
+                {["Steam", "Xbox", "PS5"].map((platform) => (
+                  <button
+                    key={platform}
+                    onClick={() => handlePlatformSelect(platform)}
+                    className="w-full px-4 py-3 bg-black/50 border border-border hover:bg-primary/20 hover:border-primary text-foreground font-mono font-bold rounded-md transition-all duration-200"
+                    data-testid={`button-platform-${platform}`}
+                  >
+                    {platform}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowPlatformModal(false);
+                  setSelectedGame(null);
+                }}
+                className="w-full mt-4 px-4 py-2 text-muted-foreground font-mono text-sm hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
 
         {/* Cyberpunk Tabs */}
         <div className="flex flex-wrap gap-2 border-b border-border/50 pb-1">
