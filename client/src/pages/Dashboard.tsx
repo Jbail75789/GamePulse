@@ -29,6 +29,9 @@ export default function Dashboard() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedGame, setSelectedGame] = useState<SearchResult | null>(null);
   const [showPlatformModal, setShowPlatformModal] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<"active" | "completed" | "backlog">("backlog");
+  const [selectedVibe, setSelectedVibe] = useState<"chill" | "intense" | "story" | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
 
@@ -70,19 +73,30 @@ export default function Dashboard() {
 
   const handleGameSelect = (game: SearchResult) => {
     setSelectedGame(game);
+    setSelectedStatus("backlog");
+    setSelectedVibe(null);
+    setSelectedPlatform(null);
     setShowPlatformModal(true);
   };
 
-  const handlePlatformSelect = async (platform: string) => {
-    if (!selectedGame) return;
+  const handleSaveGame = async () => {
+    if (!selectedGame || !selectedPlatform) {
+      toast({
+        title: "Error",
+        description: "Please select a platform",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       await createGame({
         title: selectedGame.name,
         coverUrl: selectedGame.background_image || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80",
-        platform,
-        status: "backlog",
+        platform: selectedPlatform,
+        status: selectedStatus,
         playtime: 0,
+        vibe: selectedVibe,
       });
 
       toast({
@@ -174,7 +188,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Platform Selection Modal */}
+        {/* Game Details Modal */}
         {showPlatformModal && selectedGame && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -190,38 +204,109 @@ export default function Dashboard() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-card border border-border rounded-lg p-6 max-w-sm w-full"
+              className="bg-card border border-border rounded-lg p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-xl font-display font-bold text-foreground mb-2">
+              <h2 className="text-xl font-display font-bold text-foreground mb-1">
                 {selectedGame.name}
               </h2>
-              <p className="text-muted-foreground font-mono text-sm mb-6">
-                Which platform do you own this on?
+              <p className="text-muted-foreground font-mono text-xs mb-6">
+                Configure before adding to library
               </p>
 
-              <div className="space-y-3">
-                {["Steam", "Xbox", "PS5"].map((platform) => (
-                  <button
-                    key={platform}
-                    onClick={() => handlePlatformSelect(platform)}
-                    className="w-full px-4 py-3 bg-black/50 border border-border hover:bg-primary/20 hover:border-primary text-foreground font-mono font-bold rounded-md transition-all duration-200"
-                    data-testid={`button-platform-${platform}`}
-                  >
-                    {platform}
-                  </button>
-                ))}
+              {/* Status Selection */}
+              <div className="mb-6">
+                <label className="text-sm font-display font-bold text-foreground mb-2 block">
+                  Status
+                </label>
+                <div className="space-y-2">
+                  {["active", "backlog", "completed"].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setSelectedStatus(status as "active" | "backlog" | "completed")}
+                      className={`w-full px-4 py-2 rounded-md font-mono text-sm transition-all duration-200 capitalize ${
+                        selectedStatus === status
+                          ? "bg-primary/30 border border-primary text-primary"
+                          : "bg-black/50 border border-border text-foreground hover:bg-primary/20"
+                      }`}
+                      data-testid={`button-status-${status}`}
+                    >
+                      {status === "active" ? "Playing Now" : status}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <button
-                onClick={() => {
-                  setShowPlatformModal(false);
-                  setSelectedGame(null);
-                }}
-                className="w-full mt-4 px-4 py-2 text-muted-foreground font-mono text-sm hover:text-foreground transition-colors"
-              >
-                Cancel
-              </button>
+              {/* Vibe Selection */}
+              <div className="mb-6">
+                <label className="text-sm font-display font-bold text-foreground mb-2 block">
+                  Vibe (Optional)
+                </label>
+                <div className="space-y-2">
+                  {["chill", "intense", "story"].map((vibe) => (
+                    <button
+                      key={vibe}
+                      onClick={() => setSelectedVibe(selectedVibe === vibe ? null : (vibe as "chill" | "intense" | "story"))}
+                      className={`w-full px-4 py-2 rounded-md font-mono text-sm transition-all duration-200 capitalize ${
+                        selectedVibe === vibe
+                          ? "bg-secondary/30 border border-secondary text-secondary"
+                          : "bg-black/50 border border-border text-foreground hover:bg-secondary/20"
+                      }`}
+                      data-testid={`button-vibe-${vibe}`}
+                    >
+                      {vibe}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Platform Selection */}
+              <div className="mb-6">
+                <label className="text-sm font-display font-bold text-foreground mb-2 block">
+                  Platform
+                </label>
+                <div className="space-y-2">
+                  {["Steam", "Xbox", "PS5"].map((platform) => (
+                    <button
+                      key={platform}
+                      onClick={() => setSelectedPlatform(selectedPlatform === platform ? null : platform)}
+                      className={`w-full px-4 py-3 rounded-md font-mono font-bold text-sm transition-all duration-200 ${
+                        selectedPlatform === platform
+                          ? "bg-accent/30 border border-accent text-accent"
+                          : "bg-black/50 border border-border text-foreground hover:bg-accent/20"
+                      }`}
+                      data-testid={`button-platform-${platform}`}
+                    >
+                      {platform}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2">
+                <button
+                  onClick={handleSaveGame}
+                  disabled={!selectedPlatform}
+                  className={`w-full px-4 py-3 rounded-md font-mono font-bold transition-all duration-200 ${
+                    selectedPlatform
+                      ? "bg-primary text-background hover:bg-primary/90"
+                      : "bg-black/30 text-muted-foreground cursor-not-allowed"
+                  }`}
+                  data-testid="button-save-game"
+                >
+                  Save to Library
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPlatformModal(false);
+                    setSelectedGame(null);
+                  }}
+                  className="w-full px-4 py-2 text-muted-foreground font-mono text-sm hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
