@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useGames } from "@/hooks/use-games";
 import { Layout } from "@/components/Layout";
 import { CyberCard } from "@/components/CyberCard";
 import { AddGameModal } from "@/components/AddGameModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2 } from "lucide-react";
+import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search } from "lucide-react";
 import { type Game } from "@shared/schema";
 import { CyberButton } from "@/components/CyberButton";
 import {
@@ -17,6 +17,40 @@ import {
 export default function Dashboard() {
   const { games, isLoading, deleteGame, updateGame } = useGames();
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog">("active");
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (searchQuery.trim()) {
+      searchTimeoutRef.current = setTimeout(async () => {
+        const apiKey = import.meta.env.VITE_RAWG_API_KEY;
+        if (!apiKey) {
+          console.error("RAWG API key not found");
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `https://api.rawg.io/api/games?search=${encodeURIComponent(searchQuery)}&key=${apiKey}`
+          );
+          const data = await response.json();
+          console.log("RAWG API Results:", data);
+        } catch (error) {
+          console.error("Failed to search RAWG API:", error);
+        }
+      }, 500);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
 
   const filteredGames = games?.filter(game => game.status === activeTab) || [];
 
@@ -37,6 +71,21 @@ export default function Dashboard() {
             <p className="text-muted-foreground font-mono">Manage your gaming operations.</p>
           </div>
           <AddGameModal />
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-4 py-3">
+            <Search className="w-5 h-5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search RAWG database..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none font-mono text-sm"
+              data-testid="input-search-games"
+            />
+          </div>
         </div>
 
         {/* Cyberpunk Tabs */}
