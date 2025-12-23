@@ -4,7 +4,7 @@ import { Layout } from "@/components/Layout";
 import { CyberCard } from "@/components/CyberCard";
 import { AddGameModal } from "@/components/AddGameModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search } from "lucide-react";
+import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search, Dices } from "lucide-react";
 import { type Game } from "@shared/schema";
 import { CyberButton } from "@/components/CyberButton";
 import {
@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Slider } from "@/components/ui/slider";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -32,8 +33,23 @@ export default function Dashboard() {
   const [selectedStatus, setSelectedStatus] = useState<"active" | "completed" | "backlog">("backlog");
   const [selectedVibe, setSelectedVibe] = useState<"chill" | "intense" | "story" | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
+  const [spotlightGame, setSpotlightGame] = useState<Game | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
+
+  const handlePickGame = () => {
+    const eligibleGames = games?.filter(g => g.status === "backlog" || g.progress === 0 || g.progress === null) || [];
+    if (eligibleGames.length === 0) {
+      toast({
+        title: "No Games Available",
+        description: "All games are either in progress or completed. Add more games to your backlog!",
+        variant: "destructive",
+      });
+      return;
+    }
+    const randomIndex = Math.floor(Math.random() * eligibleGames.length);
+    setSpotlightGame(eligibleGames[randomIndex]);
+  };
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -136,7 +152,17 @@ export default function Dashboard() {
             </h1>
             <p className="text-muted-foreground font-mono">Manage your gaming operations.</p>
           </div>
-          <AddGameModal />
+          <div className="flex gap-2">
+            <button
+              onClick={handlePickGame}
+              className="px-6 py-3 bg-gradient-to-r from-secondary to-secondary/80 text-background font-display font-bold uppercase tracking-wider rounded-md hover:from-secondary/90 hover:to-secondary/70 transition-all flex items-center gap-2"
+              data-testid="button-pick-game"
+            >
+              <Dices className="w-5 h-5" />
+              Pick a Game
+            </button>
+            <AddGameModal />
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -369,21 +395,98 @@ export default function Dashboard() {
                     game={game} 
                     onDelete={() => deleteGame(game.id)}
                     onStatusUpdate={(status) => updateGame({ id: game.id, status })}
+                    onProgressUpdate={(progress) => {
+                      let newStatus = game.status;
+                      if (progress === 100) {
+                        newStatus = "completed";
+                      } else if (progress > 0 && progress < 100) {
+                        newStatus = "active";
+                      } else if (progress === 0) {
+                        newStatus = "backlog";
+                      }
+                      updateGame({ id: game.id, progress, status: newStatus });
+                    }}
                   />
                 ))}
               </AnimatePresence>
             </motion.div>
           )}
         </div>
+
+        {/* Spotlight Modal */}
+        {spotlightGame && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setSpotlightGame(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="max-w-2xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative overflow-hidden rounded-lg border-2 border-secondary shadow-2xl">
+                {/* Background Image */}
+                <div className="relative aspect-[16/9] overflow-hidden bg-black/50">
+                  <img
+                    src={spotlightGame.coverUrl}
+                    alt={spotlightGame.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                </div>
+
+                {/* Content Overlay */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <p className="text-secondary font-display font-bold text-sm uppercase tracking-widest mb-3">
+                      Your Next Mission
+                    </p>
+                    <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-6 leading-tight drop-shadow-lg">
+                      {spotlightGame.title}
+                    </h2>
+                    <div className="flex gap-3 justify-center mb-6">
+                      <span className="bg-secondary/30 backdrop-blur-md text-secondary font-mono text-sm px-4 py-2 rounded-md border border-secondary/50">
+                        {spotlightGame.platform}
+                      </span>
+                      {spotlightGame.vibe && (
+                        <span className="bg-primary/30 backdrop-blur-md text-primary font-mono text-sm px-4 py-2 rounded-md border border-primary/50 capitalize">
+                          {spotlightGame.vibe}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setSpotlightGame(null)}
+                      className="mt-8 px-8 py-3 bg-secondary text-background font-display font-bold uppercase tracking-wider rounded-md hover:bg-secondary/90 transition-all"
+                      data-testid="button-spotlight-close"
+                    >
+                      Let's Go!
+                    </button>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </div>
     </Layout>
   );
 }
 
-function GameCard({ game, onDelete, onStatusUpdate }: { 
+function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate }: { 
   game: Game, 
   onDelete: () => void,
-  onStatusUpdate: (status: string) => void
+  onStatusUpdate: (status: string) => void,
+  onProgressUpdate: (progress: number) => void
 }) {
   const statusColors: Record<string, "primary" | "secondary" | "accent"> = {
     active: "primary",
@@ -429,6 +532,22 @@ function GameCard({ game, onDelete, onStatusUpdate }: {
           <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground mb-4">
             <Clock className="w-3 h-3" />
             <span>{game.playtime}h recorded</span>
+          </div>
+
+          {/* Progress Slider */}
+          <div className="mb-4 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-mono text-muted-foreground">Progress</span>
+              <span className="text-sm font-display font-bold text-primary">{game.progress || 0}%</span>
+            </div>
+            <Slider
+              value={[game.progress || 0]}
+              onValueChange={(value) => onProgressUpdate(value[0])}
+              max={100}
+              step={1}
+              className="w-full"
+              data-testid={`slider-progress-${game.id}`}
+            />
           </div>
 
           <div className="mt-auto flex items-center justify-between gap-2 pt-4 border-t border-white/5">
