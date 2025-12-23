@@ -14,10 +14,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+interface SearchResult {
+  id: number;
+  name: string;
+  background_image: string | null;
+}
+
 export default function Dashboard() {
   const { games, isLoading, deleteGame, updateGame } = useGames();
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog">("active");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -39,10 +46,14 @@ export default function Dashboard() {
           );
           const data = await response.json();
           console.log("RAWG API Results:", data);
+          setSearchResults(data.results || []);
         } catch (error) {
           console.error("Failed to search RAWG API:", error);
+          setSearchResults([]);
         }
       }, 500);
+    } else {
+      setSearchResults([]);
     }
 
     return () => {
@@ -74,7 +85,7 @@ export default function Dashboard() {
         </div>
 
         {/* Search Bar */}
-        <div className="relative">
+        <div className="relative z-50">
           <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-4 py-3">
             <Search className="w-5 h-5 text-muted-foreground" />
             <input
@@ -86,6 +97,39 @@ export default function Dashboard() {
               data-testid="input-search-games"
             />
           </div>
+
+          {/* Search Results Dropdown */}
+          {searchResults.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-full left-0 right-0 mt-2 bg-black/80 border border-border/50 rounded-md overflow-hidden backdrop-blur-sm max-h-96 overflow-y-auto"
+            >
+              {searchResults.slice(0, 8).map((result) => (
+                <div
+                  key={result.id}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-primary/20 transition-colors cursor-pointer group border-b border-border/30 last:border-b-0"
+                  data-testid={`result-game-${result.id}`}
+                >
+                  {result.background_image ? (
+                    <img
+                      src={result.background_image}
+                      alt={result.name}
+                      className="w-12 h-12 object-cover rounded-sm"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-muted rounded-sm flex items-center justify-center">
+                      <Gamepad2 className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <span className="flex-1 text-sm font-mono text-foreground group-hover:text-primary transition-colors">
+                    {result.name}
+                  </span>
+                </div>
+              ))}
+            </motion.div>
+          )}
         </div>
 
         {/* Cyberpunk Tabs */}
