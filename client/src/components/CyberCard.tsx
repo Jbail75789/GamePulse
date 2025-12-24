@@ -25,7 +25,7 @@ export function CyberCard({
 
   return (
     <div className={cn(
-      "relative bg-card border border-border/50 p-6 overflow-hidden transition-all duration-300 group",
+      "relative bg-card border border-border/50 p-3 sm:p-4 md:p-6 overflow-hidden transition-all duration-300 group",
       glows[glowColor],
       className
     )}>

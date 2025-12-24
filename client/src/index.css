@@ -98,9 +98,15 @@
   100% { transform: scale(1) }
 }
 
-/* Touch-friendly slider handles */
+/* Touch-friendly slider handles with thin track */
 [role="slider"] {
   --slider-thumb-size: 24px;
+  height: 4px;
+}
+
+/* Slider track styling */
+[role="slider"] input[type="range"] {
+  height: 4px;
 }
 
 [role="slider"]::-webkit-slider-thumb {

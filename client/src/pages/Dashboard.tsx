@@ -145,33 +145,34 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="space-y-4 md:space-y-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold uppercase tracking-wider text-foreground">
+            <h1 className="text-2xl md:text-3xl font-display font-bold uppercase tracking-wider text-foreground">
               Mission Control
             </h1>
-            <p className="text-muted-foreground font-mono">Manage your gaming operations.</p>
-            <div className="mt-3 flex items-center gap-2">
-              <span className="text-xl font-display font-bold text-primary">
+            <p className="text-xs md:text-sm text-muted-foreground font-mono">Manage your gaming operations.</p>
+            <div className="mt-2 md:mt-3 flex items-center gap-1 md:gap-2 flex-wrap">
+              <span className="text-lg md:text-xl font-display font-bold text-primary">
                 {filteredGames.length}
               </span>
-              <span className="text-sm font-mono text-muted-foreground">
-                Showing in <span className="text-primary">{currentTab}</span>
+              <span className="text-xs md:text-sm font-mono text-muted-foreground">
+                in <span className="text-primary">{currentTab}</span>
               </span>
-              <span className="text-xs font-mono text-muted-foreground/60 ml-2">
+              <span className="text-xs font-mono text-muted-foreground/60">
                 ({games?.length || 0} total)
               </span>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full md:w-auto">
             <button
               onClick={handlePickGame}
-              className="px-6 py-3 bg-gradient-to-r from-secondary to-secondary/80 text-background font-display font-bold uppercase tracking-wider rounded-md hover:from-secondary/90 hover:to-secondary/70 transition-all flex items-center gap-2 tactile-press"
+              className="flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 bg-gradient-to-r from-secondary to-secondary/80 text-background font-display font-bold uppercase tracking-wider text-xs md:text-base rounded-md hover:from-secondary/90 hover:to-secondary/70 transition-all flex items-center justify-center gap-1 md:gap-2 tactile-press"
               data-testid="button-pick-game"
             >
-              <Dices className="w-5 h-5" />
-              Pick a Game
+              <Dices className="w-4 md:w-5 h-4 md:h-5" />
+              <span className="hidden sm:inline">Pick a Game</span>
+              <span className="sm:hidden">Game</span>
             </button>
             <AddGameModal />
           </div>
@@ -179,14 +180,14 @@ export default function Dashboard() {
 
         {/* Search Bar */}
         <div className="relative z-50">
-          <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-4 py-3">
-            <Search className="w-5 h-5 text-muted-foreground" />
+          <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-3 md:px-4 py-2 md:py-3">
+            <Search className="w-4 md:w-5 h-4 md:h-5 text-muted-foreground flex-shrink-0" />
             <input
               type="text"
-              placeholder="Search RAWG database..."
+              placeholder="Search games..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none font-mono text-sm"
+              className="flex-1 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none font-mono text-xs md:text-sm"
               data-testid="input-search-games"
             />
           </div>
@@ -475,22 +476,22 @@ export default function Dashboard() {
                     <p className="text-secondary font-display font-bold text-sm uppercase tracking-widest mb-3">
                       Your Next Mission
                     </p>
-                    <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-6 leading-tight drop-shadow-lg">
+                    <h2 className="text-2xl sm:text-3xl md:text-5xl font-display font-bold text-white mb-4 md:mb-6 leading-tight drop-shadow-lg">
                       {spotlightGame.title}
                     </h2>
-                    <div className="flex gap-3 justify-center mb-6">
-                      <span className="bg-secondary/30 backdrop-blur-md text-secondary font-mono text-sm px-4 py-2 rounded-md border border-secondary/50">
+                    <div className="flex gap-2 md:gap-3 justify-center mb-4 md:mb-6 flex-wrap">
+                      <span className="bg-secondary/30 backdrop-blur-md text-secondary font-mono text-xs md:text-sm px-3 md:px-4 py-1 md:py-2 rounded-md border border-secondary/50">
                         {spotlightGame.platform}
                       </span>
                       {spotlightGame.vibe && (
-                        <span className="bg-primary/30 backdrop-blur-md text-primary font-mono text-sm px-4 py-2 rounded-md border border-primary/50 capitalize">
+                        <span className="bg-primary/30 backdrop-blur-md text-primary font-mono text-xs md:text-sm px-3 md:px-4 py-1 md:py-2 rounded-md border border-primary/50 capitalize">
                           {spotlightGame.vibe}
                         </span>
                       )}
                     </div>
                     <button
                       onClick={() => setSpotlightGame(null)}
-                      className="mt-8 px-8 py-3 bg-secondary text-background font-display font-bold uppercase tracking-wider rounded-md hover:bg-secondary/90 transition-all tactile-press"
+                      className="mt-6 md:mt-8 px-6 md:px-8 py-2 md:py-3 bg-secondary text-background font-display font-bold uppercase tracking-wider text-sm md:text-base rounded-md hover:bg-secondary/90 transition-all tactile-press"
                       data-testid="button-spotlight-close"
                     >
                       Let's Go!
@@ -577,21 +578,21 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault 
           </div>
         </div>
 
-        <div className="p-5 flex flex-col flex-1">
-          <h3 className="font-display font-bold text-lg leading-tight mb-1 line-clamp-1 text-white group-hover:text-primary transition-colors">
+        <div className="p-3 sm:p-4 md:p-5 flex flex-col flex-1">
+          <h3 className="font-display font-bold text-sm sm:text-base md:text-lg leading-tight mb-1 line-clamp-1 text-white group-hover:text-primary transition-colors">
             {game.title}
           </h3>
           
-          <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground mb-4">
-            <Clock className="w-3 h-3" />
-            <span>{game.playtime}h recorded</span>
+          <div className="flex items-center gap-1 sm:gap-2 text-xs font-mono text-muted-foreground mb-2 sm:mb-4">
+            <Clock className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">{game.playtime}h</span>
           </div>
 
           {/* Progress Slider */}
-          <div className="mb-4 space-y-2">
-            <div className="flex justify-between items-center">
+          <div className="mb-3 sm:mb-4 space-y-1 sm:space-y-2">
+            <div className="flex justify-between items-center gap-1">
               <span className="text-xs font-mono text-muted-foreground">Progress</span>
-              <span className={`text-sm font-display font-bold ${isInVault ? "text-secondary" : "text-primary"}`}>
+              <span className={`text-xs sm:text-sm font-display font-bold ${isInVault ? "text-secondary" : "text-primary"}`}>
                 {game.progress || 0}%
               </span>
             </div>
@@ -605,17 +606,17 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault 
               data-testid={`slider-progress-${game.id}`}
             />
             {isInVault && (
-              <p className="text-xs font-mono text-secondary text-center">
-                Locked in The Vault
+              <p className="text-xs font-mono text-secondary text-center mt-1">
+                Locked
               </p>
             )}
           </div>
 
-          <div className="mt-auto flex items-center justify-between gap-2 pt-4 border-t border-white/5">
+          <div className="mt-auto flex items-center justify-between gap-1 sm:gap-2 pt-2 sm:pt-4 border-t border-white/5">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="text-xs font-mono uppercase tracking-wider text-muted-foreground hover:text-white transition-colors flex items-center gap-1 focus:outline-none">
-                  Status: <span className={`text-${statusColors[game.status]}`}>{game.status}</span>
+                <button className="text-xs font-mono uppercase tracking-wider text-muted-foreground hover:text-white transition-colors flex items-center gap-1 focus:outline-none truncate">
+                  <span className="hidden sm:inline">Status:</span> <span className={`text-${statusColors[game.status]}`}>{game.status}</span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-card border-border">
