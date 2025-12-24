@@ -167,7 +167,7 @@ export default function Dashboard() {
           <div className="flex gap-2">
             <button
               onClick={handlePickGame}
-              className="px-6 py-3 bg-gradient-to-r from-secondary to-secondary/80 text-background font-display font-bold uppercase tracking-wider rounded-md hover:from-secondary/90 hover:to-secondary/70 transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-gradient-to-r from-secondary to-secondary/80 text-background font-display font-bold uppercase tracking-wider rounded-md hover:from-secondary/90 hover:to-secondary/70 transition-all flex items-center gap-2 tactile-press"
               data-testid="button-pick-game"
             >
               <Dices className="w-5 h-5" />
@@ -308,7 +308,7 @@ export default function Dashboard() {
                     <button
                       key={platform}
                       onClick={() => setSelectedPlatform(selectedPlatform === platform ? null : platform)}
-                      className={`w-full px-4 py-3 rounded-md font-mono font-bold text-sm transition-all duration-200 ${
+                      className={`w-full px-4 py-3 rounded-md font-mono font-bold text-sm transition-all duration-200 tactile-press ${
                         selectedPlatform === platform
                           ? "bg-accent/30 border border-accent text-accent"
                           : "bg-black/50 border border-border text-foreground hover:bg-accent/20"
@@ -326,7 +326,7 @@ export default function Dashboard() {
                 <button
                   onClick={handleSaveGame}
                   disabled={!selectedPlatform}
-                  className={`w-full px-4 py-3 rounded-md font-mono font-bold transition-all duration-200 ${
+                  className={`w-full px-4 py-3 rounded-md font-mono font-bold transition-all duration-200 tactile-press ${
                     selectedPlatform
                       ? "bg-primary text-background hover:bg-primary/90"
                       : "bg-black/30 text-muted-foreground cursor-not-allowed"
@@ -340,7 +340,7 @@ export default function Dashboard() {
                     setShowPlatformModal(false);
                     setSelectedGame(null);
                   }}
-                  className="w-full px-4 py-2 text-muted-foreground font-mono text-sm hover:text-foreground transition-colors"
+                  className="w-full px-4 py-2 text-muted-foreground font-mono text-sm hover:text-foreground transition-colors tactile-press"
                 >
                   Cancel
                 </button>
@@ -349,8 +349,8 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Cyberpunk Tabs */}
-        <div className="flex flex-wrap gap-2 border-b border-border/50 pb-1">
+        {/* Desktop Cyberpunk Tabs */}
+        <div className="hidden md:flex flex-wrap gap-2 border-b border-border/50 pb-1">
           {tabData.map((tab) => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
@@ -359,7 +359,7 @@ export default function Dashboard() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  relative px-6 py-3 font-display font-bold uppercase tracking-wider text-sm transition-all duration-300
+                  relative px-6 py-3 font-display font-bold uppercase tracking-wider text-sm transition-all duration-300 tactile-press
                   ${isActive ? 'text-background' : 'text-muted-foreground hover:text-foreground'}
                 `}
               >
@@ -398,7 +398,7 @@ export default function Dashboard() {
           ) : (
             <motion.div 
               layout
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-24 md:pb-0"
             >
               <AnimatePresence>
                 {filteredGames.map((game) => (
@@ -490,7 +490,7 @@ export default function Dashboard() {
                     </div>
                     <button
                       onClick={() => setSpotlightGame(null)}
-                      className="mt-8 px-8 py-3 bg-secondary text-background font-display font-bold uppercase tracking-wider rounded-md hover:bg-secondary/90 transition-all"
+                      className="mt-8 px-8 py-3 bg-secondary text-background font-display font-bold uppercase tracking-wider rounded-md hover:bg-secondary/90 transition-all tactile-press"
                       data-testid="button-spotlight-close"
                     >
                       Let's Go!
@@ -501,6 +501,32 @@ export default function Dashboard() {
             </motion.div>
           </motion.div>
         )}
+
+        {/* Mobile Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background/95 border-t border-border/50 backdrop-blur-md z-40">
+          <div className="flex justify-around items-stretch">
+            {tabData.map((tab) => {
+              const isActive = activeTab === tab.id;
+              const Icon = tab.icon;
+              const count = games?.filter(g => g.status === tab.id).length || 0;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all duration-300 tactile-press ${
+                    isActive 
+                      ? `border-t-4 ${tab.id === 'active' ? 'border-primary text-primary' : tab.id === 'completed' ? 'border-secondary text-secondary' : 'border-accent text-accent'} bg-black/30`
+                      : 'border-t-4 border-transparent text-muted-foreground'
+                  }`}
+                  data-testid={`button-mobile-tab-${tab.id}`}
+                >
+                  <Icon className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-mono font-bold">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </Layout>
   );
@@ -607,8 +633,9 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault 
 
             <button 
               onClick={onDelete}
-              className="text-muted-foreground hover:text-destructive transition-colors p-1.5 hover:bg-destructive/10 rounded-sm"
+              className="text-muted-foreground hover:text-destructive transition-colors p-1.5 hover:bg-destructive/10 rounded-sm tactile-press"
               title="Delete Game"
+              data-testid={`button-delete-${game.id}`}
             >
               <Trash2 className="w-4 h-4" />
             </button>
