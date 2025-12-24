@@ -38,11 +38,11 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   const handlePickGame = () => {
-    const eligibleGames = games?.filter(g => g.status === "backlog" || g.progress === 0 || g.progress === null) || [];
+    const eligibleGames = games?.filter(g => g.status === "backlog") || [];
     if (eligibleGames.length === 0) {
       toast({
         title: "No Games Available",
-        description: "All games are either in progress or completed. Add more games to your backlog!",
+        description: "Complete some games or add more to your backlog!",
         variant: "destructive",
       });
       return;
@@ -134,13 +134,14 @@ export default function Dashboard() {
     }
   };
 
-  const filteredGames = games?.filter(game => game.status === activeTab) || [];
-
   const tabData = [
     { id: "active", label: "My Pulse", icon: Gamepad2, color: "text-primary" },
     { id: "completed", label: "The Vault", icon: Trophy, color: "text-secondary" },
-    { id: "backlog", label: "Backlog", icon: Clock, color: "text-accent" },
+    { id: "backlog", label: "The Backlog", icon: Clock, color: "text-accent" },
   ] as const;
+
+  const filteredGames = games?.filter(game => game.status === activeTab) || [];
+  const currentTab = tabData.find(t => t.id === activeTab)?.label || "Library";
 
   return (
     <Layout>
@@ -153,10 +154,13 @@ export default function Dashboard() {
             <p className="text-muted-foreground font-mono">Manage your gaming operations.</p>
             <div className="mt-3 flex items-center gap-2">
               <span className="text-xl font-display font-bold text-primary">
-                {games?.length || 0}
+                {filteredGames.length}
               </span>
               <span className="text-sm font-mono text-muted-foreground">
-                Total Games in Collection
+                Showing in <span className="text-primary">{currentTab}</span>
+              </span>
+              <span className="text-xs font-mono text-muted-foreground/60 ml-2">
+                ({games?.length || 0} total)
               </span>
             </div>
           </div>
@@ -413,7 +417,15 @@ export default function Dashboard() {
                         newStatus = "backlog";
                       }
                       updateGame({ id: game.id, progress, status: newStatus });
+                      if (progress === 100) {
+                        toast({
+                          title: "Game Completed!",
+                          description: `${game.title} has been moved to The Vault!`,
+                          className: "border-secondary text-secondary font-mono",
+                        });
+                      }
                     }}
+                    isInVault={game.status === "completed"}
                   />
                 ))}
               </AnimatePresence>
@@ -490,11 +502,12 @@ export default function Dashboard() {
   );
 }
 
-function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate }: { 
+function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault }: { 
   game: Game, 
   onDelete: () => void,
   onStatusUpdate: (status: string) => void,
-  onProgressUpdate: (progress: number) => void
+  onProgressUpdate: (progress: number) => void,
+  isInVault?: boolean
 }) {
   const statusColors: Record<string, "primary" | "secondary" | "accent"> = {
     active: "primary",
@@ -511,8 +524,10 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate }: {
       transition={{ duration: 0.2 }}
     >
       <CyberCard 
-        glowColor={statusColors[game.status]} 
-        className="h-full flex flex-col p-0 group"
+        glowColor={statusColors[game.status]}
+        className={`h-full flex flex-col p-0 group ${
+          isInVault ? "border-yellow-500/50 shadow-lg shadow-yellow-500/20" : ""
+        }`}
       >
         <div className="relative aspect-[16/9] overflow-hidden bg-black/50">
           <img 
@@ -546,7 +561,9 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate }: {
           <div className="mb-4 space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-xs font-mono text-muted-foreground">Progress</span>
-              <span className="text-sm font-display font-bold text-primary">{game.progress || 0}%</span>
+              <span className={`text-sm font-display font-bold ${isInVault ? "text-secondary" : "text-primary"}`}>
+                {game.progress || 0}%
+              </span>
             </div>
             <Slider
               value={[game.progress || 0]}
@@ -554,8 +571,14 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate }: {
               max={100}
               step={1}
               className="w-full"
+              disabled={isInVault}
               data-testid={`slider-progress-${game.id}`}
             />
+            {isInVault && (
+              <p className="text-xs font-mono text-secondary text-center">
+                Locked in The Vault
+              </p>
+            )}
           </div>
 
           <div className="mt-auto flex items-center justify-between gap-2 pt-4 border-t border-white/5">
