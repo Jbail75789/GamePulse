@@ -416,7 +416,8 @@ export default function Dashboard() {
                       } else if (progress === 0) {
                         newStatus = "backlog";
                       }
-                      updateGame({ id: game.id, progress, status: newStatus });
+                      
+                      // Optimistic update with celebration
                       if (progress === 100) {
                         toast({
                           title: "Game Completed!",
@@ -424,6 +425,9 @@ export default function Dashboard() {
                           className: "border-secondary text-secondary font-mono",
                         });
                       }
+                      
+                      // Background sync
+                      updateGame({ id: game.id, progress, status: newStatus });
                     }}
                     isInVault={game.status === "completed"}
                   />

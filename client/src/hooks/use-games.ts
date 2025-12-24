@@ -58,13 +58,39 @@ export function useGames() {
       if (!res.ok) throw new Error("Failed to update game");
       return api.games.update.responses[200].parse(await res.json());
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.games.list.path] });
+    onMutate: async ({ id, ...updates }: { id: number } & Partial<InsertGame>) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [api.games.list.path] });
+
+      // Snapshot the previous value
+      const previousGames = queryClient.getQueryData([api.games.list.path]);
+
+      // Optimistically update to the new value
+      if (previousGames && Array.isArray(previousGames)) {
+        queryClient.setQueryData([api.games.list.path], (old: any[]) =>
+          old.map((game) =>
+            game.id === id ? { ...game, ...updates } : game
+          )
+        );
+      }
+
+      // Return a context with the previous data
+      return { previousGames };
+    },
+    onError: (err, newGame, context: any) => {
+      // Rollback on error
+      if (context?.previousGames) {
+        queryClient.setQueryData([api.games.list.path], context.previousGames);
+      }
       toast({
-        title: "Sync Complete",
-        description: "Game status updated.",
-        className: "border-secondary text-secondary font-mono",
+        title: "Sync Failed",
+        description: "Changes could not be saved. Rolling back.",
+        variant: "destructive",
       });
+    },
+    onSuccess: () => {
+      // Invalidate after success to ensure consistency
+      queryClient.invalidateQueries({ queryKey: [api.games.list.path] });
     },
   });
 
