@@ -153,13 +153,13 @@ export default function Dashboard() {
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground font-mono">Manage your gaming operations.</p>
             <div className="mt-2 md:mt-3 flex items-center gap-1 md:gap-2 flex-wrap">
-              <span className="text-lg md:text-xl font-display font-bold text-primary">
+              <span className="text-[1.25rem] md:text-[1.5rem] font-display font-bold text-primary">
                 {filteredGames.length}
               </span>
-              <span className="text-xs md:text-sm font-mono text-muted-foreground">
+              <span className="text-[0.75rem] md:text-[0.875rem] font-mono text-muted-foreground">
                 in <span className="text-primary">{currentTab}</span>
               </span>
-              <span className="text-xs font-mono text-muted-foreground/60">
+              <span className="text-[0.7rem] md:text-[0.75rem] font-mono text-muted-foreground/60">
                 ({games?.length || 0} total)
               </span>
             </div>
@@ -399,7 +399,7 @@ export default function Dashboard() {
           ) : (
             <motion.div 
               layout
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-24 md:pb-0"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-[100px] md:pb-0"
             >
               <AnimatePresence>
                 {filteredGames.map((game) => (
@@ -579,11 +579,11 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault 
         </div>
 
         <div className="p-3 sm:p-4 md:p-5 flex flex-col flex-1">
-          <h3 className="font-display font-bold text-sm sm:text-base md:text-lg leading-tight mb-1 line-clamp-1 text-white group-hover:text-primary transition-colors">
+          <h3 className="font-display font-bold text-[0.875rem] sm:text-[1rem] md:text-[1.125rem] leading-tight mb-1 line-clamp-1 text-white group-hover:text-primary transition-colors">
             {game.title}
           </h3>
           
-          <div className="flex items-center gap-1 sm:gap-2 text-xs font-mono text-muted-foreground mb-2 sm:mb-4">
+          <div className="flex items-center gap-1 sm:gap-2 text-[0.75rem] font-mono text-muted-foreground mb-2 sm:mb-4">
             <Clock className="w-3 h-3 flex-shrink-0" />
             <span className="truncate">{game.playtime}h</span>
           </div>
@@ -591,8 +591,8 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault 
           {/* Progress Slider */}
           <div className="mb-3 sm:mb-4 space-y-1 sm:space-y-2">
             <div className="flex justify-between items-center gap-1">
-              <span className="text-xs font-mono text-muted-foreground">Progress</span>
-              <span className={`text-xs sm:text-sm font-display font-bold ${isInVault ? "text-secondary" : "text-primary"}`}>
+              <span className="text-[0.75rem] font-mono text-muted-foreground">Progress</span>
+              <span className={`text-[0.75rem] sm:text-[0.875rem] font-display font-bold ${isInVault ? "text-secondary" : "text-primary"}`}>
                 {game.progress || 0}%
               </span>
             </div>

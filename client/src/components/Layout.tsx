@@ -22,26 +22,29 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0" />
       
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+        <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-4">
           <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer group">
+            <div className="flex items-center gap-2 cursor-pointer group flex-shrink-0">
               <Gamepad2 className="w-8 h-8 text-primary group-hover:animate-pulse" />
-              <span className="text-2xl font-display font-bold tracking-tighter text-foreground">
+              <span className="text-[1.25rem] md:text-[1.5rem] font-display font-bold tracking-tighter text-foreground whitespace-nowrap">
                 GAME<span className="text-primary text-shadow-neon">PULSE</span>
               </span>
             </div>
           </Link>
 
-          <nav className="flex items-center gap-6">
+          <nav className="flex items-center gap-3 md:gap-6 min-w-0">
             {user ? (
               <>
-                <Link href="/dashboard" className={`text-sm font-display font-bold uppercase tracking-wider hover:text-primary transition-colors ${location === '/dashboard' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <Link href="/dashboard" className={`hidden sm:inline-block text-[0.875rem] font-display font-bold uppercase tracking-wider hover:text-primary transition-colors whitespace-nowrap ${location === '/dashboard' ? 'text-primary' : 'text-muted-foreground'}`}>
                   Dashboard
                 </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-sm hover:bg-white/5 transition-colors focus:outline-none">
-                      <div className="w-8 h-8 bg-gradient-to-tr from-primary to-secondary rounded-sm flex items-center justify-center text-background font-bold font-mono">
+                    <button className="flex items-center gap-2 px-2 md:px-3 py-1.5 rounded-sm hover:bg-white/5 transition-colors focus:outline-none min-w-0">
+                      <span className="hidden md:inline-block text-[0.875rem] font-mono text-muted-foreground truncate max-w-[150px]">
+                        {user.username}
+                      </span>
+                      <div className="w-8 h-8 bg-gradient-to-tr from-primary to-secondary rounded-sm flex items-center justify-center text-background font-bold font-mono flex-shrink-0">
                         {user.username.slice(0, 2).toUpperCase()}
                       </div>
                     </button>
