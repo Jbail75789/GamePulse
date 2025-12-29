@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useGames } from "@/hooks/use-games";
 import { Layout } from "@/components/Layout";
 import { CyberCard } from "@/components/CyberCard";
 import { AddGameModal } from "@/components/AddGameModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search, Dices } from "lucide-react";
+import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search, Dices, Share2, Settings, AlertTriangle, Info } from "lucide-react";
 import { type Game } from "@shared/schema";
 import { CyberButton } from "@/components/CyberButton";
 import {
@@ -13,9 +13,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface SearchResult {
   id: number;
@@ -30,10 +38,14 @@ export default function Dashboard() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedGame, setSelectedGame] = useState<SearchResult | null>(null);
   const [showPlatformModal, setShowPlatformModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<"active" | "completed" | "backlog">("backlog");
   const [selectedVibe, setSelectedVibe] = useState<"chill" | "intense" | "story" | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [spotlightGame, setSpotlightGame] = useState<Game | null>(null);
+  const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
 
@@ -49,6 +61,48 @@ export default function Dashboard() {
     }
     const randomIndex = Math.floor(Math.random() * eligibleGames.length);
     setSpotlightGame(eligibleGames[randomIndex]);
+  };
+
+  const handleShareVault = () => {
+    const completedCount = games?.filter(g => g.status === "completed").length || 0;
+    const currentPulse = games?.find(g => g.status === "active")?.title || "None";
+    const appUrl = window.location.origin;
+    const text = `🏆 I've conquered ${completedCount} games in my GamePulse Vault! Current Pulse: ${currentPulse}. Check your backlog at ${appUrl}`;
+    
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Share Code Copied",
+        description: "Vault summary ready for broadcast!",
+        className: "border-secondary text-secondary font-mono",
+      });
+    });
+  };
+
+  const handleResetData = async () => {
+    setIsResetting(true);
+    try {
+      if (games) {
+        for (const game of games) {
+          await apiRequest("DELETE", `/api/games/${game.id}`);
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/games"] });
+      toast({
+        title: "System Reset Complete",
+        description: "All game data has been purged from Mission Control.",
+        variant: "destructive",
+      });
+      setShowSettingsModal(false);
+      setShowResetConfirm(false);
+    } catch (error) {
+      toast({
+        title: "Reset Failed",
+        description: "Could not wipe the data logs.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   useEffect(() => {
@@ -106,7 +160,7 @@ export default function Dashboard() {
     }
 
     try {
-      await createGame({
+      const newGame = await createGame({
         title: selectedGame.name,
         coverUrl: selectedGame.background_image || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80",
         platform: selectedPlatform,
@@ -114,6 +168,9 @@ export default function Dashboard() {
         playtime: 0,
         vibe: selectedVibe,
       });
+
+      setJustUpdatedId(newGame.id);
+      setTimeout(() => setJustUpdatedId(null), 1000);
 
       toast({
         title: "Game Added",
@@ -147,22 +204,82 @@ export default function Dashboard() {
     <Layout>
       <div className="space-y-4 md:space-y-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-display font-bold uppercase tracking-wider text-foreground">
-              Mission Control
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground font-mono">Manage your gaming operations.</p>
-            <div className="mt-2 md:mt-3 flex items-center gap-1 md:gap-2 flex-wrap">
-              <span className="text-[1.25rem] md:text-[1.5rem] font-display font-bold text-primary">
-                {filteredGames.length}
-              </span>
-              <span className="text-[0.75rem] md:text-[0.875rem] font-mono text-muted-foreground">
-                in <span className="text-primary">{currentTab}</span>
-              </span>
-              <span className="text-[0.7rem] md:text-[0.75rem] font-mono text-muted-foreground/60">
-                ({games?.length || 0} total)
-              </span>
+          <div className="flex justify-between items-start w-full">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-display font-bold uppercase tracking-wider text-foreground">
+                Mission Control
+              </h1>
+              <p className="text-xs md:text-sm text-muted-foreground font-mono">Manage your gaming operations.</p>
+              <div className="mt-2 md:mt-3 flex items-center gap-1 md:gap-2 flex-wrap">
+                <span className="text-[1.25rem] md:text-[1.5rem] font-display font-bold text-primary">
+                  {filteredGames.length}
+                </span>
+                <span className="text-[0.75rem] md:text-[0.875rem] font-mono text-muted-foreground">
+                  in <span className="text-primary">{currentTab}</span>
+                </span>
+                <span className="text-[0.7rem] md:text-[0.75rem] font-mono text-muted-foreground/60">
+                  ({games?.length || 0} total)
+                </span>
+              </div>
             </div>
+            
+            <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
+              <DialogTrigger asChild>
+                <button className="p-2 text-muted-foreground hover:text-primary transition-colors tactile-press">
+                  <Settings className="w-6 h-6" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="font-display uppercase tracking-widest text-primary">System Settings</DialogTitle>
+                  <DialogDescription className="font-mono text-xs">Configure GamePulse core parameters.</DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6 py-4">
+                  <section>
+                    <h4 className="flex items-center gap-2 font-display text-sm text-foreground mb-2">
+                      <Info className="w-4 h-4 text-secondary" /> About GamePulse
+                    </h4>
+                    <p className="text-xs text-muted-foreground font-mono leading-relaxed bg-black/20 p-3 border border-white/5 rounded-sm">
+                      Inspired by the $0.99 philosophy of finite experiences. GamePulse is designed to help you stop hoarding and start finishing. One pulse at a time.
+                    </p>
+                  </section>
+
+                  <section className="pt-4 border-t border-white/5">
+                    <h4 className="flex items-center gap-2 font-display text-sm text-destructive mb-2">
+                      <AlertTriangle className="w-4 h-4" /> Danger Zone
+                    </h4>
+                    {!showResetConfirm ? (
+                      <button 
+                        onClick={() => setShowResetConfirm(true)}
+                        className="w-full py-2 bg-destructive/10 border border-destructive/30 text-destructive text-xs font-mono rounded-sm hover:bg-destructive/20 transition-all tactile-press"
+                      >
+                        Reset All Data logs
+                      </button>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-[10px] text-destructive font-mono uppercase text-center animate-pulse">Confirm total data wipe?</p>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={handleResetData}
+                            disabled={isResetting}
+                            className="flex-1 py-2 bg-destructive text-background text-xs font-bold font-mono rounded-sm tactile-press disabled:opacity-50"
+                          >
+                            {isResetting ? "PURGING..." : "YES, PURGE"}
+                          </button>
+                          <button 
+                            onClick={() => setShowResetConfirm(false)}
+                            className="flex-1 py-2 bg-black/50 border border-border text-xs font-mono rounded-sm tactile-press"
+                          >
+                            CANCEL
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="flex gap-2 w-full md:w-auto">
             <button
@@ -178,7 +295,17 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Share Button (Vault Only) */}
+        {activeTab === "completed" && filteredGames.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center md:justify-end">
+            <button 
+              onClick={handleShareVault}
+              className="flex items-center gap-2 px-4 py-2 bg-secondary/10 border border-secondary text-secondary text-xs font-display font-bold uppercase tracking-widest rounded-sm hover:bg-secondary/20 transition-all tactile-press"
+            >
+              <Share2 className="w-4 h-4" /> Share My Vault
+            </button>
+          </motion.div>
+        )}
         <div className="relative z-50">
           <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-3 md:px-4 py-2 md:py-3">
             <Search className="w-4 md:w-5 h-4 md:h-5 text-muted-foreground flex-shrink-0" />
@@ -391,23 +518,44 @@ export default function Dashboard() {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
             </div>
           ) : filteredGames.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground border-2 border-dashed border-border/50 rounded-lg bg-black/20">
-              <AlertCircle className="w-12 h-12 mb-4 opacity-50" />
-              <p className="font-mono text-lg">No signals detected in this sector.</p>
-              <p className="text-sm mt-2">Add a game to initialize tracking.</p>
+            <div className="empty-state-container">
+              {activeTab === "completed" ? (
+                <>
+                  <Trophy className="w-16 h-16 mb-4 text-secondary/40" />
+                  <h3 className="text-xl font-display font-bold text-foreground mb-2">The Vault is Silent</h3>
+                  <p className="font-mono text-sm text-muted-foreground max-w-xs">Your legacy hasn't begun yet. Time to finish a legend!</p>
+                </>
+              ) : activeTab === "active" ? (
+                <>
+                  <Gamepad2 className="w-16 h-16 mb-4 text-primary/40" />
+                  <h3 className="text-xl font-display font-bold text-foreground mb-2">No Active Signals</h3>
+                  <p className="font-mono text-sm text-muted-foreground max-w-xs">Initiate a gaming session to see your pulse.</p>
+                </>
+              ) : (
+                <>
+                  <Clock className="w-16 h-16 mb-4 text-accent/40" />
+                  <h3 className="text-xl font-display font-bold text-foreground mb-2">Backlog Offline</h3>
+                  <p className="font-mono text-sm text-muted-foreground max-w-xs">Add potential missions from the database above.</p>
+                </>
+              )}
             </div>
           ) : (
             <motion.div 
               layout
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-[100px] md:pb-0"
             >
-              <AnimatePresence>
+              <AnimatePresence mode="popLayout">
                 {filteredGames.map((game) => (
                   <GameCard 
                     key={game.id} 
-                    game={game} 
+                    game={game}
+                    isPop={justUpdatedId === game.id}
                     onDelete={() => deleteGame(game.id)}
-                    onStatusUpdate={(status) => updateGame({ id: game.id, status })}
+                    onStatusUpdate={(status) => {
+                      setJustUpdatedId(game.id);
+                      setTimeout(() => setJustUpdatedId(null), 1000);
+                      updateGame({ id: game.id, status });
+                    }}
                     onProgressUpdate={(progress) => {
                       let newStatus = game.status;
                       if (progress === 100) {
@@ -418,8 +566,9 @@ export default function Dashboard() {
                         newStatus = "backlog";
                       }
                       
-                      // Optimistic update with celebration
                       if (progress === 100) {
+                        setJustUpdatedId(game.id);
+                        setTimeout(() => setJustUpdatedId(null), 1000);
                         toast({
                           title: "Game Completed!",
                           description: `${game.title} has been moved to The Vault!`,
@@ -427,7 +576,6 @@ export default function Dashboard() {
                         });
                       }
                       
-                      // Background sync
                       updateGame({ id: game.id, progress, status: newStatus });
                     }}
                     isInVault={game.status === "completed"}
@@ -533,12 +681,13 @@ export default function Dashboard() {
   );
 }
 
-function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault }: { 
+function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault, isPop }: { 
   game: Game, 
   onDelete: () => void,
   onStatusUpdate: (status: string) => void,
   onProgressUpdate: (progress: number) => void,
-  isInVault?: boolean
+  isInVault?: boolean,
+  isPop?: boolean
 }) {
   const statusColors: Record<string, "primary" | "secondary" | "accent"> = {
     active: "primary",
@@ -550,9 +699,19 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault 
     <motion.div
       layout
       initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
+      animate={{ 
+        opacity: 1, 
+        scale: isPop ? 1.05 : 1,
+        transition: {
+          scale: {
+            type: "spring",
+            stiffness: 300,
+            damping: 15
+          }
+        }
+      }}
       exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.2 }}
+      className={isPop ? "z-10" : "z-0"}
     >
       <CyberCard 
         glowColor={statusColors[game.status]}
