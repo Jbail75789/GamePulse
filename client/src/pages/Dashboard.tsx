@@ -45,22 +45,64 @@ export default function Dashboard() {
   const [selectedVibe, setSelectedVibe] = useState<"chill" | "intense" | "story" | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [spotlightGame, setSpotlightGame] = useState<Game | null>(null);
+  const [showRoulette, setShowRoulette] = useState(false);
+  const [winnerGame, setWinnerGame] = useState<Game | null>(null);
+  const [isStartingAdventure, setIsStartingAdventure] = useState(false);
   const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
 
-  const handlePickGame = () => {
-    const eligibleGames = games?.filter(g => g.status === "backlog") || [];
+  const handlePickGame = (mode: "epic" | "quick" | "relaxing" | "surprise") => {
+    let eligibleGames = games?.filter(g => g.status === "backlog") || [];
+    
+    if (mode === "epic") {
+      eligibleGames = eligibleGames.filter(g => g.vibe === "story" || g.vibe === "intense");
+    } else if (mode === "quick") {
+      eligibleGames = eligibleGames.filter(g => g.vibe === "intense");
+    } else if (mode === "relaxing") {
+      eligibleGames = eligibleGames.filter(g => g.vibe === "chill");
+    }
+
     if (eligibleGames.length === 0) {
       toast({
-        title: "No Games Available",
-        description: "Complete some games or add more to your backlog!",
+        title: "No Signals Detected",
+        description: `No games found matching the '${mode}' profile in your backlog.`,
         variant: "destructive",
       });
       return;
     }
+
     const randomIndex = Math.floor(Math.random() * eligibleGames.length);
-    setSpotlightGame(eligibleGames[randomIndex]);
+    setWinnerGame(eligibleGames[randomIndex]);
+    setShowRoulette(false);
+  };
+
+  const handleStartAdventure = async (game: Game) => {
+    setIsStartingAdventure(true);
+    try {
+      await updateGame({
+        id: game.id,
+        status: "active",
+        progress: 1,
+      });
+      setJustUpdatedId(game.id);
+      setTimeout(() => setJustUpdatedId(null), 1000);
+      toast({
+        title: "Adventure Initiated",
+        description: `${game.title} is now your active pulse.`,
+        className: "border-primary text-primary font-mono",
+      });
+      setWinnerGame(null);
+      setActiveTab("active");
+    } catch (error) {
+      toast({
+        title: "Link Failed",
+        description: "Could not initialize adventure sequence.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsStartingAdventure(false);
+    }
   };
 
   const handleShareVault = () => {
@@ -283,7 +325,7 @@ export default function Dashboard() {
           </div>
           <div className="flex gap-2 w-full md:w-auto">
             <button
-              onClick={handlePickGame}
+              onClick={() => setShowRoulette(true)}
               className="flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 bg-gradient-to-r from-secondary to-secondary/80 text-background font-display font-bold uppercase tracking-wider text-xs md:text-base rounded-md hover:from-secondary/90 hover:to-secondary/70 transition-all flex items-center justify-center gap-1 md:gap-2 tactile-press"
               data-testid="button-pick-game"
             >
@@ -306,7 +348,77 @@ export default function Dashboard() {
             </button>
           </motion.div>
         )}
-        <div className="relative z-50">
+        {/* Roulette Modal */}
+        <Dialog open={showRoulette} onOpenChange={setShowRoulette}>
+          <DialogContent className="bg-card border-border sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-display uppercase tracking-widest text-secondary">Mood-Based Roulette</DialogTitle>
+              <DialogDescription className="font-mono text-xs text-muted-foreground">Select your operational profile for the next session.</DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 gap-3 py-4">
+              {[
+                { id: "epic", label: "Epic Quest", desc: "RPG / Story Focused", icon: Trophy, color: "text-secondary", bg: "bg-secondary/10" },
+                { id: "quick", label: "Quick Hit", desc: "Action / Intensity", icon: Gamepad2, color: "text-primary", bg: "bg-primary/10" },
+                { id: "relaxing", label: "Relaxing", desc: "Indie / Chill", icon: Info, color: "text-accent", bg: "bg-accent/10" },
+                { id: "surprise", label: "Surprise Me", desc: "Total Randomization", icon: Dices, color: "text-foreground", bg: "bg-white/5" },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => handlePickGame(opt.id as any)}
+                  className={`flex items-center gap-4 p-4 ${opt.bg} border border-white/5 rounded-md hover:border-white/20 transition-all tactile-press text-left group`}
+                >
+                  <div className={`p-2 rounded-sm bg-black/40 ${opt.color}`}>
+                    <opt.icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-display font-bold uppercase tracking-wider">{opt.label}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground">{opt.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Winner Modal */}
+        <Dialog open={!!winnerGame} onOpenChange={(open) => !open && setWinnerGame(null)}>
+          <DialogContent className="bg-card border-secondary sm:max-w-sm overflow-hidden p-0">
+            {winnerGame && (
+              <div className="relative">
+                <div className="h-48 w-full relative">
+                  <img src={winnerGame.coverUrl} className="w-full h-full object-cover" alt="" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="text-[10px] font-mono text-secondary uppercase tracking-[0.2em] mb-1">Target Identified</div>
+                    <h2 className="text-xl font-display font-bold uppercase leading-tight text-white">{winnerGame.title}</h2>
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <p className="text-xs text-muted-foreground font-mono leading-relaxed">
+                    Neural link established. The system recommends initializing this sequence immediately.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleStartAdventure(winnerGame)}
+                      disabled={isStartingAdventure}
+                      className="flex-1 py-3 bg-secondary text-background font-display font-bold uppercase tracking-wider text-xs rounded-sm tactile-press disabled:opacity-50"
+                    >
+                      {isStartingAdventure ? "INITIALIZING..." : "Start Adventure"}
+                    </button>
+                    <button
+                      onClick={() => setWinnerGame(null)}
+                      className="px-4 py-3 bg-white/5 border border-white/10 text-xs font-mono rounded-sm hover:bg-white/10 transition-colors"
+                    >
+                      SKIP
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Search Bar */}
           <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-3 md:px-4 py-2 md:py-3">
             <Search className="w-4 md:w-5 h-4 md:h-5 text-muted-foreground flex-shrink-0" />
             <input
@@ -684,7 +796,7 @@ export default function Dashboard() {
 function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault, isPop }: { 
   game: Game, 
   onDelete: () => void,
-  onStatusUpdate: (status: string) => void,
+  onStatusUpdate: (status: "active" | "completed" | "backlog") => void,
   onProgressUpdate: (progress: number) => void,
   isInVault?: boolean,
   isPop?: boolean

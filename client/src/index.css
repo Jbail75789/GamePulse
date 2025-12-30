@@ -138,5 +138,5 @@
 
 /* Empty state styling */
 .empty-state-container {
-  @apply flex flex-col items-center justify-center p-8 text-center border-2 border-dashed border-border rounded-lg bg-black/20;
+  @apply flex flex-col items-center justify-center p-8 text-center border-2 border-dashed border-gray-700 rounded-lg bg-black/20;
 }

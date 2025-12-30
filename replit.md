@@ -4,6 +4,12 @@
 
 GamePulse is a cyberpunk-themed game tracking web application that allows users to manage their gaming library. Users can track games across different statuses (active, completed, backlog), log playtime, categorize by platform and vibe, and get random game recommendations from their backlog. The application features a distinctive neon-styled UI with custom components.
 
+## Recent Changes
+- Fixed CSS crash in `index.css` by changing `border-border` to `border-gray-700`.
+- Implemented Mood-Based Roulette for 'Pick a Game' functionality.
+- Added Settings modal with 'Reset All Data' and 'Share My Vault' features.
+- Enhanced empty state illustrations and haptic pop animations.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
