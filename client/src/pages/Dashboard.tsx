@@ -52,21 +52,21 @@ export default function Dashboard() {
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
 
-  const handlePickGame = (mode: "epic" | "quick" | "relaxing" | "surprise") => {
+  const handlePickGame = (mode: "epic" | "quick" | "chill" | "chaos") => {
+    const moods = {
+      epic: { filter: (g: Game) => g.vibe === 'story' || g.vibe === 'intense', label: 'Epic Quest' },
+      quick: { filter: (g: Game) => g.vibe === 'intense', label: 'Quick Hit' },
+      chill: { filter: (g: Game) => g.vibe === 'chill', label: 'Chill Vibe' },
+      chaos: { filter: () => true, label: 'Chaos Mode' }
+    };
+
     let eligibleGames = games?.filter(g => g.status === "backlog") || [];
-    
-    if (mode === "epic") {
-      eligibleGames = eligibleGames.filter(g => g.vibe === "story" || g.vibe === "intense");
-    } else if (mode === "quick") {
-      eligibleGames = eligibleGames.filter(g => g.vibe === "intense");
-    } else if (mode === "relaxing") {
-      eligibleGames = eligibleGames.filter(g => g.vibe === "chill");
-    }
+    eligibleGames = eligibleGames.filter(moods[mode].filter);
 
     if (eligibleGames.length === 0) {
       toast({
         title: "No Signals Detected",
-        description: `No games found matching the '${mode}' profile in your backlog.`,
+        description: `No games found matching the '${moods[mode].label}' profile in your backlog.`,
         variant: "destructive",
       });
       return;
@@ -356,8 +356,8 @@ export default function Dashboard() {
               {[
                 { id: "epic", label: "Epic Quest", desc: "RPG / Story Focused", icon: Trophy, color: "text-secondary", bg: "bg-secondary/10" },
                 { id: "quick", label: "Quick Hit", desc: "Action / Intensity", icon: Gamepad2, color: "text-primary", bg: "bg-primary/10" },
-                { id: "relaxing", label: "Relaxing", desc: "Indie / Chill", icon: Info, color: "text-accent", bg: "bg-accent/10" },
-                { id: "surprise", label: "Surprise Me", desc: "Total Randomization", icon: Dices, color: "text-foreground", bg: "bg-white/5" },
+                { id: "chill", label: "Chill Vibe", desc: "Indie / Chill", icon: Info, color: "text-accent", bg: "bg-accent/10" },
+                { id: "chaos", label: "Chaos Mode", desc: "Total Randomization", icon: Dices, color: "text-foreground", bg: "bg-white/5" },
               ].map((opt) => (
                 <button
                   key={opt.id}
