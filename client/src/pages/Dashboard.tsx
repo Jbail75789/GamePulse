@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useGames } from "@/hooks/use-games";
 import { Layout } from "@/components/Layout";
 import { CyberCard } from "@/components/CyberCard";
@@ -165,7 +165,6 @@ export default function Dashboard() {
             `https://api.rawg.io/api/games?search=${encodeURIComponent(searchQuery)}&key=${apiKey}`
           );
           const data = await response.json();
-          console.log("RAWG API Results:", data);
           setSearchResults(data.results || []);
         } catch (error) {
           console.error("Failed to search RAWG API:", error);
@@ -202,7 +201,7 @@ export default function Dashboard() {
     }
 
     try {
-      const newGame = await createGame({
+      await createGame({
         title: selectedGame.name,
         coverUrl: selectedGame.background_image || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80",
         platform: selectedPlatform,
@@ -210,9 +209,6 @@ export default function Dashboard() {
         playtime: 0,
         vibe: selectedVibe,
       });
-
-      setJustUpdatedId(newGame.id);
-      setTimeout(() => setJustUpdatedId(null), 1000);
 
       toast({
         title: "Game Added",
@@ -348,6 +344,7 @@ export default function Dashboard() {
             </button>
           </motion.div>
         )}
+        
         {/* Roulette Modal */}
         <Dialog open={showRoulette} onOpenChange={setShowRoulette}>
           <DialogContent className="bg-card border-border sm:max-w-md">
@@ -419,6 +416,7 @@ export default function Dashboard() {
         </Dialog>
 
         {/* Search Bar */}
+        <div className="relative">
           <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-3 md:px-4 py-2 md:py-3">
             <Search className="w-4 md:w-5 h-4 md:h-5 text-muted-foreground flex-shrink-0" />
             <input
@@ -437,7 +435,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-black/80 border border-border/50 rounded-md overflow-hidden backdrop-blur-sm max-h-96 overflow-y-auto"
+              className="absolute top-full left-0 right-0 mt-2 bg-black/80 border border-border/50 rounded-md overflow-hidden backdrop-blur-sm z-20 max-h-96 overflow-y-auto"
             >
               {searchResults.slice(0, 8).map((result) => (
                 <div
@@ -468,10 +466,7 @@ export default function Dashboard() {
 
         {/* Game Details Modal */}
         {showPlatformModal && selectedGame && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
             className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
             onClick={() => {
               setShowPlatformModal(false);
@@ -481,7 +476,6 @@ export default function Dashboard() {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
               className="bg-card border border-border rounded-lg p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
@@ -527,8 +521,8 @@ export default function Dashboard() {
                       onClick={() => setSelectedVibe(selectedVibe === vibe ? null : (vibe as "chill" | "intense" | "story"))}
                       className={`w-full px-4 py-2 rounded-md font-mono text-sm transition-all duration-200 capitalize ${
                         selectedVibe === vibe
-                          ? "bg-secondary/30 border border-secondary text-secondary"
-                          : "bg-black/50 border border-border text-foreground hover:bg-secondary/20"
+                          ? "bg-accent/30 border border-accent text-accent"
+                          : "bg-black/50 border border-border text-foreground hover:bg-accent/20"
                       }`}
                       data-testid={`button-vibe-${vibe}`}
                     >
@@ -547,11 +541,11 @@ export default function Dashboard() {
                   {["Steam", "Xbox", "PS5"].map((platform) => (
                     <button
                       key={platform}
-                      onClick={() => setSelectedPlatform(selectedPlatform === platform ? null : platform)}
+                      onClick={() => setSelectedPlatform(platform)}
                       className={`w-full px-4 py-3 rounded-md font-mono font-bold text-sm transition-all duration-200 tactile-press ${
                         selectedPlatform === platform
-                          ? "bg-accent/30 border border-accent text-accent"
-                          : "bg-black/50 border border-border text-foreground hover:bg-accent/20"
+                          ? "bg-secondary/30 border border-secondary text-secondary"
+                          : "bg-black/50 border border-border text-foreground hover:bg-secondary/20"
                       }`}
                       data-testid={`button-platform-${platform}`}
                     >
@@ -561,7 +555,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="space-y-2">
                 <button
                   onClick={handleSaveGame}
@@ -586,7 +579,7 @@ export default function Dashboard() {
                 </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
 
         {/* Desktop Cyberpunk Tabs */}
@@ -603,7 +596,6 @@ export default function Dashboard() {
                   ${isActive ? 'text-background' : 'text-muted-foreground hover:text-foreground'}
                 `}
               >
-                {/* Active Tab Background Shape */}
                 {isActive && (
                   <motion.div
                     layoutId="activeTab"
@@ -716,7 +708,6 @@ export default function Dashboard() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative overflow-hidden rounded-lg border-2 border-secondary shadow-2xl">
-                {/* Background Image */}
                 <div className="relative aspect-[16/9] overflow-hidden bg-black/50">
                   <img
                     src={spotlightGame.coverUrl}
@@ -726,7 +717,6 @@ export default function Dashboard() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                 </div>
 
-                {/* Content Overlay */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
@@ -837,7 +827,7 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
             alt={game.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80"; // Fallback gaming image
+              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80";
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
@@ -859,7 +849,6 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
             <span className="truncate">{game.playtime}h</span>
           </div>
 
-          {/* Progress Slider */}
           <div className="mb-3 sm:mb-4 space-y-1 sm:space-y-2">
             <div className="flex justify-between items-center gap-1">
               <span className="text-[0.75rem] font-mono text-muted-foreground">Progress</span>

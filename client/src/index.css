@@ -42,7 +42,7 @@
 
 @layer base {
   * {
-    /* @apply border-border; */
+    border-color: #333;
   }
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground;
