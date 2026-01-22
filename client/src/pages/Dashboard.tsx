@@ -46,6 +46,7 @@ export default function Dashboard() {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [spotlightGame, setSpotlightGame] = useState<Game | null>(null);
   const [showRoulette, setShowRoulette] = useState(false);
+  const [rouletteSource, setRouletteSource] = useState<"backlog" | "active">("backlog");
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
   const [isStartingAdventure, setIsStartingAdventure] = useState(false);
   const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
@@ -60,13 +61,13 @@ export default function Dashboard() {
       chaos: { filter: () => true, label: 'Chaos Mode' }
     };
 
-    let eligibleGames = games?.filter(g => g.status === "backlog") || [];
+    let eligibleGames = games?.filter(g => g.status === rouletteSource) || [];
     eligibleGames = eligibleGames.filter(moods[mode].filter);
 
     if (eligibleGames.length === 0) {
       toast({
         title: "No Signals Detected",
-        description: `No games found matching the '${moods[mode].label}' profile in your backlog.`,
+        description: `No games found matching the '${moods[mode].label}' profile in your ${rouletteSource}.`,
         variant: "destructive",
       });
       return;
@@ -349,8 +350,24 @@ export default function Dashboard() {
         <Dialog open={showRoulette} onOpenChange={setShowRoulette}>
           <DialogContent className="bg-card border-border sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="font-display uppercase tracking-widest text-secondary">Mood-Based Roulette</DialogTitle>
-              <DialogDescription className="font-mono text-xs text-muted-foreground">Select your operational profile for the next session.</DialogDescription>
+              <DialogTitle className="font-display uppercase tracking-widest text-secondary text-center mb-4">Mood-Based Roulette</DialogTitle>
+              <div className="flex bg-black/40 p-1 rounded-md border border-white/5 mb-6">
+                <button 
+                  onClick={() => setRouletteSource("backlog")}
+                  className={`flex-1 py-2 text-[10px] font-mono uppercase tracking-widest transition-all rounded-sm ${rouletteSource === "backlog" ? "bg-primary text-background font-bold shadow-[0_0_10px_rgba(var(--primary),0.3)]" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Find a Pulse (Backlog)
+                </button>
+                <button 
+                  onClick={() => setRouletteSource("active")}
+                  className={`flex-1 py-2 text-[10px] font-mono uppercase tracking-widest transition-all rounded-sm ${rouletteSource === "active" ? "bg-secondary text-background font-bold shadow-[0_0_10px_rgba(var(--secondary),0.3)]" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Keep the Pulse (Active)
+                </button>
+              </div>
+              <DialogDescription className="font-mono text-xs text-muted-foreground text-center">
+                Select your operational profile for the next session.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-1 gap-3 py-4">
               {[
