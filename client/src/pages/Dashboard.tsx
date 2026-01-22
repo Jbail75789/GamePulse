@@ -62,12 +62,21 @@ export default function Dashboard() {
     };
 
     let eligibleGames = games?.filter(g => g.status === rouletteSource) || [];
+    
+    // Additional filtering for "Keep the Pulse" mode: only games with 1-99% progress
+    if (rouletteSource === "active") {
+      eligibleGames = eligibleGames.filter(g => (g.progress || 0) > 0 && (g.progress || 0) < 100);
+    } else {
+      // Find a Pulse: only games with 0% progress (or precisely at 0 if specified)
+      eligibleGames = eligibleGames.filter(g => (g.progress || 0) === 0);
+    }
+
     eligibleGames = eligibleGames.filter(moods[mode].filter);
 
     if (eligibleGames.length === 0) {
       toast({
         title: "No Signals Detected",
-        description: `No games found matching the '${moods[mode].label}' profile in your ${rouletteSource}.`,
+        description: `No games found matching the '${moods[mode].label}' profile in your ${rouletteSource === 'backlog' ? 'Backlog (0%)' : 'Active (1-99%)'} list.`,
         variant: "destructive",
       });
       return;
@@ -356,13 +365,13 @@ export default function Dashboard() {
                   onClick={() => setRouletteSource("backlog")}
                   className={`flex-1 py-2 text-[10px] font-mono uppercase tracking-widest transition-all rounded-sm ${rouletteSource === "backlog" ? "bg-primary text-background font-bold shadow-[0_0_10px_rgba(var(--primary),0.3)]" : "text-muted-foreground hover:text-foreground"}`}
                 >
-                  Find a Pulse (Backlog)
+                  Find a Pulse (0%)
                 </button>
                 <button 
                   onClick={() => setRouletteSource("active")}
                   className={`flex-1 py-2 text-[10px] font-mono uppercase tracking-widest transition-all rounded-sm ${rouletteSource === "active" ? "bg-secondary text-background font-bold shadow-[0_0_10px_rgba(var(--secondary),0.3)]" : "text-muted-foreground hover:text-foreground"}`}
                 >
-                  Keep the Pulse (Active)
+                  Keep the Pulse (1-99%)
                 </button>
               </div>
               <DialogDescription className="font-mono text-xs text-muted-foreground text-center">
