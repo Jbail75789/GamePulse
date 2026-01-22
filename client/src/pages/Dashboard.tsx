@@ -50,6 +50,7 @@ export default function Dashboard() {
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
   const [isStartingAdventure, setIsStartingAdventure] = useState(false);
   const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
+  const [pulseCharges, setPulseCharges] = useState(3);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
 
@@ -84,6 +85,7 @@ export default function Dashboard() {
 
     const randomIndex = Math.floor(Math.random() * eligibleGames.length);
     setWinnerGame(eligibleGames[randomIndex]);
+    setPulseCharges(prev => Math.max(0, prev - 1));
     setShowRoulette(false);
   };
 
@@ -330,15 +332,26 @@ export default function Dashboard() {
             </Dialog>
           </div>
           <div className="flex gap-2 w-full md:w-auto">
-            <button
-              onClick={() => setShowRoulette(true)}
-              className="flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 bg-gradient-to-r from-secondary to-secondary/80 text-background font-display font-bold uppercase tracking-wider text-xs md:text-base rounded-md hover:from-secondary/90 hover:to-secondary/70 transition-all flex items-center justify-center gap-1 md:gap-2 tactile-press"
-              data-testid="button-pick-game"
-            >
-              <Dices className="w-4 md:w-5 h-4 md:h-5" />
-              <span className="hidden sm:inline">Pick a Game</span>
-              <span className="sm:hidden">Game</span>
-            </button>
+            <div className="flex flex-col gap-1 flex-1 md:flex-none">
+              <button
+                onClick={() => setShowRoulette(true)}
+                disabled={pulseCharges === 0}
+                className="w-full px-3 md:px-6 py-2 md:py-3 bg-gradient-to-r from-secondary to-secondary/80 text-background font-display font-bold uppercase tracking-wider text-xs md:text-base rounded-md hover:from-secondary/90 hover:to-secondary/70 transition-all flex items-center justify-center gap-1 md:gap-2 tactile-press disabled:opacity-50 disabled:grayscale"
+                data-testid="button-pick-game"
+              >
+                <Dices className="w-4 md:w-5 h-4 md:h-5" />
+                <span className="hidden sm:inline">Pick a Game</span>
+                <span className="sm:hidden">Game</span>
+              </button>
+              <div className="flex justify-center gap-1">
+                {[...Array(3)].map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`h-1 w-4 rounded-full transition-colors ${i < pulseCharges ? "bg-secondary shadow-[0_0_5px_rgba(var(--secondary),0.5)]" : "bg-white/10"}`}
+                  />
+                ))}
+              </div>
+            </div>
             <AddGameModal />
           </div>
         </div>
@@ -688,10 +701,16 @@ export default function Dashboard() {
                     }}
                     onProgressUpdate={(progress) => {
                       let newStatus = game.status;
+                      const progressDiff = progress - (game.progress || 0);
+                      
                       if (progress === 100) {
                         newStatus = "completed";
+                        setPulseCharges(3);
                       } else if (progress > 0 && progress < 100) {
                         newStatus = "active";
+                        if (progressDiff >= 5) {
+                          setPulseCharges(3);
+                        }
                       } else if (progress === 0) {
                         newStatus = "backlog";
                       }
@@ -817,6 +836,7 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
   isInVault?: boolean,
   isPop?: boolean
 }) {
+  const { toast } = useToast();
   const statusColors: Record<string, "primary" | "secondary" | "accent"> = {
     active: "primary",
     completed: "secondary",
