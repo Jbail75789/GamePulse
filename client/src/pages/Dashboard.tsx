@@ -899,24 +899,41 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
           </div>
 
           <div className="mt-auto flex items-center justify-between gap-1 sm:gap-2 pt-2 sm:pt-4 border-t border-white/5">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="text-xs font-mono uppercase tracking-wider text-muted-foreground hover:text-white transition-colors flex items-center gap-1 focus:outline-none truncate">
-                  <span className="hidden sm:inline">Status:</span> <span className={`text-${statusColors[game.status]}`}>{game.status}</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-card border-border">
-                <DropdownMenuItem onClick={() => onStatusUpdate("active")} className="font-mono cursor-pointer hover:bg-primary/20 hover:text-primary">
-                  <Gamepad2 className="w-3 h-3 mr-2" /> Active
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusUpdate("completed")} className="font-mono cursor-pointer hover:bg-secondary/20 hover:text-secondary">
-                  <CheckCircle2 className="w-3 h-3 mr-2" /> Completed
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusUpdate("backlog")} className="font-mono cursor-pointer hover:bg-accent/20 hover:text-accent">
-                  <Clock className="w-3 h-3 mr-2" /> Backlog
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {isInVault ? (
+              <button
+                onClick={() => {
+                  onStatusUpdate("active");
+                  onProgressUpdate(0);
+                  toast({
+                    title: "Mission Re-Initialized",
+                    description: `${game.title} moved back to active status.`,
+                    className: "border-primary text-primary font-mono",
+                  });
+                }}
+                className="flex-1 py-1.5 bg-primary/10 border border-primary/30 text-primary text-[10px] font-mono rounded-sm hover:bg-primary/20 transition-all tactile-press uppercase tracking-wider"
+              >
+                Move back to Active
+              </button>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="text-xs font-mono uppercase tracking-wider text-muted-foreground hover:text-white transition-colors flex items-center gap-1 focus:outline-none truncate">
+                    <span className="hidden sm:inline">Status:</span> <span className={`text-${statusColors[game.status]}`}>{game.status}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-card border-border">
+                  <DropdownMenuItem onClick={() => onStatusUpdate("active")} className="font-mono cursor-pointer hover:bg-primary/20 hover:text-primary">
+                    <Gamepad2 className="w-3 h-3 mr-2" /> Active
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onStatusUpdate("completed")} className="font-mono cursor-pointer hover:bg-secondary/20 hover:text-secondary">
+                    <CheckCircle2 className="w-3 h-3 mr-2" /> Completed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onStatusUpdate("backlog")} className="font-mono cursor-pointer hover:bg-accent/20 hover:text-accent">
+                    <Clock className="w-3 h-3 mr-2" /> Backlog
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             <button 
               onClick={onDelete}
