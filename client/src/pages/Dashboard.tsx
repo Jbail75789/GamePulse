@@ -24,6 +24,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import confetti from "canvas-confetti";
 
 interface SearchResult {
   id: number;
@@ -153,6 +154,15 @@ export default function Dashboard() {
         setSpinGame(null);
         setPulseCharges(prev => Math.max(0, prev - 1));
         playSound('win');
+        
+        // Confetti burst exactly when sound plays
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#00ff9f', '#00b8ff', '#d600ff'],
+          disableForReducedMotion: true
+        });
         
         // Haptic feedback / visual celebration
         if ('vibrate' in navigator) {
