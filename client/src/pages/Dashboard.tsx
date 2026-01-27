@@ -56,6 +56,51 @@ export default function Dashboard() {
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
 
+  // Low-profile UI sound effects
+  const playSound = (type: 'tick' | 'win') => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      if (type === 'tick') {
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.1);
+      } else {
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.3);
+        
+        // Secondary harmonic for "win"
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'sine';
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.frequency.setValueAtTime(554.37, audioCtx.currentTime); // C#
+        osc2.frequency.exponentialRampToValueAtTime(1108.73, audioCtx.currentTime + 0.2);
+        gain2.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc2.start();
+        osc2.stop(audioCtx.currentTime + 0.3);
+      }
+    } catch (e) {
+      console.warn('Audio feedback failed:', e);
+    }
+  };
+
   const handlePickGame = (mode: "epic" | "quick" | "chill" | "chaos") => {
     const moods = {
       epic: { filter: (g: Game) => g.vibe === 'story' || g.vibe === 'intense', label: 'Epic Quest' },
@@ -93,6 +138,7 @@ export default function Dashboard() {
     const maxIterations = 20;
     const interval = setInterval(() => {
       setSpinGame(eligibleGames[Math.floor(Math.random() * eligibleGames.length)]);
+      playSound('tick');
       iterations++;
       if (iterations >= maxIterations) {
         clearInterval(interval);
@@ -100,6 +146,7 @@ export default function Dashboard() {
         setIsSpinning(false);
         setSpinGame(null);
         setPulseCharges(prev => Math.max(0, prev - 1));
+        playSound('win');
         
         // Haptic feedback / visual celebration
         if ('vibrate' in navigator) {
