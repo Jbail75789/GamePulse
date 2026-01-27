@@ -1055,7 +1055,7 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
         </div>
 
         <div className="p-3 sm:p-4 md:p-5 flex flex-col flex-1">
-          <h3 className="font-display font-bold text-[0.875rem] sm:text-[1rem] md:text-[1.125rem] leading-tight mb-1 line-clamp-1 text-white group-hover:text-primary transition-colors">
+          <h3 className="font-display font-black text-[1rem] sm:text-[1.125rem] md:text-[1.25rem] leading-tight mb-1 line-clamp-1 text-white group-hover:text-primary transition-colors">
             {game.title}
           </h3>
           
