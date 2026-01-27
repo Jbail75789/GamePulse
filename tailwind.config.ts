@@ -70,7 +70,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["'Rajdhani'", "sans-serif"],
+        sans: ["'Inter'", "system-ui", "-apple-system", "sans-serif"],
         display: ["'Orbitron'", "sans-serif"],
         mono: ["'Share Tech Mono'", "monospace"],
       },

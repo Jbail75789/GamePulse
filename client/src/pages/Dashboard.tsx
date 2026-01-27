@@ -523,7 +523,7 @@ export default function Dashboard() {
                     className="min-h-[120px] flex flex-col items-center justify-center relative"
                   >
                     <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full animate-pulse" />
-                    <h2 className="text-3xl md:text-6xl font-display font-bold uppercase tracking-tighter text-white drop-shadow-[0_0_20px_rgba(var(--primary),0.8)] z-10">
+                    <h2 className="text-4xl md:text-7xl font-display font-black uppercase tracking-tighter text-white drop-shadow-[0_0_20px_rgba(var(--primary),0.8)] z-10">
                       {spinGame?.title || "???"}
                     </h2>
                     <div className="mt-4 text-secondary font-mono text-sm uppercase tracking-[0.5em] z-10">
