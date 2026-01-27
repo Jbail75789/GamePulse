@@ -501,16 +501,17 @@ export default function Dashboard() {
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={spinGame?.id || 'empty'}
-                    initial={{ y: 50, opacity: 0, scale: 0.8 }}
-                    animate={{ y: 0, opacity: 1, scale: 1 }}
-                    exit={{ y: -50, opacity: 0, scale: 1.2 }}
-                    transition={{ duration: 0.1 }}
-                    className="min-h-[120px] flex flex-col items-center justify-center"
+                    initial={{ y: 50, opacity: 0, scale: 0.8, filter: "blur(10px)" }}
+                    animate={{ y: 0, opacity: 1, scale: 1, filter: "blur(0px)" }}
+                    exit={{ y: -50, opacity: 0, scale: 1.2, filter: "blur(10px)" }}
+                    transition={{ duration: 0.1, ease: "easeOut" }}
+                    className="min-h-[120px] flex flex-col items-center justify-center relative"
                   >
-                    <h2 className="text-3xl md:text-5xl font-display font-bold uppercase tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
+                    <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full animate-pulse" />
+                    <h2 className="text-3xl md:text-6xl font-display font-bold uppercase tracking-tighter text-white drop-shadow-[0_0_20px_rgba(var(--primary),0.8)] z-10">
                       {spinGame?.title || "???"}
                     </h2>
-                    <div className="mt-4 text-secondary font-mono text-xs uppercase tracking-widest">
+                    <div className="mt-4 text-secondary font-mono text-sm uppercase tracking-[0.5em] z-10">
                       {spinGame?.platform}
                     </div>
                   </motion.div>
