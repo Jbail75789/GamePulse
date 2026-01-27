@@ -155,6 +155,11 @@ export default function Dashboard() {
         setPulseCharges(prev => Math.max(0, prev - 1));
         playSound('win');
         
+        // Haptic vibration for mobile
+        if ('vibrate' in navigator) {
+          navigator.vibrate(200);
+        }
+        
         // Confetti burst exactly when sound plays
         confetti({
           particleCount: 150,
