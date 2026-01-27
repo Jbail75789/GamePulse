@@ -53,6 +53,7 @@ export default function Dashboard() {
   const [isStartingAdventure, setIsStartingAdventure] = useState(false);
   const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
   const [pulseCharges, setPulseCharges] = useState(3);
+  const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
 
@@ -130,8 +131,12 @@ export default function Dashboard() {
       return;
     }
 
-    const randomIndex = Math.floor(Math.random() * eligibleGames.length);
-    const winner = eligibleGames[randomIndex];
+    // Anti-repeat logic: try to pick a different game than the last one
+    let winner = eligibleGames[Math.floor(Math.random() * eligibleGames.length)];
+    if (lastWinnerId !== null && eligibleGames.length > 1) {
+      let filtered = eligibleGames.filter(g => g.id !== lastWinnerId);
+      winner = filtered[Math.floor(Math.random() * filtered.length)];
+    }
     
     setIsSpinning(true);
     let iterations = 0;
@@ -143,6 +148,7 @@ export default function Dashboard() {
       if (iterations >= maxIterations) {
         clearInterval(interval);
         setWinnerGame(winner);
+        setLastWinnerId(winner.id);
         setIsSpinning(false);
         setSpinGame(null);
         setPulseCharges(prev => Math.max(0, prev - 1));
