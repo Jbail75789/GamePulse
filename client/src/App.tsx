@@ -10,6 +10,8 @@ import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/not-found";
 import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -48,6 +50,18 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // Keep-alive query for Supabase free tier
+    const keepAlive = async () => {
+      try {
+        await supabase.from('games').select('id').limit(1);
+      } catch (e) {
+        console.error('Supabase keep-alive failed:', e);
+      }
+    };
+    keepAlive();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
