@@ -923,16 +923,16 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
               <button
                 onClick={() => {
                   onStatusUpdate("active");
-                  onProgressUpdate(0);
+                  onProgressUpdate(99);
                   toast({
-                    title: "Mission Re-Initialized",
-                    description: `${game.title} moved back to active status.`,
+                    title: "System Restored",
+                    description: `${game.title} has been moved back to active status at 99%.`,
                     className: "border-primary text-primary font-mono",
                   });
                 }}
                 className="flex-1 py-1.5 bg-primary/10 border border-primary/30 text-primary text-[10px] font-mono rounded-sm hover:bg-primary/20 transition-all tactile-press uppercase tracking-wider"
               >
-                Move back to Active
+                Restore
               </button>
             ) : (
               <DropdownMenu>
