@@ -252,7 +252,51 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="space-y-4 md:space-y-8">
+      <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
+        <DialogContent className="bg-card border-border sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display uppercase tracking-widest text-primary">System Settings</DialogTitle>
+            <DialogDescription className="font-mono text-xs">Configure GamePulse core parameters.</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <section className="pt-4 border-t border-white/5">
+              <h4 className="flex items-center gap-2 font-display text-sm text-destructive mb-2">
+                <AlertTriangle className="w-4 h-4" /> Danger Zone
+              </h4>
+              {!showResetConfirm ? (
+                <button 
+                  onClick={() => setShowResetConfirm(true)}
+                  className="w-full py-2 bg-destructive/10 border border-destructive/30 text-destructive text-xs font-mono rounded-sm hover:bg-destructive/20 transition-all tactile-press"
+                >
+                  Reset All Data logs
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-[10px] text-destructive font-mono uppercase text-center animate-pulse">Confirm total data wipe?</p>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={handleResetData}
+                      disabled={isResetting}
+                      className="flex-1 py-2 bg-destructive text-background text-xs font-bold font-mono rounded-sm tactile-press disabled:opacity-50"
+                    >
+                      {isResetting ? "PURGING..." : "YES, PURGE"}
+                    </button>
+                    <button 
+                      onClick={() => setShowResetConfirm(false)}
+                      className="flex-1 py-2 bg-black/50 border border-border text-xs font-mono rounded-sm tactile-press"
+                    >
+                      CANCEL
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <div className="space-y-4 md:space-y-8 pb-10">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4">
           <div className="flex justify-between items-start w-full">
             <div>
@@ -272,64 +316,6 @@ export default function Dashboard() {
                 </span>
               </div>
             </div>
-            
-            <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
-              <DialogTrigger asChild>
-                <button className="p-2 text-muted-foreground hover:text-primary transition-colors tactile-press">
-                  <Settings className="w-6 h-6" />
-                </button>
-              </DialogTrigger>
-              <DialogContent className="bg-card border-border sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="font-display uppercase tracking-widest text-primary">System Settings</DialogTitle>
-                  <DialogDescription className="font-mono text-xs">Configure GamePulse core parameters.</DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-6 py-4">
-                  <section>
-                    <h4 className="flex items-center gap-2 font-display text-sm text-foreground mb-2">
-                      <Info className="w-4 h-4 text-secondary" /> About GamePulse
-                    </h4>
-                    <p className="text-xs text-muted-foreground font-mono leading-relaxed bg-black/20 p-3 border border-white/5 rounded-sm">
-                      Inspired by the $0.99 philosophy of finite experiences. GamePulse is designed to help you stop hoarding and start finishing. One pulse at a time.
-                    </p>
-                  </section>
-
-                  <section className="pt-4 border-t border-white/5">
-                    <h4 className="flex items-center gap-2 font-display text-sm text-destructive mb-2">
-                      <AlertTriangle className="w-4 h-4" /> Danger Zone
-                    </h4>
-                    {!showResetConfirm ? (
-                      <button 
-                        onClick={() => setShowResetConfirm(true)}
-                        className="w-full py-2 bg-destructive/10 border border-destructive/30 text-destructive text-xs font-mono rounded-sm hover:bg-destructive/20 transition-all tactile-press"
-                      >
-                        Reset All Data logs
-                      </button>
-                    ) : (
-                      <div className="space-y-3">
-                        <p className="text-[10px] text-destructive font-mono uppercase text-center animate-pulse">Confirm total data wipe?</p>
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={handleResetData}
-                            disabled={isResetting}
-                            className="flex-1 py-2 bg-destructive text-background text-xs font-bold font-mono rounded-sm tactile-press disabled:opacity-50"
-                          >
-                            {isResetting ? "PURGING..." : "YES, PURGE"}
-                          </button>
-                          <button 
-                            onClick={() => setShowResetConfirm(false)}
-                            className="flex-1 py-2 bg-black/50 border border-border text-xs font-mono rounded-sm tactile-press"
-                          >
-                            CANCEL
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </section>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
           <div className="flex gap-2 w-full md:w-auto">
             <div className="flex flex-col gap-1 flex-1 md:flex-none">
@@ -824,6 +810,27 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Low-profile footer */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-md border-t border-white/5 py-1 px-4 z-40 flex justify-between items-center">
+        <div className="flex gap-4">
+          <button 
+            onClick={() => setActiveTab("completed")}
+            className={`text-[10px] font-mono uppercase tracking-widest transition-colors ${activeTab === 'completed' ? 'text-secondary' : 'text-muted-foreground hover:text-white'}`}
+          >
+            [ The Vault ]
+          </button>
+          <button 
+            onClick={() => setShowSettingsModal(true)}
+            className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-white transition-colors flex items-center gap-1"
+          >
+            <Settings className="w-3 h-3" /> System
+          </button>
+        </div>
+        <div className="text-[9px] font-mono text-muted-foreground/40 uppercase">
+          Neural Link: Active
+        </div>
+      </footer>
     </Layout>
   );
 }
