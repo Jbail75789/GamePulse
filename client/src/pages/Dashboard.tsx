@@ -76,10 +76,10 @@ export default function Dashboard() {
 
     eligibleGames = eligibleGames.filter(moods[mode].filter);
 
-    if (eligibleGames.length === 0) {
+    if (eligibleGames.length <= 1) {
       toast({
-        title: "No Signals Detected",
-        description: `No games found matching the '${moods[mode].label}' profile in your ${rouletteSource === 'backlog' ? 'Backlog (0%)' : 'Active (1-99%)'} list.`,
+        title: "Insufficient Variety",
+        description: `Add more ${moods[mode].label} games to shuffle! (Need at least 2 games)`,
         variant: "destructive",
       });
       return;
