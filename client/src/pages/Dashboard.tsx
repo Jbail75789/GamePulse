@@ -543,7 +543,17 @@ export default function Dashboard() {
         <Dialog open={!!winnerGame} onOpenChange={(open) => !open && setWinnerGame(null)}>
           <DialogContent className="bg-card border-secondary sm:max-w-sm overflow-hidden p-0 animate-haptic-pop">
             {winnerGame && (
-              <div className="relative">
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 400, 
+                  damping: 10,
+                  delay: 0.1
+                }}
+                className="relative"
+              >
                 <div className="h-48 w-full relative">
                   <img src={winnerGame.coverUrl} className="w-full h-full object-cover" alt="" />
                   <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
@@ -572,7 +582,7 @@ export default function Dashboard() {
                     </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
           </DialogContent>
         </Dialog>
