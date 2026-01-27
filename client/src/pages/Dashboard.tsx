@@ -48,6 +48,8 @@ export default function Dashboard() {
   const [showRoulette, setShowRoulette] = useState(false);
   const [rouletteSource, setRouletteSource] = useState<"backlog" | "active">("backlog");
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [spinGame, setSpinGame] = useState<Game | null>(null);
   const [isStartingAdventure, setIsStartingAdventure] = useState(false);
   const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
   const [pulseCharges, setPulseCharges] = useState(3);
@@ -84,8 +86,23 @@ export default function Dashboard() {
     }
 
     const randomIndex = Math.floor(Math.random() * eligibleGames.length);
-    setWinnerGame(eligibleGames[randomIndex]);
-    setPulseCharges(prev => Math.max(0, prev - 1));
+    const winner = eligibleGames[randomIndex];
+    
+    setIsSpinning(true);
+    let iterations = 0;
+    const maxIterations = 20;
+    const interval = setInterval(() => {
+      setSpinGame(eligibleGames[Math.floor(Math.random() * eligibleGames.length)]);
+      iterations++;
+      if (iterations >= maxIterations) {
+        clearInterval(interval);
+        setWinnerGame(winner);
+        setIsSpinning(false);
+        setSpinGame(null);
+        setPulseCharges(prev => Math.max(0, prev - 1));
+      }
+    }, 150);
+
     setShowRoulette(false);
   };
 
@@ -401,6 +418,67 @@ export default function Dashboard() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Spinning Overlay */}
+        <AnimatePresence>
+          {isSpinning && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] flex flex-col items-center justify-center"
+            >
+              <div className="relative w-full max-w-lg px-6 text-center">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="mb-8"
+                >
+                  <div className="text-[10px] font-mono text-primary uppercase tracking-[0.3em] mb-2 animate-pulse">
+                    Scanning Neural Pathways...
+                  </div>
+                  <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+                </motion.div>
+
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={spinGame?.id || 'empty'}
+                    initial={{ y: 50, opacity: 0, scale: 0.8 }}
+                    animate={{ y: 0, opacity: 1, scale: 1 }}
+                    exit={{ y: -50, opacity: 0, scale: 1.2 }}
+                    transition={{ duration: 0.1 }}
+                    className="min-h-[120px] flex flex-col items-center justify-center"
+                  >
+                    <h2 className="text-3xl md:text-5xl font-display font-bold uppercase tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
+                      {spinGame?.title || "???"}
+                    </h2>
+                    <div className="mt-4 text-secondary font-mono text-xs uppercase tracking-widest">
+                      {spinGame?.platform}
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+
+                <div className="mt-12 flex justify-center gap-2">
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{
+                        opacity: [0.2, 1, 0.2],
+                        scale: [1, 1.2, 1],
+                      }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        delay: i * 0.1,
+                      }}
+                      className="w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary),0.8)]"
+                    />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Winner Modal */}
         <Dialog open={!!winnerGame} onOpenChange={(open) => !open && setWinnerGame(null)}>
