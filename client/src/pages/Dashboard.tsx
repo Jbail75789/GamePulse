@@ -364,13 +364,13 @@ export default function Dashboard() {
                   onClick={() => setRouletteSource("backlog")}
                   className={`flex-1 py-2 text-[10px] font-mono uppercase tracking-widest transition-all rounded-sm ${rouletteSource === "backlog" ? "bg-primary text-background font-bold shadow-[0_0_10px_rgba(var(--primary),0.3)]" : "text-muted-foreground hover:text-foreground"}`}
                 >
-                  Find a Pulse (0%)
+                  Backlog (0%)
                 </button>
                 <button 
                   onClick={() => setRouletteSource("active")}
                   className={`flex-1 py-2 text-[10px] font-mono uppercase tracking-widest transition-all rounded-sm ${rouletteSource === "active" ? "bg-secondary text-background font-bold shadow-[0_0_10px_rgba(var(--secondary),0.3)]" : "text-muted-foreground hover:text-foreground"}`}
                 >
-                  Keep the Pulse (1-99%)
+                  Active (1-99%)
                 </button>
               </div>
               <DialogDescription className="font-mono text-xs text-muted-foreground text-center">
