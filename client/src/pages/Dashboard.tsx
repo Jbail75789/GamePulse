@@ -1048,6 +1048,11 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
               disabled={isInVault}
               data-testid={`slider-progress-${game.id}`}
             />
+            {game.vibe && (
+              <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-tighter">
+                // {game.vibe}
+              </p>
+            )}
             {isInVault && (
               <p className="text-xs font-mono text-secondary text-center mt-1">
                 Locked
