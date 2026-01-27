@@ -100,6 +100,11 @@ export default function Dashboard() {
         setIsSpinning(false);
         setSpinGame(null);
         setPulseCharges(prev => Math.max(0, prev - 1));
+        
+        // Haptic feedback / visual celebration
+        if ('vibrate' in navigator) {
+          navigator.vibrate([100, 50, 100]);
+        }
       }
     }, 150);
 
@@ -482,7 +487,7 @@ export default function Dashboard() {
 
         {/* Winner Modal */}
         <Dialog open={!!winnerGame} onOpenChange={(open) => !open && setWinnerGame(null)}>
-          <DialogContent className="bg-card border-secondary sm:max-w-sm overflow-hidden p-0">
+          <DialogContent className="bg-card border-secondary sm:max-w-sm overflow-hidden p-0 animate-haptic-pop">
             {winnerGame && (
               <div className="relative">
                 <div className="h-48 w-full relative">
