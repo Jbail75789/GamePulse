@@ -11,45 +11,45 @@ export default {
         sm: ".1875rem", /* 3px */
       },
       colors: {
-        background: "hsl(240 20% 5%)", // #0a0a0f - cyber-black
+        background: "hsl(0 0% 4%)", // #0a0a0a
         foreground: "hsl(180 100% 90%)", // Light neon tint
 
         card: {
-          DEFAULT: "hsl(240 16% 12%)", // #1a1a24 - cyber-gray
+          DEFAULT: "hsl(0 0% 9%)", // #161616
           foreground: "hsl(180 100% 90%)",
-          border: "hsl(240 20% 20%)",
+          border: "hsl(0 0% 15%)",
         },
         popover: {
-          DEFAULT: "hsl(240 20% 5%)",
+          DEFAULT: "hsl(0 0% 4%)",
           foreground: "hsl(180 100% 90%)",
-          border: "hsl(240 20% 20%)",
+          border: "hsl(0 0% 15%)",
         },
         primary: {
           DEFAULT: "hsl(157 100% 50%)", // #00ff9f - neon-green
-          foreground: "hsl(240 20% 5%)",
+          foreground: "hsl(0 0% 4%)",
           border: "hsl(157 100% 50%)",
         },
         secondary: {
           DEFAULT: "hsl(197 100% 50%)", // #00b8ff - neon-blue
-          foreground: "hsl(240 20% 5%)",
+          foreground: "hsl(0 0% 4%)",
           border: "hsl(197 100% 50%)",
         },
         muted: {
-          DEFAULT: "hsl(240 16% 16%)",
-          foreground: "hsl(240 10% 60%)",
-          border: "hsl(240 16% 20%)",
+          DEFAULT: "hsl(0 0% 12%)",
+          foreground: "hsl(0 0% 60%)",
+          border: "hsl(0 0% 15%)",
         },
         accent: {
           DEFAULT: "hsl(280 100% 50%)", // #d600ff - neon-purple
-          foreground: "hsl(240 20% 5%)",
+          foreground: "hsl(0 0% 4%)",
           border: "hsl(280 100% 50%)",
         },
         destructive: {
           DEFAULT: "hsl(0 100% 50%)",
-          foreground: "hsl(240 20% 5%)",
+          foreground: "hsl(0 0% 4%)",
           border: "hsl(0 100% 50%)",
         },
-        input: "hsl(240 16% 20%)",
+        input: "hsl(0 0% 15%)",
         ring: "hsl(157 100% 50%)", // Primary ring
         chart: {
           "1": "hsl(157 100% 50%)",
@@ -59,12 +59,12 @@ export default {
           "5": "hsl(27 100% 50%)",
         },
         sidebar: {
-          DEFAULT: "hsl(240 20% 4%)",
+          DEFAULT: "hsl(0 0% 3%)",
           foreground: "hsl(180 100% 90%)",
-          border: "hsl(240 20% 15%)",
+          border: "hsl(0 0% 12%)",
           primary: "hsl(157 100% 50%)",
-          "primary-foreground": "hsl(240 20% 5%)",
-          accent: "hsl(240 16% 12%)",
+          "primary-foreground": "hsl(0 0% 4%)",
+          accent: "hsl(0 0% 9%)",
           "accent-foreground": "hsl(157 100% 50%)",
           ring: "hsl(157 100% 50%)",
         },
