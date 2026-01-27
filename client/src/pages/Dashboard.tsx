@@ -76,26 +76,26 @@ export default function Dashboard() {
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.1);
       } else {
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.3);
-        
-        // Secondary harmonic for "win"
-        const osc2 = audioCtx.createOscillator();
-        const gain2 = audioCtx.createGain();
-        osc2.type = 'sine';
-        osc2.connect(gain2);
-        gain2.connect(audioCtx.destination);
-        osc2.frequency.setValueAtTime(554.37, audioCtx.currentTime); // C#
-        osc2.frequency.exponentialRampToValueAtTime(1108.73, audioCtx.currentTime + 0.2);
-        gain2.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        osc2.start();
-        osc2.stop(audioCtx.currentTime + 0.3);
+        // "Power-up" chime: bright, ascending synth chord
+        const notes = [440, 554.37, 659.25, 880]; // A4, C#5, E5, A5
+        notes.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          
+          const startTime = audioCtx.currentTime + (i * 0.05);
+          osc.frequency.setValueAtTime(freq, startTime);
+          osc.frequency.exponentialRampToValueAtTime(freq * 1.05, startTime + 0.3);
+          
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(0.05, startTime + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+          
+          osc.start(startTime);
+          osc.stop(startTime + 0.4);
+        });
       }
     } catch (e) {
       console.warn('Audio feedback failed:', e);
