@@ -111,17 +111,12 @@ export default function Dashboard() {
       chaos: { filter: () => true, label: 'Chaos Mode' }
     };
 
-    let eligibleGames = games?.filter(g => g.status === rouletteSource) || [];
-    
-    // Additional filtering for "Keep the Pulse" mode: only games with 1-99% progress
-    if (rouletteSource === "active") {
-      eligibleGames = eligibleGames.filter(g => (g.progress || 0) > 0 && (g.progress || 0) < 100);
-    } else {
-      // Find a Pulse: only games with 0% progress (or precisely at 0 if specified)
-      eligibleGames = eligibleGames.filter(g => (g.progress || 0) === 0);
-    }
-
-    eligibleGames = eligibleGames.filter(moods[mode].filter);
+    const eligibleGames = (games || [])
+      .filter(g => g.status === rouletteSource)
+      .filter(g => rouletteSource === "active" 
+        ? (g.progress || 0) > 0 && (g.progress || 0) < 100 
+        : (g.progress || 0) === 0)
+      .filter(moods[mode].filter);
 
     if (eligibleGames.length <= 1) {
       toast({
@@ -471,7 +466,7 @@ export default function Dashboard() {
               {[
                 { id: "epic", label: "Epic Quest", desc: "RPG / Story Focused", icon: Trophy, color: "text-secondary", bg: "bg-secondary/10" },
                 { id: "quick", label: "Quick Hit", desc: "Action / Intensity", icon: Gamepad2, color: "text-primary", bg: "bg-primary/10" },
-                { id: "chill", label: "Chill Vibe", desc: "Indie / Chill", icon: Info, color: "text-accent", bg: "bg-accent/10" },
+                { id: "chill", label: "Chill Vibe", desc: "Indie / Chill", icon: Sofa, color: "text-accent", bg: "bg-accent/10" },
                 { id: "chaos", label: "Chaos Mode", desc: "Total Randomization", icon: Dices, color: "text-foreground", bg: "bg-white/5" },
               ].map((opt) => (
                 <button
