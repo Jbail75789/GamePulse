@@ -11,7 +11,7 @@ import {
 import { CyberButton } from "./CyberButton";
 import { CyberInput } from "./CyberInput";
 import { useGames } from "@/hooks/use-games";
-import { Plus } from "lucide-react";
+import { Plus, Zap } from "lucide-react";
 import { useState } from "react";
 import {
   Select,
@@ -23,8 +23,10 @@ import {
 
 export function AddGameModal() {
   const [open, setOpen] = useState(false);
-  const { createGame, isCreating } = useGames();
-  
+  const [showProModal, setShowProModal] = useState(false);
+  const { games, createGame, isCreating } = useGames();
+  const isPro = false; // Plan: In a real app, this would come from user context/profile
+
   const form = useForm<InsertGame>({
     resolver: zodResolver(insertGameSchema),
     defaultValues: {
@@ -37,6 +39,13 @@ export function AddGameModal() {
   });
 
   const onSubmit = (data: InsertGame) => {
+    const activeGamesCount = games?.filter(g => g.status !== 'completed').length || 0;
+
+    if (!isPro && activeGamesCount >= 5) {
+      setShowProModal(true);
+      return;
+    }
+
     createGame(data, {
       onSuccess: () => {
         setOpen(false);
@@ -46,85 +55,118 @@ export function AddGameModal() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <CyberButton className="w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Game
-        </CyberButton>
-      </DialogTrigger>
-      <DialogContent className="bg-card border-border font-body sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-display text-primary">New Database Entry</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
-          <CyberInput
-            label="Game Title"
-            placeholder="e.g. Cyberpunk 2077"
-            {...form.register("title")}
-            error={form.formState.errors.title?.message}
-          />
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <CyberButton className="w-full sm:w-auto">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Game
+          </CyberButton>
+        </DialogTrigger>
+        <DialogContent className="bg-card border-border font-body sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-display text-primary">New Database Entry</DialogTitle>
+          </DialogHeader>
           
-          <CyberInput
-            label="Cover Image URL"
-            placeholder="https://..."
-            {...form.register("coverUrl")}
-            error={form.formState.errors.coverUrl?.message}
-          />
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Platform</label>
-              <Select 
-                onValueChange={(val) => form.setValue("platform", val)} 
-                defaultValue={form.getValues("platform") || "PC"}
-              >
-                <SelectTrigger className="bg-black/40 border-input font-mono rounded-none h-12">
-                  <SelectValue placeholder="Select platform" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {["PC", "PlayStation", "Xbox", "Switch", "Other"].map(p => (
-                    <SelectItem key={p} value={p} className="font-mono focus:bg-primary/20 focus:text-primary cursor-pointer">
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+            <CyberInput
+              label="Game Title"
+              placeholder="e.g. Cyberpunk 2077"
+              {...form.register("title")}
+              error={form.formState.errors.title?.message}
+            />
+            
+            <CyberInput
+              label="Cover Image URL"
+              placeholder="https://..."
+              {...form.register("coverUrl")}
+              error={form.formState.errors.coverUrl?.message}
+            />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Platform</label>
+                <Select 
+                  onValueChange={(val) => form.setValue("platform", val)} 
+                  defaultValue={form.getValues("platform") || "PC"}
+                >
+                  <SelectTrigger className="bg-black/40 border-input font-mono rounded-none h-12">
+                    <SelectValue placeholder="Select platform" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {["PC", "PlayStation", "Xbox", "Switch", "Other"].map(p => (
+                      <SelectItem key={p} value={p} className="font-mono focus:bg-primary/20 focus:text-primary cursor-pointer">
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Status</label>
+                <Select 
+                  onValueChange={(val: any) => form.setValue("status", val)} 
+                  defaultValue={form.getValues("status")}
+                >
+                  <SelectTrigger className="bg-black/40 border-input font-mono rounded-none h-12">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="active" className="font-mono text-primary focus:bg-primary/20">Active</SelectItem>
+                    <SelectItem value="backlog" className="font-mono text-muted-foreground focus:bg-muted/20">Backlog</SelectItem>
+                    <SelectItem value="completed" className="font-mono text-secondary focus:bg-secondary/20">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Status</label>
-              <Select 
-                onValueChange={(val: any) => form.setValue("status", val)} 
-                defaultValue={form.getValues("status")}
-              >
-                <SelectTrigger className="bg-black/40 border-input font-mono rounded-none h-12">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="active" className="font-mono text-primary focus:bg-primary/20">Active</SelectItem>
-                  <SelectItem value="backlog" className="font-mono text-muted-foreground focus:bg-muted/20">Backlog</SelectItem>
-                  <SelectItem value="completed" className="font-mono text-secondary focus:bg-secondary/20">Completed</SelectItem>
-                </SelectContent>
-              </Select>
+            <CyberInput
+              type="number"
+              label="Playtime (Hours)"
+              {...form.register("playtime", { valueAsNumber: true })}
+              error={form.formState.errors.playtime?.message}
+            />
+
+            <div className="flex justify-end pt-4">
+              <CyberButton type="submit" isLoading={isCreating}>
+                Save to Database
+              </CyberButton>
             </div>
-          </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-          <CyberInput
-            type="number"
-            label="Playtime (Hours)"
-            {...form.register("playtime", { valueAsNumber: true })}
-            error={form.formState.errors.playtime?.message}
-          />
-
-          <div className="flex justify-end pt-4">
-            <CyberButton type="submit" isLoading={isCreating}>
-              Save to Database
+      <Dialog open={showProModal} onOpenChange={setShowProModal}>
+        <DialogContent className="bg-card border-primary/50 sm:max-w-md shadow-[0_0_30px_rgba(var(--primary),0.2)]">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-display font-black text-primary text-center uppercase tracking-tighter italic">
+              Capacity Reached
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6 space-y-6 text-center">
+            <div className="flex justify-center">
+              <div className="p-4 bg-primary/10 rounded-full animate-pulse">
+                <Zap className="w-12 h-12 text-primary" />
+              </div>
+            </div>
+            <p className="font-mono text-sm text-muted-foreground leading-relaxed">
+              Your neural links are currently capped at 5 active operational slots. 
+              Upgrade to <span className="text-primary font-bold">GAMEPULSE PRO</span> for unlimited library capacity and priority neural processing.
+            </p>
+            <CyberButton 
+              className="w-full py-6 text-lg"
+              onClick={() => setShowProModal(false)}
+            >
+              UPGRADE TO PRO
             </CyberButton>
+            <p className="text-[10px] font-mono text-muted-foreground/40 uppercase">
+              Current Tier: Standard Operator
+            </p>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
+}
 }
