@@ -1078,7 +1078,6 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
                 {game.vibe === 'story' && <Sword className="w-3 h-3" />}
                 {game.vibe === 'chill' && <Sofa className="w-3 h-3" />}
                 {game.vibe === 'intense' && <Bolt className="w-3 h-3" />}
-                {game.vibe === 'long' && <Hourglass className="w-3 h-3" />}
                 <span>{game.vibe}</span>
               </div>
             )}
