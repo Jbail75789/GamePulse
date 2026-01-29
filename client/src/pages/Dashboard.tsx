@@ -566,7 +566,21 @@ export default function Dashboard() {
                   <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
                     <div className="text-[10px] font-mono text-secondary uppercase tracking-[0.2em] mb-1">Target Identified</div>
-                    <h2 className="text-xl font-display font-bold uppercase leading-tight text-white">{winnerGame.title}</h2>
+                    <h2 className="text-xl font-display font-bold uppercase leading-tight text-white mb-2">{winnerGame.title}</h2>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 bg-secondary/10 border border-secondary/20 rounded-sm text-[10px] font-mono text-secondary uppercase tracking-wider">
+                        <Gamepad2 className="w-3 h-3" />
+                        {winnerGame.platform}
+                      </div>
+                      {winnerGame.vibe && (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-sm text-[10px] font-mono text-primary uppercase tracking-wider">
+                          {winnerGame.vibe === 'story' && <Sword className="w-3 h-3" />}
+                          {winnerGame.vibe === 'chill' && <Sofa className="w-3 h-3" />}
+                          {winnerGame.vibe === 'intense' && <Bolt className="w-3 h-3" />}
+                          {winnerGame.vibe}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="p-6 space-y-4">
