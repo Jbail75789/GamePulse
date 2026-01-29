@@ -4,7 +4,7 @@ import { Layout } from "@/components/Layout";
 import { CyberCard } from "@/components/CyberCard";
 import { AddGameModal } from "@/components/AddGameModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search, Dices, Share2, Settings, AlertTriangle, Info } from "lucide-react";
+import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search, Dices, Share2, Settings, AlertTriangle, Info, Sword, Sofa, Bolt, Hourglass } from "lucide-react";
 import { type Game } from "@shared/schema";
 import { CyberButton } from "@/components/CyberButton";
 import {
@@ -1081,9 +1081,14 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
               data-testid={`slider-progress-${game.id}`}
             />
             {game.vibe && (
-              <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-tighter">
-                // {game.vibe}
-              </p>
+              <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground/60 uppercase tracking-tighter">
+                <span>//</span>
+                {game.vibe === 'story' && <Sword className="w-3 h-3" />}
+                {game.vibe === 'chill' && <Sofa className="w-3 h-3" />}
+                {game.vibe === 'intense' && <Bolt className="w-3 h-3" />}
+                {game.vibe === 'long' && <Hourglass className="w-3 h-3" />}
+                <span>{game.vibe}</span>
+              </div>
             )}
             {isInVault && (
               <p className="text-xs font-mono text-secondary text-center mt-1">
