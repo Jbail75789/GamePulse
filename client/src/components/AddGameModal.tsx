@@ -181,14 +181,13 @@ export function AddGameModal() {
               </div>
             </div>
             <DialogTitle className="text-4xl font-display font-black text-white text-center uppercase tracking-tighter italic leading-none mb-2">
-              Neural Capacity <span className="text-purple-500">Reached</span>
+              Unlock the <span className="text-purple-500">Full Pulse</span>
             </DialogTitle>
             <div className="h-1 w-24 bg-purple-500 mx-auto mb-4" />
           </DialogHeader>
           <div className="py-2 space-y-6 text-center">
             <p className="font-mono text-sm text-muted-foreground leading-relaxed px-4">
-              Your standard neural link is currently limited to <span className="text-white font-bold">5 active operational slots</span>. 
-              Initialize <span className="text-purple-500 font-bold">GAMEPULSE PRO</span> protocol to bypass all library constraints and unlock priority neural processing.
+              You've reached the <span className="text-white font-bold">5-game limit</span>. Move games to the Vault to stay free, or upgrade to Pro for life.
             </p>
             
             <div className="grid grid-cols-1 gap-3 px-4">
