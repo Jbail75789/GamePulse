@@ -170,25 +170,25 @@ export function AddGameModal() {
       </Dialog>
 
       <Dialog open={showProModal} onOpenChange={setShowProModal}>
-        <DialogContent className="bg-[#161616] border-primary/40 sm:max-w-md shadow-[0_0_50px_rgba(var(--primary),0.15)] animate-in fade-in zoom-in duration-300">
+        <DialogContent className="bg-[#161616]/80 backdrop-blur-xl border-purple-500/50 sm:max-w-md shadow-[0_0_50px_rgba(168,85,247,0.3)] animate-in fade-in zoom-in duration-300">
           <DialogHeader>
             <div className="flex justify-center mb-6">
               <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
-                <div className="relative p-4 bg-black/40 border border-primary/30 rounded-full">
-                  <Zap className="w-12 h-12 text-primary drop-shadow-[0_0_10px_rgba(var(--primary),0.8)]" />
+                <div className="absolute inset-0 bg-purple-500/20 blur-xl rounded-full animate-pulse" />
+                <div className="relative p-4 bg-black/40 border border-purple-500/30 rounded-full">
+                  <Zap className="w-12 h-12 text-purple-500 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
                 </div>
               </div>
             </div>
             <DialogTitle className="text-4xl font-display font-black text-white text-center uppercase tracking-tighter italic leading-none mb-2">
-              Neural Capacity <span className="text-primary">Reached</span>
+              Neural Capacity <span className="text-purple-500">Reached</span>
             </DialogTitle>
-            <div className="h-1 w-24 bg-primary mx-auto mb-4" />
+            <div className="h-1 w-24 bg-purple-500 mx-auto mb-4" />
           </DialogHeader>
           <div className="py-2 space-y-6 text-center">
             <p className="font-mono text-sm text-muted-foreground leading-relaxed px-4">
               Your standard neural link is currently limited to <span className="text-white font-bold">5 active operational slots</span>. 
-              Initialize <span className="text-primary font-bold">GAMEPULSE PRO</span> protocol to bypass all library constraints and unlock priority neural processing.
+              Initialize <span className="text-purple-500 font-bold">GAMEPULSE PRO</span> protocol to bypass all library constraints and unlock priority neural processing.
             </p>
             
             <div className="grid grid-cols-1 gap-3 px-4">
@@ -199,7 +199,7 @@ export function AddGameModal() {
                 "Exclusive Neon Cosmetics"
               ].map((feature, i) => (
                 <div key={i} className="flex items-center gap-3 text-[10px] font-mono text-white/70 uppercase tracking-widest bg-black/20 p-2 border border-white/5 rounded-sm">
-                  <Check className="w-3 h-3 text-primary" />
+                  <Check className="w-3 h-3 text-purple-500" />
                   {feature}
                 </div>
               ))}
@@ -207,7 +207,7 @@ export function AddGameModal() {
 
             <div className="px-4 pt-4">
               <CyberButton 
-                className="w-full py-8 text-xl font-black italic tracking-tighter hover:shadow-[0_0_20px_rgba(var(--primary),0.4)] transition-all duration-300"
+                className="w-full py-8 text-xl font-black italic tracking-tighter bg-purple-600 hover:bg-purple-500 border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all duration-300"
                 onClick={() => setShowProModal(false)}
               >
                 INITIALIZE PRO UPGRADE
