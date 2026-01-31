@@ -192,10 +192,10 @@ export function AddGameModal() {
             
             <div className="grid grid-cols-1 gap-3 px-4">
               {[
-                "Unlimited Vault Capacity",
-                "Priority Neural Processing",
-                "Advanced Vibe Analytics",
-                "Exclusive Neon Cosmetics"
+                "∞ Unlimited Backlog & Vault",
+                "🎨 Exclusive 'Neon' & 'Obsidian' Themes",
+                "⚡ Infinite Power Spins (No Recharging)",
+                "☁️ Priority Cloud Sync"
               ].map((feature, i) => (
                 <div key={i} className="flex items-center gap-3 text-[10px] font-mono text-white/70 uppercase tracking-widest bg-black/20 p-2 border border-white/5 rounded-sm">
                   <Check className="w-3 h-3 text-purple-500" />
