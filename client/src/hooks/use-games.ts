@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl, type InsertGame } from "@shared/routes";
+import { api, buildUrl } from "@shared/routes";
+import { type InsertGame } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 export function useGames() {
