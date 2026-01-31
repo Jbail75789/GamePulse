@@ -42,7 +42,7 @@ export default function Dashboard() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<"active" | "completed" | "backlog">("backlog");
+  const [selectedStatus, setSelectedStatus] = useState<"active" | "completed" | "backlog" | "wishlist">("backlog");
   const [selectedVibe, setSelectedVibe] = useState<"chill" | "intense" | "story" | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [spotlightGame, setSpotlightGame] = useState<Game | null>(null);
@@ -831,7 +831,7 @@ export default function Dashboard() {
                 {isActive && (
                   <motion.div
                     layoutId="activeTab"
-                    className={`absolute inset-0 bg-gradient-to-r ${tab.id === 'active' ? 'from-primary to-primary/80' : tab.id === 'completed' ? 'from-secondary to-secondary/80' : 'from-accent to-accent/80'} skew-x-12 rounded-sm`}
+                    className={`absolute inset-0 bg-gradient-to-r ${tab.id === 'active' ? 'from-primary to-primary/80' : tab.id === 'completed' ? 'from-secondary to-secondary/80' : tab.id === 'wishlist' ? 'from-foreground/20 to-foreground/10' : 'from-accent to-accent/80'} skew-x-12 rounded-sm`}
                   />
                 )}
                 
@@ -867,13 +867,19 @@ export default function Dashboard() {
                   <h3 className="text-xl font-display font-bold text-foreground mb-2">No Active Signals</h3>
                   <p className="font-mono text-sm text-muted-foreground max-w-xs">Initiate a gaming session to see your pulse.</p>
                 </>
-              ) : (
+              ) : activeTab === "backlog" ? (
                 <>
                   <Clock className="w-16 h-16 mb-4 text-accent/40" />
                   <h3 className="text-xl font-display font-bold text-foreground mb-2">Backlog Offline</h3>
                   <p className="font-mono text-sm text-muted-foreground max-w-xs">Add potential missions from the database above.</p>
                 </>
-              )}
+              ) : activeTab === "wishlist" ? (
+                <>
+                  <Sword className="w-16 h-16 mb-4 text-foreground/40" />
+                  <h3 className="text-xl font-display font-bold text-foreground mb-2">Wish List Empty</h3>
+                  <p className="font-mono text-sm text-muted-foreground max-w-xs">Games you're hunting for will appear here.</p>
+                </>
+              ) : null}
             </div>
           ) : (
             <motion.div 
@@ -1028,6 +1034,12 @@ export default function Dashboard() {
             [ The Vault ]
           </button>
           <button 
+            onClick={() => setActiveTab("wishlist")}
+            className={`text-[10px] font-mono uppercase tracking-widest transition-colors ${activeTab === 'wishlist' ? 'text-white' : 'text-muted-foreground hover:text-white'}`}
+          >
+            [ Wish List ]
+          </button>
+          <button 
             onClick={() => setShowSettingsModal(true)}
             className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-white transition-colors flex items-center gap-1"
           >
@@ -1045,16 +1057,17 @@ export default function Dashboard() {
 function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault, isPop }: { 
   game: Game, 
   onDelete: () => void,
-  onStatusUpdate: (status: "active" | "completed" | "backlog") => void,
+  onStatusUpdate: (status: any) => void,
   onProgressUpdate: (progress: number) => void,
   isInVault?: boolean,
   isPop?: boolean
 }) {
   const { toast } = useToast();
-  const statusColors: Record<string, "primary" | "secondary" | "accent"> = {
+  const statusColors: Record<string, "primary" | "secondary" | "accent" | "none"> = {
     active: "primary",
     completed: "secondary",
     backlog: "accent",
+    wishlist: "none",
   };
 
   return (
@@ -1142,7 +1155,14 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
           </div>
 
           <div className="mt-auto flex items-center justify-between gap-1 sm:gap-2 pt-2 sm:pt-4 border-t border-white/5">
-            {isInVault ? (
+            {game.status === "wishlist" ? (
+              <button
+                onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(game.title + ' steam buy')}`, '_blank')}
+                className="flex-1 py-1.5 bg-primary/10 border border-primary/30 text-primary text-[10px] font-mono rounded-sm hover:bg-primary/20 transition-all tactile-press uppercase tracking-wider flex items-center justify-center gap-2"
+              >
+                <Share2 className="w-3 h-3" /> Buy Now
+              </button>
+            ) : isInVault ? (
               <button
                 onClick={() => {
                   onStatusUpdate("active");
@@ -1173,6 +1193,9 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onStatusUpdate("backlog")} className="font-mono cursor-pointer hover:bg-accent/20 hover:text-accent">
                     <Clock className="w-3 h-3 mr-2" /> Backlog
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onStatusUpdate("wishlist")} className="font-mono cursor-pointer hover:bg-foreground/20 hover:text-foreground">
+                    <Sword className="w-3 h-3 mr-2" /> Wish List
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
