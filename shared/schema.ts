@@ -12,7 +12,7 @@ export const games = pgTable("games", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   title: text("title").notNull(),
-  status: text("status", { enum: ["active", "completed", "backlog"] }).notNull().default("backlog"),
+  status: text("status", { enum: ["active", "completed", "backlog", "wishlist"] }).notNull().default("backlog"),
   coverUrl: text("cover_url").notNull(),
   playtime: integer("playtime").default(0),
   platform: text("platform").default("PC"),

@@ -149,6 +149,7 @@ export function AddGameModal() {
                   <SelectItem value="active" className="font-mono text-primary focus:bg-primary/20">Active</SelectItem>
                   <SelectItem value="backlog" className="font-mono text-muted-foreground focus:bg-muted/20">Backlog</SelectItem>
                   <SelectItem value="completed" className="font-mono text-secondary focus:bg-secondary/20">Completed</SelectItem>
+                  <SelectItem value="wishlist" className="font-mono text-accent focus:bg-accent/20">Wish List</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -34,7 +34,7 @@ interface SearchResult {
 
 export default function Dashboard() {
   const { games, isLoading, deleteGame, updateGame, createGame } = useGames();
-  const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog" | "wishlist">("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedGame, setSelectedGame] = useState<SearchResult | null>(null);
@@ -333,6 +333,7 @@ export default function Dashboard() {
     { id: "active", label: "My Pulse", icon: Gamepad2, color: "text-primary" },
     { id: "completed", label: "The Vault", icon: Trophy, color: "text-secondary" },
     { id: "backlog", label: "The Backlog", icon: Clock, color: "text-accent" },
+    { id: "wishlist", label: "Wish List", icon: Sword, color: "text-foreground" },
   ] as const;
 
   const filteredGames = games?.filter(game => game.status === activeTab) || [];
