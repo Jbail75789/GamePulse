@@ -39,6 +39,19 @@ export function AddGameModal() {
   });
 
   const onSubmit = (data: InsertGame) => {
+    // Duplicate Check
+    const isDuplicate = games?.some(
+      (g) => g.title.toLowerCase() === data.title.toLowerCase() && g.platform === data.platform
+    );
+
+    if (isDuplicate) {
+      form.setError("title", {
+        type: "manual",
+        message: `This game is already in your Pulse on ${data.platform}.`,
+      });
+      return;
+    }
+
     const activeGamesCount = games?.filter(g => g.status !== 'completed').length || 0;
 
     if (!isPro && activeGamesCount >= 5) {
