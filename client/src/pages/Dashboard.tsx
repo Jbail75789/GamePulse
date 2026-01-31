@@ -54,6 +54,7 @@ export default function Dashboard() {
   const [isStartingAdventure, setIsStartingAdventure] = useState(false);
   const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
   const [pulseCharges, setPulseCharges] = useState(3);
+  const [isPro, setIsPro] = useState(false);
   const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
@@ -147,7 +148,9 @@ export default function Dashboard() {
         setLastWinnerId(winner.id);
         setIsSpinning(false);
         setSpinGame(null);
-        setPulseCharges(prev => Math.max(0, prev - 1));
+        if (!isPro) {
+          setPulseCharges(prev => Math.max(0, prev - 1));
+        }
         playSound('win');
         
         // Haptic vibration for mobile
@@ -406,7 +409,7 @@ export default function Dashboard() {
             <div className="flex flex-col gap-1 flex-1 md:flex-none">
               <button
                 onClick={() => setShowRoulette(true)}
-                disabled={pulseCharges === 0}
+                disabled={!isPro && pulseCharges === 0}
                 className="w-full px-3 md:px-6 py-2 md:py-3 bg-gradient-to-r from-secondary to-secondary/80 text-background font-display font-bold uppercase tracking-wider text-xs md:text-base rounded-md hover:from-secondary/90 hover:to-secondary/70 transition-all flex items-center justify-center gap-1 md:gap-2 tactile-press disabled:opacity-50 disabled:grayscale"
                 data-testid="button-pick-game"
               >
@@ -415,12 +418,16 @@ export default function Dashboard() {
                 <span className="sm:hidden">Game</span>
               </button>
               <div className="flex justify-center gap-1">
-                {[...Array(3)].map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`h-1 w-4 rounded-full transition-colors ${i < pulseCharges ? "bg-secondary shadow-[0_0_5px_rgba(var(--secondary),0.5)]" : "bg-white/10"}`}
-                  />
-                ))}
+                {isPro ? (
+                  <span className="text-secondary text-lg font-bold leading-none">∞</span>
+                ) : (
+                  [...Array(3)].map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`h-1 w-4 rounded-full transition-colors ${i < pulseCharges ? "bg-secondary shadow-[0_0_5px_rgba(var(--secondary),0.5)]" : "bg-white/10"}`}
+                    />
+                  ))
+                )}
               </div>
             </div>
             <AddGameModal />
@@ -445,25 +452,33 @@ export default function Dashboard() {
             <DialogHeader>
               <div className="flex flex-col items-center gap-1 mb-6">
                 <div className="flex justify-center gap-2">
-                  {[...Array(3)].map((_, i) => (
-                    <Bolt 
-                      key={i} 
-                      className={`w-5 h-5 transition-all duration-500 ${
-                        i < pulseCharges 
-                          ? "text-yellow-400 fill-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" 
-                          : "text-white/10 fill-transparent"
-                      }`}
-                    />
-                  ))}
+                  {isPro ? (
+                    <span className="text-yellow-400 text-4xl font-bold drop-shadow-[0_0_10px_rgba(250,204,21,0.6)] leading-none">
+                      ∞
+                    </span>
+                  ) : (
+                    [...Array(3)].map((_, i) => (
+                      <Bolt 
+                        key={i} 
+                        className={`w-5 h-5 transition-all duration-500 ${
+                          i < pulseCharges 
+                            ? "text-yellow-400 fill-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" 
+                            : "text-white/10 fill-transparent"
+                        }`}
+                      />
+                    ))
+                  )}
                 </div>
-                {pulseCharges < 3 ? (
-                  <div className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-tighter animate-pulse">
-                    Next charge in 3h 59m
-                  </div>
-                ) : (
-                  <button className="text-[9px] font-mono text-primary/40 hover:text-primary uppercase tracking-tighter transition-colors">
-                    Watch Ad to Refill
-                  </button>
+                {!isPro && (
+                  pulseCharges < 3 ? (
+                    <div className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-tighter animate-pulse">
+                      Next charge in 3h 59m
+                    </div>
+                  ) : (
+                    <button className="text-[9px] font-mono text-primary/40 hover:text-primary uppercase tracking-tighter transition-colors">
+                      Watch Ad to Refill
+                    </button>
+                  )
                 )}
               </div>
               <DialogTitle className="font-display uppercase tracking-widest text-secondary text-center mb-4">Mood-Based Roulette</DialogTitle>
