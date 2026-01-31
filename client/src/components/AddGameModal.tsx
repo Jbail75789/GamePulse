@@ -21,50 +21,72 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { Plus, Zap, Check } from "lucide-react";
+import { useState } from "react";
+
 export function AddGameModal() {
   const [open, setOpen] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["PC"]);
   const { games, createGame, isCreating } = useGames();
-  const isPro = false; // Plan: In a real app, this would come from user context/profile
+  const isPro = false;
+
+  const platforms = ["PC", "PlayStation", "Xbox", "Switch", "Other"];
 
   const form = useForm<InsertGame>({
     resolver: zodResolver(insertGameSchema),
     defaultValues: {
       title: "",
       coverUrl: "",
-      platform: "PC",
       status: "backlog",
       playtime: 0,
     },
   });
 
-  const onSubmit = (data: InsertGame) => {
-    // Duplicate Check
-    const isDuplicate = games?.some(
-      (g) => g.title.toLowerCase() === data.title.toLowerCase() && g.platform === data.platform
+  const togglePlatform = (p: string) => {
+    setSelectedPlatforms(prev => 
+      prev.includes(p) 
+        ? prev.length > 1 ? prev.filter(x => x !== p) : prev
+        : [...prev, p]
+    );
+  };
+
+  const onSubmit = async (data: any) => {
+    // Check for duplicates across all selected platforms
+    const duplicates = selectedPlatforms.filter(p => 
+      games?.some(g => g.title.toLowerCase() === data.title.toLowerCase() && g.platform === p)
     );
 
-    if (isDuplicate) {
+    if (duplicates.length > 0) {
       form.setError("title", {
         type: "manual",
-        message: `This game is already in your Pulse on ${data.platform}.`,
+        message: `Already in Pulse on: ${duplicates.join(", ")}.`,
       });
       return;
     }
 
     const activeGamesCount = games?.filter(g => g.status !== 'completed').length || 0;
+    const totalToCreate = selectedPlatforms.length;
 
-    if (!isPro && activeGamesCount >= 5) {
+    if (!isPro && (activeGamesCount + totalToCreate) > 5) {
       setShowProModal(true);
       return;
     }
 
-    createGame(data, {
-      onSuccess: () => {
-        setOpen(false);
-        form.reset();
-      },
-    });
+    // Create entries for each platform
+    try {
+      for (const platform of selectedPlatforms) {
+        await createGame({
+          ...data,
+          platform,
+        });
+      }
+      setOpen(false);
+      form.reset();
+      setSelectedPlatforms(["PC"]);
+    } catch (error) {
+      console.error("Failed to create multi-platform entries", error);
+    }
   };
 
   return (
@@ -78,7 +100,7 @@ export function AddGameModal() {
         </DialogTrigger>
         <DialogContent className="bg-card border-border font-body sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-display text-primary">New Database Entry</DialogTitle>
+            <DialogTitle className="text-2xl font-display text-primary uppercase tracking-tighter">Database Entry</DialogTitle>
           </DialogHeader>
           
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
@@ -96,42 +118,42 @@ export function AddGameModal() {
               error={form.formState.errors.coverUrl?.message}
             />
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Platform</label>
-                <Select 
-                  onValueChange={(val) => form.setValue("platform", val)} 
-                  defaultValue={form.getValues("platform") || "PC"}
-                >
-                  <SelectTrigger className="bg-black/40 border-input font-mono rounded-none h-12">
-                    <SelectValue placeholder="Select platform" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {["PC", "PlayStation", "Xbox", "Switch", "Other"].map(p => (
-                      <SelectItem key={p} value={p} className="font-mono focus:bg-primary/20 focus:text-primary cursor-pointer">
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Systems (Multi-Select)</label>
+              <div className="flex flex-wrap gap-2 p-1 bg-black/20 border border-white/5 rounded-sm">
+                {platforms.map(p => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => togglePlatform(p)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all rounded-sm border ${
+                      selectedPlatforms.includes(p) 
+                        ? "bg-primary/20 border-primary text-primary shadow-[0_0_10px_rgba(var(--primary),0.2)]" 
+                        : "bg-white/5 border-transparent text-muted-foreground hover:bg-white/10"
+                    }`}
+                  >
+                    {selectedPlatforms.includes(p) && <Check className="w-3 h-3" />}
+                    {p}
+                  </button>
+                ))}
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Status</label>
-                <Select 
-                  onValueChange={(val: any) => form.setValue("status", val)} 
-                  defaultValue={form.getValues("status")}
-                >
-                  <SelectTrigger className="bg-black/40 border-input font-mono rounded-none h-12">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="active" className="font-mono text-primary focus:bg-primary/20">Active</SelectItem>
-                    <SelectItem value="backlog" className="font-mono text-muted-foreground focus:bg-muted/20">Backlog</SelectItem>
-                    <SelectItem value="completed" className="font-mono text-secondary focus:bg-secondary/20">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Status</label>
+              <Select 
+                onValueChange={(val: any) => form.setValue("status", val)} 
+                defaultValue={form.getValues("status")}
+              >
+                <SelectTrigger className="bg-black/40 border-input font-mono rounded-none h-12">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="active" className="font-mono text-primary focus:bg-primary/20">Active</SelectItem>
+                  <SelectItem value="backlog" className="font-mono text-muted-foreground focus:bg-muted/20">Backlog</SelectItem>
+                  <SelectItem value="completed" className="font-mono text-secondary focus:bg-secondary/20">Completed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <CyberInput
@@ -143,7 +165,7 @@ export function AddGameModal() {
 
             <div className="flex justify-end pt-4">
               <CyberButton type="submit" isLoading={isCreating}>
-                Save to Database
+                {selectedPlatforms.length > 1 ? `Sync ${selectedPlatforms.length} Systems` : "Save to Database"}
               </CyberButton>
             </div>
           </form>
