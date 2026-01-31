@@ -443,6 +443,18 @@ export default function Dashboard() {
         <Dialog open={showRoulette} onOpenChange={setShowRoulette}>
           <DialogContent className="bg-card border-border sm:max-w-md">
             <DialogHeader>
+              <div className="flex justify-center gap-2 mb-4">
+                {[...Array(3)].map((_, i) => (
+                  <Bolt 
+                    key={i} 
+                    className={`w-5 h-5 transition-all duration-500 ${
+                      i < pulseCharges 
+                        ? "text-yellow-400 fill-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" 
+                        : "text-white/10 fill-transparent"
+                    }`}
+                  />
+                ))}
+              </div>
               <DialogTitle className="font-display uppercase tracking-widest text-secondary text-center mb-4">Mood-Based Roulette</DialogTitle>
               <div className="flex bg-black/40 p-1 rounded-md border border-white/5 mb-6">
                 <button 
