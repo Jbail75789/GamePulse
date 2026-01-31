@@ -11,7 +11,7 @@ import {
 import { CyberButton } from "./CyberButton";
 import { CyberInput } from "./CyberInput";
 import { useGames } from "@/hooks/use-games";
-import { Plus, Zap, Check } from "lucide-react";
+import { Plus, Zap, Check, LayoutGrid } from "lucide-react";
 import { useState } from "react";
 import {
   Select,
@@ -39,6 +39,8 @@ export function AddGameModal() {
       playtime: 0,
     },
   });
+
+  const genres = ["Action", "RPG", "Strategy", "Horror", "Sports", "Indie", "Platformer"];
 
   const togglePlatform = (p: string) => {
     setSelectedPlatforms(prev => 
@@ -131,6 +133,30 @@ export function AddGameModal() {
                   >
                     {selectedPlatforms.includes(p) && <Check className="w-3 h-3" />}
                     {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Genre</label>
+              <div className="flex flex-wrap gap-2 p-1 bg-black/20 border border-white/5 rounded-sm">
+                {genres.map(g => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => {
+                      const current = form.getValues("genre") as string;
+                      form.setValue("genre", current === g ? null : g);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all rounded-sm border ${
+                      form.watch("genre") === g
+                        ? "bg-primary/20 border-primary text-primary shadow-[0_0_10px_rgba(var(--primary),0.2)]" 
+                        : "bg-white/5 border-transparent text-muted-foreground hover:bg-white/10"
+                    }`}
+                  >
+                    {form.watch("genre") === g && <Check className="w-3 h-3" />}
+                    {g}
                   </button>
                 ))}
               </div>

@@ -43,7 +43,7 @@ export default function Dashboard() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<"active" | "completed" | "backlog" | "wishlist">("backlog");
-  const [selectedVibe, setSelectedVibe] = useState<"chill" | "intense" | "story" | null>(null);
+  const [selectedGenre, setSelectedGenre] = useState<"Action" | "RPG" | "Strategy" | "Horror" | "Sports" | "Indie" | "Platformer" | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [spotlightGame, setSpotlightGame] = useState<Game | null>(null);
   const [showRoulette, setShowRoulette] = useState(false);
@@ -106,9 +106,9 @@ export default function Dashboard() {
 
   const handlePickGame = (mode: "epic" | "quick" | "chill" | "chaos") => {
     const moods = {
-      epic: { filter: (g: Game) => g.vibe === 'story' || g.vibe === 'intense', label: 'Epic Quest' },
-      quick: { filter: (g: Game) => g.vibe === 'intense', label: 'Quick Hit' },
-      chill: { filter: (g: Game) => g.vibe === 'chill', label: 'Chill Vibe' },
+      epic: { filter: (g: Game) => g.genre === 'RPG' || g.genre === 'Strategy', label: 'Epic Quest' },
+      quick: { filter: (g: Game) => g.genre === 'Action' || g.genre === 'Sports', label: 'Quick Hit' },
+      chill: { filter: (g: Game) => g.genre === 'Indie' || g.genre === 'Platformer', label: 'Chill Vibe' },
       chaos: { filter: () => true, label: 'Chaos Mode' }
     };
 
@@ -285,7 +285,7 @@ export default function Dashboard() {
   const handleGameSelect = (game: SearchResult) => {
     setSelectedGame(game);
     setSelectedStatus("backlog");
-    setSelectedVibe(null);
+    setSelectedGenre(null);
     setSelectedPlatform(null);
     setShowPlatformModal(true);
   };
@@ -307,7 +307,7 @@ export default function Dashboard() {
         platform: selectedPlatform,
         status: selectedStatus,
         playtime: 0,
-        vibe: selectedVibe,
+        genre: selectedGenre,
       });
 
       toast({
@@ -977,9 +977,9 @@ export default function Dashboard() {
                       <span className="bg-secondary/30 backdrop-blur-md text-secondary font-mono text-xs md:text-sm px-3 md:px-4 py-1 md:py-2 rounded-md border border-secondary/50">
                         {spotlightGame.platform}
                       </span>
-                      {spotlightGame.vibe && (
+                      {spotlightGame.genre && (
                         <span className="bg-primary/30 backdrop-blur-md text-primary font-mono text-xs md:text-sm px-3 md:px-4 py-1 md:py-2 rounded-md border border-primary/50 capitalize">
-                          {spotlightGame.vibe}
+                          {spotlightGame.genre}
                         </span>
                       )}
                     </div>
@@ -1138,13 +1138,10 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
               disabled={isInVault}
               data-testid={`slider-progress-${game.id}`}
             />
-            {game.vibe && (
+            {game.genre && (
               <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground/60 uppercase tracking-tighter">
                 <span>//</span>
-                {game.vibe === 'story' && <Sword className="w-3 h-3" />}
-                {game.vibe === 'chill' && <Sofa className="w-3 h-3" />}
-                {game.vibe === 'intense' && <Bolt className="w-3 h-3" />}
-                <span>{game.vibe}</span>
+                <span>{game.genre}</span>
               </div>
             )}
             {isInVault && (
