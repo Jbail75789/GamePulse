@@ -893,7 +893,7 @@ export default function Dashboard() {
                     game={game}
                     isPop={justUpdatedId === game.id}
                     onDelete={() => deleteGame(game.id)}
-                    onStatusUpdate={(status) => {
+                    onStatusUpdate={(status: any) => {
                       setJustUpdatedId(game.id);
                       setTimeout(() => setJustUpdatedId(null), 1000);
                       updateGame({ id: game.id, status });
