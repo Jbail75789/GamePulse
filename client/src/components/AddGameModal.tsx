@@ -170,30 +170,52 @@ export function AddGameModal() {
       </Dialog>
 
       <Dialog open={showProModal} onOpenChange={setShowProModal}>
-        <DialogContent className="bg-card border-primary/50 sm:max-w-md shadow-[0_0_30px_rgba(var(--primary),0.2)]">
+        <DialogContent className="bg-[#161616] border-primary/40 sm:max-w-md shadow-[0_0_50px_rgba(var(--primary),0.15)] animate-in fade-in zoom-in duration-300">
           <DialogHeader>
-            <DialogTitle className="text-3xl font-display font-black text-primary text-center uppercase tracking-tighter italic">
-              Capacity Reached
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-6 space-y-6 text-center">
-            <div className="flex justify-center">
-              <div className="p-4 bg-primary/10 rounded-full animate-pulse">
-                <Zap className="w-12 h-12 text-primary" />
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+                <div className="relative p-4 bg-black/40 border border-primary/30 rounded-full">
+                  <Zap className="w-12 h-12 text-primary drop-shadow-[0_0_10px_rgba(var(--primary),0.8)]" />
+                </div>
               </div>
             </div>
-            <p className="font-mono text-sm text-muted-foreground leading-relaxed">
-              Your neural links are currently capped at 5 active operational slots. 
-              Upgrade to <span className="text-primary font-bold">GAMEPULSE PRO</span> for unlimited library capacity and priority neural processing.
+            <DialogTitle className="text-4xl font-display font-black text-white text-center uppercase tracking-tighter italic leading-none mb-2">
+              Neural Capacity <span className="text-primary">Reached</span>
+            </DialogTitle>
+            <div className="h-1 w-24 bg-primary mx-auto mb-4" />
+          </DialogHeader>
+          <div className="py-2 space-y-6 text-center">
+            <p className="font-mono text-sm text-muted-foreground leading-relaxed px-4">
+              Your standard neural link is currently limited to <span className="text-white font-bold">5 active operational slots</span>. 
+              Initialize <span className="text-primary font-bold">GAMEPULSE PRO</span> protocol to bypass all library constraints and unlock priority neural processing.
             </p>
-            <CyberButton 
-              className="w-full py-6 text-lg"
-              onClick={() => setShowProModal(false)}
-            >
-              UPGRADE TO PRO
-            </CyberButton>
-            <p className="text-[10px] font-mono text-muted-foreground/40 uppercase">
-              Current Tier: Standard Operator
+            
+            <div className="grid grid-cols-1 gap-3 px-4">
+              {[
+                "Unlimited Vault Capacity",
+                "Priority Neural Processing",
+                "Advanced Vibe Analytics",
+                "Exclusive Neon Cosmetics"
+              ].map((feature, i) => (
+                <div key={i} className="flex items-center gap-3 text-[10px] font-mono text-white/70 uppercase tracking-widest bg-black/20 p-2 border border-white/5 rounded-sm">
+                  <Check className="w-3 h-3 text-primary" />
+                  {feature}
+                </div>
+              ))}
+            </div>
+
+            <div className="px-4 pt-4">
+              <CyberButton 
+                className="w-full py-8 text-xl font-black italic tracking-tighter hover:shadow-[0_0_20px_rgba(var(--primary),0.4)] transition-all duration-300"
+                onClick={() => setShowProModal(false)}
+              >
+                INITIALIZE PRO UPGRADE
+              </CyberButton>
+            </div>
+            
+            <p className="text-[10px] font-mono text-muted-foreground/30 uppercase tracking-[0.2em]">
+              Authorization Status: Level 1 Technician
             </p>
           </div>
         </DialogContent>
