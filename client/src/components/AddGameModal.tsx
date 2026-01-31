@@ -206,10 +206,10 @@ export function AddGameModal() {
 
             <div className="px-4 pt-4">
               <CyberButton 
-                className="w-full py-8 text-xl font-black italic tracking-tighter bg-purple-600 hover:bg-purple-500 border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all duration-300"
+                className="w-full py-8 text-xl font-black italic tracking-tighter bg-purple-600 hover:bg-purple-500 border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all duration-300 animate-pulse"
                 onClick={() => setShowProModal(false)}
               >
-                INITIALIZE PRO UPGRADE
+                UPGRADE FOR $0.99
               </CyberButton>
             </div>
             
