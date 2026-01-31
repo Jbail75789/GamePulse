@@ -11,7 +11,7 @@ import {
 import { CyberButton } from "./CyberButton";
 import { CyberInput } from "./CyberInput";
 import { useGames } from "@/hooks/use-games";
-import { Plus, Zap } from "lucide-react";
+import { Plus, Zap, Check } from "lucide-react";
 import { useState } from "react";
 import {
   Select,
@@ -20,9 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import { Plus, Zap, Check } from "lucide-react";
-import { useState } from "react";
 
 export function AddGameModal() {
   const [open, setOpen] = useState(false);
