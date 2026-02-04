@@ -52,8 +52,37 @@ export default function Dashboard() {
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinGame, setSpinGame] = useState<Game | null>(null);
   const [isStartingAdventure, setIsStartingAdventure] = useState(false);
-  const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
-  const [pulseCharges, setPulseCharges] = useState(3);
+  const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
+  const [logHours, setLogHours] = useState<string>("1");
+  const [isLoggingTime, setIsLoggingTime] = useState(false);
+
+  const handleLogTime = async (game: Game) => {
+    const hours = parseInt(logHours);
+    if (isNaN(hours) || hours <= 0) return;
+
+    setIsLoggingTime(true);
+    try {
+      await updateGame({
+        id: game.id,
+        playtime: (game.playtime || 0) + hours,
+      });
+      toast({
+        title: "Playtime Logged",
+        description: `Added ${hours}h to ${game.title}. Total: ${(game.playtime || 0) + hours}h`,
+        className: "border-primary text-primary font-mono",
+      });
+      setLoggingTimeId(null);
+      setLogHours("1");
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "Could not log playtime to the database.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoggingTime(false);
+    }
+  };
   const [isPro, setIsPro] = useState(false);
   const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
