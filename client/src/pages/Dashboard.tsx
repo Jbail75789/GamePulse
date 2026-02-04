@@ -917,46 +917,97 @@ export default function Dashboard() {
             >
               <AnimatePresence mode="popLayout">
                 {filteredGames.map((game) => (
-                  <GameCard 
-                    key={game.id} 
-                    game={game}
-                    isPop={justUpdatedId === game.id}
-                    onDelete={() => deleteGame(game.id)}
-                    onStatusUpdate={(status: any) => {
-                      setJustUpdatedId(game.id);
-                      setTimeout(() => setJustUpdatedId(null), 1000);
-                      updateGame({ id: game.id, status });
-                    }}
-                    onProgressUpdate={(progress) => {
-                      let newStatus = game.status;
-                      const progressDiff = progress - (game.progress || 0);
-                      
-                      if (progress === 100) {
-                        newStatus = "completed";
-                        setPulseCharges(3);
-                      } else if (progress > 0 && progress < 100) {
-                        newStatus = "active";
-                        if (progressDiff >= 5) {
-                          setPulseCharges(3);
-                        }
-                      } else if (progress === 0) {
-                        newStatus = "backlog";
-                      }
-                      
-                      if (progress === 100) {
+                  <div key={game.id} className="relative">
+                    <GameCard 
+                      game={game}
+                      isPop={justUpdatedId === game.id}
+                      onDelete={() => deleteGame(game.id)}
+                      onStatusUpdate={(status: any) => {
                         setJustUpdatedId(game.id);
                         setTimeout(() => setJustUpdatedId(null), 1000);
-                        toast({
-                          title: "Game Completed!",
-                          description: `${game.title} has been moved to The Vault!`,
-                          className: "border-secondary text-secondary font-mono",
-                        });
-                      }
-                      
-                      updateGame({ id: game.id, progress, status: newStatus });
-                    }}
-                    isInVault={game.status === "completed"}
-                  />
+                        updateGame({ id: game.id, status });
+                      }}
+                      onProgressUpdate={(progress) => {
+                        let newStatus = game.status;
+                        const progressDiff = progress - (game.progress || 0);
+                        
+                        if (progress === 100) {
+                          newStatus = "completed";
+                          setPulseCharges(3);
+                        } else if (progress > 0 && progress < 100) {
+                          newStatus = "active";
+                          if (progressDiff >= 5) {
+                            setPulseCharges(3);
+                          }
+                        } else if (progress === 0) {
+                          newStatus = "backlog";
+                        }
+                        
+                        if (progress === 100) {
+                          setJustUpdatedId(game.id);
+                          setTimeout(() => setJustUpdatedId(null), 1000);
+                          toast({
+                            title: "Game Completed!",
+                            description: `${game.title} has been moved to The Vault!`,
+                            className: "border-secondary text-secondary font-mono",
+                          });
+                        }
+                        
+                        updateGame({ id: game.id, progress, status: newStatus });
+                      }}
+                      isInVault={game.status === "completed"}
+                      onLogTimeClick={() => {
+                        setLoggingTimeId(game.id);
+                        setLogHours("1");
+                      }}
+                      isLoggingActive={loggingTimeId === game.id}
+                    />
+
+                    {/* Log Time Overlay */}
+                    <AnimatePresence>
+                      {loggingTimeId === game.id && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="absolute inset-0 z-20 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 rounded-lg border border-primary/30 shadow-[0_0_20px_rgba(0,255,159,0.1)]"
+                        >
+                          <div className="text-[10px] font-mono text-primary uppercase tracking-[0.2em] mb-4">Neural Link: Add Hours</div>
+                          <div className="flex items-center gap-3 mb-6">
+                            <button 
+                              onClick={() => setLogHours(prev => Math.max(1, parseInt(prev) - 1).toString())}
+                              className="w-10 h-10 flex items-center justify-center bg-black border border-white/10 rounded-sm hover:border-primary/50 text-white transition-all active:scale-95"
+                            >-</button>
+                            <input 
+                              type="number"
+                              value={logHours}
+                              onChange={(e) => setLogHours(e.target.value)}
+                              className="w-20 h-10 bg-black border border-primary/40 text-center font-mono text-lg text-primary focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none rounded-sm shadow-[inset_0_0_10px_rgba(0,255,159,0.1)]"
+                            />
+                            <button 
+                              onClick={() => setLogHours(prev => (parseInt(prev) + 1).toString())}
+                              className="w-10 h-10 flex items-center justify-center bg-black border border-white/10 rounded-sm hover:border-primary/50 text-white transition-all active:scale-95"
+                            >+</button>
+                          </div>
+                          <div className="flex flex-col gap-2 w-full max-w-[160px]">
+                            <button
+                              onClick={() => handleLogTime(game)}
+                              disabled={isLoggingTime}
+                              className="w-full py-2 bg-primary text-background text-xs font-black font-display uppercase tracking-widest rounded-sm hover:bg-primary/90 transition-all tactile-press disabled:opacity-50"
+                            >
+                              {isLoggingTime ? "UPLOADING..." : "CONFIRM LOG"}
+                            </button>
+                            <button
+                              onClick={() => setLoggingTimeId(null)}
+                              className="w-full py-2 bg-white/5 border border-white/10 text-white/50 text-[10px] font-mono uppercase tracking-widest rounded-sm hover:bg-white/10 transition-all"
+                            >
+                              ABORT
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 ))}
               </AnimatePresence>
             </motion.div>
@@ -1083,13 +1134,24 @@ export default function Dashboard() {
   );
 }
 
-function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault, isPop }: { 
+function GameCard({ 
+  game, 
+  onDelete, 
+  onStatusUpdate, 
+  onProgressUpdate, 
+  isInVault, 
+  isPop,
+  onLogTimeClick,
+  isLoggingActive
+}: { 
   game: Game, 
   onDelete: () => void,
   onStatusUpdate: (status: any) => void,
   onProgressUpdate: (progress: number) => void,
   isInVault?: boolean,
-  isPop?: boolean
+  isPop?: boolean,
+  onLogTimeClick: () => void,
+  isLoggingActive: boolean
 }) {
   const { toast } = useToast();
   const statusColors: Record<string, "primary" | "secondary" | "accent" | "none"> = {
@@ -1119,7 +1181,7 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
     >
       <CyberCard 
         glowColor={statusColors[game.status]}
-        className={`h-full flex flex-col p-0 group ${
+        className={`h-full flex flex-col p-0 group relative ${
           isInVault ? "border-yellow-500/50 shadow-lg shadow-yellow-500/20" : ""
         }`}
       >
@@ -1134,7 +1196,17 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
           
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-2 right-2 flex gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onLogTimeClick();
+              }}
+              className="bg-black/80 backdrop-blur-md p-1.5 border border-white/10 text-white hover:text-primary hover:border-primary/50 transition-all rounded-sm"
+              title="Log Playtime"
+            >
+              <Clock className="w-3.5 h-3.5" />
+            </button>
             <span className="bg-black/80 backdrop-blur-md text-xs font-mono px-2 py-1 border border-white/10 text-white rounded-sm">
               {game.platform}
             </span>
@@ -1148,7 +1220,7 @@ function GameCard({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault,
           
           <div className="flex items-center gap-1 sm:gap-2 text-[0.75rem] font-mono text-muted-foreground mb-2 sm:mb-4">
             <Clock className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate">{game.playtime}h</span>
+            <span className="truncate">{game.playtime || 0}h logged</span>
           </div>
 
           <div className="mb-3 sm:mb-4 space-y-1 sm:space-y-2">
