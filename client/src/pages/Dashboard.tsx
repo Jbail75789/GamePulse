@@ -645,6 +645,19 @@ export default function Dashboard() {
 
 function GameCardItem({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault, isPop, onLogTimeClick, isLoggingActive }: { game: Game, onDelete: () => void, onStatusUpdate: (status: any) => void, onProgressUpdate: (progress: number) => void, isInVault?: boolean, isPop?: boolean, onLogTimeClick: () => void, isLoggingActive: boolean }) {
   const statusColors: Record<string, "primary" | "secondary" | "accent" | "none"> = { active: "primary", completed: "secondary", backlog: "accent", wishlist: "none" };
+  
+  const getGenreGlowClass = (genre: string | null) => {
+    if (!genre) return "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]";
+    const lowerGenre = genre.toLowerCase();
+    if (lowerGenre.includes("action")) return "bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.7)]";
+    if (lowerGenre.includes("rpg") || lowerGenre.includes("strategy")) return "bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.7)]";
+    if (lowerGenre.includes("indie") || lowerGenre.includes("platformer")) return "bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.7)]";
+    if (lowerGenre.includes("horror")) return "bg-purple-600 shadow-[0_0_15px_rgba(147,51,234,0.7)]";
+    if (lowerGenre.includes("sports")) return "bg-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.7)]";
+    return "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]";
+  };
+
+  const { toast } = useToast();
   return (
     <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: isPop ? 1.05 : 1 }} exit={{ opacity: 0, scale: 0.9 }}>
       <CyberCard glowColor={statusColors[game.status]} className="h-full flex flex-col p-0 group overflow-hidden">
@@ -661,7 +674,13 @@ function GameCardItem({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVa
             <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {game.playtime || 0}h</span>
             <span className="text-primary">{game.progress || 0}%</span>
           </div>
-          <Slider value={[game.progress || 0]} onValueChange={(v) => onProgressUpdate(v[0])} max={100} className="mb-4" />
+          <Slider 
+            value={[game.progress || 0]} 
+            onValueChange={(v) => onProgressUpdate(v[0])} 
+            max={100} 
+            className="mb-4"
+            rangeClassName={getGenreGlowClass(game.genre)}
+          />
           {game.genre && <div className="text-[8px] font-mono text-muted-foreground/60 uppercase mb-4 tracking-widest">// {game.genre}</div>}
           <div className="mt-auto flex justify-between items-center gap-2">
             <DropdownMenu>
