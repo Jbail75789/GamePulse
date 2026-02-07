@@ -55,6 +55,7 @@ export default function Dashboard() {
   const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
   const [logHours, setLogHours] = useState<string>("1");
   const [isLoggingTime, setIsLoggingTime] = useState(false);
+  const [pulseCharges, setPulseCharges] = useState(3);
 
   const handleLogTime = async (game: Game) => {
     const hours = parseInt(logHours);
