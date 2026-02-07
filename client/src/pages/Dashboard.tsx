@@ -43,7 +43,6 @@ export default function Dashboard() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<"active" | "completed" | "backlog" | "wishlist">("backlog");
-  const [selectedGenre, setSelectedGenre] = useState<"Action" | "RPG" | "Strategy" | "Horror" | "Sports" | "Indie" | "Platformer" | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [spotlightGame, setSpotlightGame] = useState<Game | null>(null);
   const [showRoulette, setShowRoulette] = useState(false);
@@ -56,6 +55,12 @@ export default function Dashboard() {
   const [logHours, setLogHours] = useState<string>("1");
   const [isLoggingTime, setIsLoggingTime] = useState(false);
   const [pulseCharges, setPulseCharges] = useState(3);
+  const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
+  const [isPro, setIsPro] = useState(false);
+  const [selectedGenre, setSelectedGenre] = useState<"Action" | "RPG" | "Strategy" | "Horror" | "Sports" | "Indie" | "Platformer" | null>(null);
+  const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const { toast } = useToast();
 
   const handleLogTime = async (game: Game) => {
     const hours = parseInt(logHours);
@@ -84,10 +89,6 @@ export default function Dashboard() {
       setIsLoggingTime(false);
     }
   };
-  const [isPro, setIsPro] = useState(false);
-  const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  const { toast } = useToast();
 
   // Low-profile UI sound effects
   const playSound = (type: 'tick' | 'win') => {
@@ -641,12 +642,9 @@ export default function Dashboard() {
                         <Gamepad2 className="w-3 h-3" />
                         {winnerGame.platform}
                       </div>
-                      {winnerGame.vibe && (
+                      {winnerGame.genre && (
                         <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-sm text-[10px] font-mono text-primary uppercase tracking-wider">
-                          {winnerGame.vibe === 'story' && <Sword className="w-3 h-3" />}
-                          {winnerGame.vibe === 'chill' && <Sofa className="w-3 h-3" />}
-                          {winnerGame.vibe === 'intense' && <Bolt className="w-3 h-3" />}
-                          {winnerGame.vibe}
+                          {winnerGame.genre}
                         </div>
                       )}
                     </div>
@@ -771,33 +769,8 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Vibe Selection */}
-              <div className="mb-6">
-                <label className="text-sm font-display font-bold text-foreground mb-2 block">
-                  Vibe (Optional)
-                </label>
-                <div className="space-y-2">
-                  {["chill", "intense", "story"].map((vibe) => (
-                    <button
-                      key={vibe}
-                      onClick={() => setSelectedVibe(selectedVibe === vibe ? null : (vibe as "chill" | "intense" | "story"))}
-                      className={`w-full px-4 py-2 rounded-md font-mono text-sm transition-all duration-200 capitalize ${
-                        selectedVibe === vibe
-                          ? "bg-accent/30 border border-accent text-accent"
-                          : "bg-black/50 border border-border text-foreground hover:bg-accent/20"
-                      }`}
-                      data-testid={`button-vibe-${vibe}`}
-                    >
-                      {vibe}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Platform Selection */}
-              <div className="mb-6">
-                <label className="text-sm font-display font-bold text-foreground mb-2 block">
-                  Platform
+                <label className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2 block">
+                  Select Sector
                 </label>
                 <div className="space-y-2">
                   {["Steam", "Xbox", "PS5"].map((platform) => (
