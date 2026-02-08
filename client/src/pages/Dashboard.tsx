@@ -55,7 +55,7 @@ export default function Dashboard() {
   const [pulseCharges, setPulseCharges] = useState(3);
   const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
   const [isPro, setIsPro] = useState(false);
-  const [selectedGenre, setSelectedGenre] = useState<"Action" | "RPG" | "Strategy" | "Horror" | "Sports" | "Indie" | "Platformer" | null>(null);
+  const [selectedVibe, setSelectedVibe] = useState<"Chill" | "Epic" | "Gritty" | "Quick Fix" | "Competitive" | null>(null);
   const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
@@ -130,9 +130,9 @@ export default function Dashboard() {
 
   const handlePickGame = (mode: "epic" | "quick" | "chill" | "chaos") => {
     const moods = {
-      epic: { filter: (g: Game) => g.genre === 'RPG' || g.genre === 'Strategy', label: 'Epic Quest' },
-      quick: { filter: (g: Game) => g.genre === 'Action' || g.genre === 'Sports', label: 'Quick Hit' },
-      chill: { filter: (g: Game) => g.genre === 'Indie' || g.genre === 'Platformer', label: 'Chill Vibe' },
+      epic: { filter: (g: Game) => g.vibe === 'Epic', label: 'Epic Quest' },
+      quick: { filter: (g: Game) => g.vibe === 'Quick Fix' || g.vibe === 'Competitive', label: 'Quick Hit' },
+      chill: { filter: (g: Game) => g.vibe === 'Chill', label: 'Chill Vibe' },
       chaos: { filter: () => true, label: 'Chaos Mode' }
     };
 
@@ -278,7 +278,7 @@ export default function Dashboard() {
   const handleGameSelect = (game: SearchResult) => {
     setSelectedGame(game);
     setSelectedStatus("backlog");
-    setSelectedGenre(null);
+    setSelectedVibe(null);
     setSelectedPlatform(null);
     setShowPlatformModal(true);
   };
@@ -303,7 +303,7 @@ export default function Dashboard() {
         status: selectedStatus,
         playtime: 0,
         progress: 0,
-        genre: selectedGenre,
+        vibe: selectedVibe,
       });
 
       toast({ title: "Link Established", description: `${selectedGame.name} added to your library.`, className: "border-primary text-primary font-mono" });
@@ -471,7 +471,7 @@ export default function Dashboard() {
                     <h2 className="text-xl font-display font-bold uppercase text-white mb-2">{winnerGame.title}</h2>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1.5 px-2 py-0.5 bg-secondary/10 border border-secondary/20 rounded-sm text-[10px] font-mono text-secondary uppercase">{winnerGame.platform}</div>
-                      {winnerGame.genre && <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-sm text-[10px] font-mono text-primary uppercase">{winnerGame.genre}</div>}
+                      {winnerGame.vibe && <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-sm text-[10px] font-mono text-primary uppercase">{winnerGame.vibe}</div>}
                     </div>
                   </div>
                 </div>
@@ -522,11 +522,11 @@ export default function Dashboard() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2 block">Genre</label>
+                <label className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2 block">Vibe</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {["Action", "RPG", "Strategy", "Horror", "Sports", "Indie", "Platformer"].map((genre) => (
-                    <button key={genre} onClick={() => setSelectedGenre(selectedGenre === genre ? null : (genre as any))} className={`px-3 py-2 rounded-md font-mono text-[10px] transition-all ${selectedGenre === genre ? "bg-accent/30 border border-accent text-accent" : "bg-black/50 border border-border text-foreground hover:bg-accent/20"}`}>
-                      {genre}
+                  {["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"].map((v) => (
+                    <button key={v} onClick={() => setSelectedVibe(selectedVibe === v ? null : (v as any))} className={`px-3 py-2 rounded-md font-mono text-[10px] transition-all ${selectedVibe === v ? "bg-accent/30 border border-accent text-accent" : "bg-black/50 border border-border text-foreground hover:bg-accent/20"}`}>
+                      {v}
                     </button>
                   ))}
                 </div>
@@ -646,15 +646,16 @@ export default function Dashboard() {
 function GameCardItem({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault, isPop, onLogTimeClick, isLoggingActive }: { game: Game, onDelete: () => void, onStatusUpdate: (status: any) => void, onProgressUpdate: (progress: number) => void, isInVault?: boolean, isPop?: boolean, onLogTimeClick: () => void, isLoggingActive: boolean }) {
   const statusColors: Record<string, "primary" | "secondary" | "accent" | "none"> = { active: "primary", completed: "secondary", backlog: "accent", wishlist: "none" };
   
-  const getGenreGlowClass = (genre: string | null) => {
-    if (!genre) return "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]";
-    const lowerGenre = genre.toLowerCase();
-    if (lowerGenre.includes("action")) return "bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.7)]";
-    if (lowerGenre.includes("rpg") || lowerGenre.includes("strategy")) return "bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.7)]";
-    if (lowerGenre.includes("indie") || lowerGenre.includes("platformer")) return "bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.7)]";
-    if (lowerGenre.includes("horror")) return "bg-purple-600 shadow-[0_0_15px_rgba(147,51,234,0.7)]";
-    if (lowerGenre.includes("sports")) return "bg-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.7)]";
-    return "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]";
+  const getVibeGlowClass = (vibe: string | null) => {
+    if (!vibe) return "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]";
+    switch (vibe) {
+      case "Chill": return "bg-green-400 shadow-[0_0_15px_rgba(74,222,128,0.7)]";
+      case "Epic": return "bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.7)]";
+      case "Gritty": return "bg-orange-700 shadow-[0_0_15px_rgba(194,65,12,0.7)]";
+      case "Quick Fix": return "bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.7)]";
+      case "Competitive": return "bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.7)]";
+      default: return "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]";
+    }
   };
 
   const { toast } = useToast();
@@ -679,9 +680,9 @@ function GameCardItem({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVa
             onValueChange={(v) => onProgressUpdate(v[0])} 
             max={100} 
             className="mb-4"
-            rangeClassName={getGenreGlowClass(game.genre)}
+            rangeClassName={getVibeGlowClass(game.vibe)}
           />
-          {game.genre && <div className="text-[8px] font-mono text-muted-foreground/60 uppercase mb-4 tracking-widest">// {game.genre}</div>}
+          {game.vibe && <div className="text-[8px] font-mono text-muted-foreground/60 uppercase mb-4 tracking-widest">// {game.vibe}</div>}
           <div className="mt-auto flex justify-between items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger className="text-[10px] font-mono uppercase text-muted-foreground focus:outline-none">[{game.status}]</DropdownMenuTrigger>

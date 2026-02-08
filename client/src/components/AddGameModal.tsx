@@ -40,7 +40,7 @@ export function AddGameModal() {
     },
   });
 
-  const genres = ["Action", "RPG", "Strategy", "Horror", "Sports", "Indie", "Platformer"];
+  const vibes = ["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"];
 
   const togglePlatform = (p: string) => {
     setSelectedPlatforms(prev => 
@@ -139,24 +139,24 @@ export function AddGameModal() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Genre</label>
+              <label className="text-xs uppercase tracking-widest text-muted-foreground font-display font-bold ml-1">Vibe</label>
               <div className="flex flex-wrap gap-2 p-1 bg-black/20 border border-white/5 rounded-sm">
-                {genres.map(g => (
+                {vibes.map(v => (
                   <button
-                    key={g}
+                    key={v}
                     type="button"
                     onClick={() => {
-                      const current = form.getValues("genre") as string;
-                      form.setValue("genre", current === g ? null : g);
+                      const current = form.getValues("vibe") as "Chill" | "Epic" | "Gritty" | "Quick Fix" | "Competitive" | null;
+                      form.setValue("vibe", current === v ? null : v as any);
                     }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all rounded-sm border ${
-                      form.watch("genre") === g
+                      form.watch("vibe") === v
                         ? "bg-primary/20 border-primary text-primary shadow-[0_0_10px_rgba(var(--primary),0.2)]" 
                         : "bg-white/5 border-transparent text-muted-foreground hover:bg-white/10"
                     }`}
                   >
-                    {form.watch("genre") === g && <Check className="w-3 h-3" />}
-                    {g}
+                    {form.watch("vibe") === v && <Check className="w-3 h-3" />}
+                    {v}
                   </button>
                 ))}
               </div>

@@ -16,7 +16,7 @@ export const games = pgTable("games", {
   coverUrl: text("cover_url").notNull(),
   playtime: integer("playtime").default(0),
   platform: text("platform").default("PC"),
-  genre: text("genre", { enum: ["Action", "RPG", "Strategy", "Horror", "Sports", "Indie", "Platformer"] }),
+  vibe: text("vibe", { enum: ["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"] }),
   progress: integer("progress").default(0),
 });
 
