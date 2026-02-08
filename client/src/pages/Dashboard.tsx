@@ -57,8 +57,23 @@ export default function Dashboard() {
   const [isPro, setIsPro] = useState(false);
   const [selectedVibe, setSelectedVibe] = useState<"Chill" | "Epic" | "Gritty" | "Quick Fix" | "Competitive" | null>(null);
   const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
+  const [showProModal, setShowProModal] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
+
+  const handleUpdateStatus = async (gameId: number, newStatus: string) => {
+    const activeGamesCount = games?.filter(g => g.status !== 'completed' && g.status !== 'wishlist').length || 0;
+    const currentGame = games?.find(g => g.id === gameId);
+    
+    // If moving TO an active-like status (active/backlog) FROM a non-active status (wishlist)
+    if (!isPro && (newStatus === 'active' || newStatus === 'backlog') && 
+        currentGame?.status === 'wishlist' && activeGamesCount >= 5) {
+      setShowProModal(true);
+      return;
+    }
+    
+    updateGame({ id: gameId, status: newStatus as any });
+  };
 
   const handleLogTime = async (game: Game) => {
     const hours = parseInt(logHours);
@@ -361,6 +376,57 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={showProModal} onOpenChange={setShowProModal}>
+        <DialogContent className="bg-[#161616]/80 backdrop-blur-xl border-purple-500/50 sm:max-w-md shadow-[0_0_50px_rgba(168,85,247,0.3)] animate-in fade-in zoom-in duration-300">
+          <DialogHeader>
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-purple-500/20 blur-xl rounded-full animate-pulse" />
+                <div className="relative p-4 bg-black/40 border border-purple-500/30 rounded-full">
+                  <Zap className="w-12 h-12 text-purple-500 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
+                </div>
+              </div>
+            </div>
+            <DialogTitle className="text-4xl font-display font-black text-white text-center uppercase tracking-tighter italic leading-none mb-2">
+              Unlock the <span className="text-purple-500">Full Pulse</span>
+            </DialogTitle>
+            <div className="h-1 w-24 bg-purple-500 mx-auto mb-4" />
+          </DialogHeader>
+          <div className="py-2 space-y-6 text-center">
+            <p className="font-mono text-sm text-muted-foreground leading-relaxed px-4">
+              You've reached the <span className="text-white font-bold">5-game limit</span>. Move games to the Vault to stay free, or upgrade to Pro for life.
+            </p>
+            
+            <div className="grid grid-cols-1 gap-3 px-4">
+              {[
+                "∞ Unlimited Backlog & Vault",
+                "🎨 Exclusive 'Neon' & 'Obsidian' Themes",
+                "⚡ Infinite Power Spins (No Recharging)",
+                "☁️ Priority Cloud Sync"
+              ].map((feature, i) => (
+                <div key={i} className="flex items-center gap-3 text-[10px] font-mono text-white/70 uppercase tracking-widest bg-black/20 p-2 border border-white/5 rounded-sm">
+                  <Check className="w-3 h-3 text-purple-500" />
+                  {feature}
+                </div>
+              ))}
+            </div>
+
+            <div className="px-4 pt-4">
+              <button 
+                className="w-full py-8 text-xl font-black italic tracking-tighter bg-purple-600 hover:bg-purple-500 border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all duration-300 animate-pulse text-white rounded-md"
+                onClick={() => setShowProModal(false)}
+              >
+                UPGRADE FOR $0.99
+              </button>
+            </div>
+            
+            <p className="text-[10px] font-mono text-muted-foreground/30 uppercase tracking-[0.2em]">
+              Authorization Status: Level 1 Technician
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="space-y-4 md:space-y-8 pb-10">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4">
           <div className="flex justify-between items-start w-full">
@@ -584,7 +650,7 @@ export default function Dashboard() {
                     <GameCardItem 
                       game={game} 
                       onDelete={() => deleteGame(game.id)} 
-                      onStatusUpdate={(status) => updateGame({ id: game.id, status })}
+                      onStatusUpdate={(status) => handleUpdateStatus(game.id, status)}
                       onProgressUpdate={(progress) => {
                         let status = game.status;
                         if (progress === 100) status = "completed";

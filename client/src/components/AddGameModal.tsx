@@ -64,10 +64,10 @@ export function AddGameModal() {
       return;
     }
 
-    const activeGamesCount = games?.filter(g => g.status !== 'completed').length || 0;
+    const activeGamesCount = games?.filter(g => g.status !== 'completed' && g.status !== 'wishlist').length || 0;
     const totalToCreate = selectedPlatforms.length;
 
-    if (!isPro && (activeGamesCount + totalToCreate) > 5) {
+    if (!isPro && data.status !== 'wishlist' && (activeGamesCount + totalToCreate) > 5) {
       setShowProModal(true);
       return;
     }
