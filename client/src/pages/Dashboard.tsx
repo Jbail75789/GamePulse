@@ -55,6 +55,7 @@ export default function Dashboard() {
   const [logHours, setLogHours] = useState<string>("1");
   const [isLoggingTime, setIsLoggingTime] = useState(false);
   const [pulseCharges, setPulseCharges] = useState(3);
+  const [nextRefill, setNextRefill] = useState<string | null>(null);
   const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
   const [isPro, setIsPro] = useState(false);
   const [selectedVibe, setSelectedVibe] = useState<"Chill" | "Epic" | "Gritty" | "Quick Fix" | "Competitive" | null>(null);
@@ -145,6 +146,22 @@ export default function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    const fetchCharges = async () => {
+      try {
+        const res = await fetch("/api/user/charges");
+        if (res.ok) {
+          const data = await res.json();
+          setPulseCharges(data.charges);
+          setNextRefill(data.nextRefill);
+        }
+      } catch (err) {
+        console.error("Failed to fetch charges", err);
+      }
+    };
+    fetchCharges();
+  }, [isPro]);
+
   const handlePickGame = (mode: "epic" | "quick" | "chill" | "chaos") => {
     const moods = {
       epic: { filter: (g: Game) => g.vibe === 'Epic', label: 'Epic Quest' },
@@ -186,7 +203,11 @@ export default function Dashboard() {
         setIsSpinning(false);
         setSpinGame(null);
         if (!isPro) {
-          setPulseCharges(prev => Math.max(0, prev - 1));
+          apiRequest("POST", "/api/user/charges/consume").then(res => {
+            if (res.ok) {
+              res.json().then(data => setPulseCharges(data.charges));
+            }
+          });
         }
         playSound('win');
         if ('vibrate' in navigator) navigator.vibrate(200);
@@ -381,6 +402,17 @@ export default function Dashboard() {
   const filteredGames = games?.filter(game => game.status === activeTab) || [];
   const currentTab = tabData.find(t => t.id === activeTab)?.label || "Library";
 
+  const getTimeRemaining = () => {
+    if (!nextRefill) return "23h 59m";
+    const now = new Date();
+    const refill = new Date(nextRefill);
+    const diff = refill.getTime() - now.getTime();
+    if (diff <= 0) return "REFILL SOON";
+    const h = Math.floor(diff / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${h}h ${m}m`;
+  };
+
   return (
     <Layout>
       <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
@@ -543,7 +575,7 @@ export default function Dashboard() {
                     ))
                   )}
                 </div>
-                {!isPro && pulseCharges < 3 && <div className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-tighter animate-pulse">Next charge in 3h 59m</div>}
+                {!isPro && pulseCharges < 3 && <div className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-tighter animate-pulse">Next charge in {getTimeRemaining()}</div>}
               </div>
               <DialogTitle className="font-display uppercase tracking-widest text-secondary text-center mb-4">Mood-Based Roulette</DialogTitle>
               <div className="flex bg-black/40 p-1 rounded-md border border-white/5 mb-6">

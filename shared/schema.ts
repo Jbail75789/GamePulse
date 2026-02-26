@@ -7,6 +7,8 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   isPro: boolean("is_pro").default(false),
+  pulseCharges: integer("pulse_charges").default(3),
+  lastChargeRefill: timestamp("last_charge_refill").defaultNow(),
 });
 
 export const games = pgTable("games", {

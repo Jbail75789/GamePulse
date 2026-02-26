@@ -44,5 +44,45 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.status(400).json({ message: "Invalid redemption code" });
   });
 
+  app.get("/api/user/charges", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    let user = await storage.getUser(req.user.id);
+    if (!user) return res.sendStatus(404);
+
+    if (user.isPro) {
+      return res.json({ charges: Infinity, nextRefill: null });
+    }
+
+    const now = new Date();
+    const lastRefill = user.lastChargeRefill || now;
+    const hoursSinceLastRefill = (now.getTime() - lastRefill.getTime()) / (1000 * 60 * 60);
+
+    if (hoursSinceLastRefill >= 24) {
+      user = await storage.updateUserCharges(user.id, 3, now);
+    }
+
+    const nextRefill = new Date(lastRefill.getTime() + 24 * 60 * 60 * 1000);
+    res.json({ charges: user.pulseCharges, nextRefill: nextRefill.toISOString() });
+  });
+
+  app.post("/api/user/charges/consume", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    const user = await storage.getUser(req.user.id);
+    if (!user) return res.sendStatus(404);
+
+    if (user.isPro) {
+      return res.json({ charges: Infinity });
+    }
+
+    if (user.pulseCharges && user.pulseCharges > 0) {
+      const updatedUser = await storage.updateUserCharges(user.id, user.pulseCharges - 1);
+      return res.json({ charges: updatedUser.pulseCharges });
+    }
+
+    res.status(400).json({ message: "No charges remaining" });
+  });
+
   return httpServer;
 }
