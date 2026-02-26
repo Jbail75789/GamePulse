@@ -10,6 +10,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserProStatus(id: number, isPro: boolean): Promise<User>;
   
   getGames(userId: number): Promise<Game[]>;
   createGame(userId: number, game: InsertGame): Promise<Game>;
@@ -41,6 +42,11 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updateUserProStatus(id: number, isPro: boolean): Promise<User> {
+    const [user] = await db.update(users).set({ isPro }).where(eq(users.id, id)).returning();
     return user;
   }
 

@@ -34,5 +34,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.sendStatus(204);
   });
 
+  app.post("/api/user/redeem", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const { code } = req.body;
+    if (code === "PRO99") {
+      const user = await storage.updateUserProStatus(req.user.id, true);
+      return res.json(user);
+    }
+    res.status(400).json({ message: "Invalid redemption code" });
+  });
+
   return httpServer;
 }

@@ -40,6 +40,8 @@ export default function Dashboard() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [redeemCode, setRedeemCode] = useState("");
+  const [isRedeeming, setIsRedeeming] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<"active" | "completed" | "backlog" | "wishlist">("backlog");
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [spotlightGame, setSpotlightGame] = useState<Game | null>(null);
@@ -270,6 +272,44 @@ export default function Dashboard() {
     }
   };
 
+  const handleRedeemCode = async () => {
+    if (!redeemCode.trim()) return;
+    setIsRedeeming(true);
+    try {
+      const res = await apiRequest("POST", "/api/user/redeem", { code: redeemCode });
+      if (res.ok) {
+        setIsPro(true);
+        toast({
+          title: "Pro Unlocked",
+          description: "Welcome to the elite tier, operative.",
+          className: "border-purple-500 text-purple-500 font-mono shadow-[0_0_15px_rgba(168,85,247,0.4)]",
+        });
+        setRedeemCode("");
+        setShowSettingsModal(false);
+        confetti({
+          particleCount: 200,
+          spread: 100,
+          origin: { y: 0.6 },
+          colors: ['#a855f7', '#d600ff', '#ffffff']
+        });
+      } else {
+        toast({
+          title: "Access Denied",
+          description: "Redemption code invalid or expired.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Link Error",
+        description: "Could not connect to redemption server.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
+
   useEffect(() => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     if (searchQuery.trim()) {
@@ -350,6 +390,27 @@ export default function Dashboard() {
             <DialogDescription className="font-mono text-xs">Configure GamePulse core parameters.</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
+            <section className="space-y-3">
+              <h4 className="flex items-center gap-2 font-display text-sm text-primary">
+                <Zap className="w-4 h-4" /> Redeem Access
+              </h4>
+              <div className="flex gap-2">
+                <input 
+                  value={redeemCode}
+                  onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
+                  placeholder="ENTER CODE (e.g. PRO99)"
+                  className="flex-1 bg-black/40 border border-white/10 rounded-sm px-3 py-2 text-xs font-mono focus:border-primary outline-none transition-all"
+                />
+                <button 
+                  onClick={handleRedeemCode}
+                  disabled={isRedeeming || !redeemCode}
+                  className="px-4 py-2 bg-primary text-background text-[10px] font-bold font-mono rounded-sm hover:bg-primary/90 transition-all tactile-press disabled:opacity-50"
+                >
+                  {isRedeeming ? "LINKING..." : "REDEEM"}
+                </button>
+              </div>
+            </section>
+
             <section className="pt-4 border-t border-white/5">
               <h4 className="flex items-center gap-2 font-display text-sm text-destructive mb-2">
                 <AlertTriangle className="w-4 h-4" /> Danger Zone
