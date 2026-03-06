@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useGames } from "@/hooks/use-games";
+import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/Layout";
 import { CyberCard } from "@/components/CyberCard";
 import { AddGameModal } from "@/components/AddGameModal";
@@ -31,6 +32,7 @@ interface SearchResult {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const { games, isLoading, deleteGame, updateGame, createGame } = useGames();
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog" | "wishlist">("active");
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,7 +59,13 @@ export default function Dashboard() {
   const [pulseCharges, setPulseCharges] = useState(3);
   const [nextRefill, setNextRefill] = useState<string | null>(null);
   const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(user?.isPro ?? false);
+
+  useEffect(() => {
+    if (user) {
+      setIsPro(user.isPro);
+    }
+  }, [user]);
   const [selectedVibe, setSelectedVibe] = useState<"Chill" | "Epic" | "Gritty" | "Quick Fix" | "Competitive" | null>(null);
   const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
   const [showProModal, setShowProModal] = useState(false);
