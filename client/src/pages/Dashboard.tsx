@@ -758,7 +758,14 @@ export default function Dashboard() {
                         else if (progress > 0) status = "active";
                         updateGame({ id: game.id, progress, status });
                       }}
-                      onLogTimeClick={() => { setLoggingTimeId(game.id); setLogHours("1"); }}
+                      onLogTimeClick={() => { 
+                        const newPlaytime = (game.playtime || 0) + 1;
+                        const newProgress = Math.min(100, Math.floor((newPlaytime / 50) * 100));
+                        let newStatus = game.status;
+                        if (newProgress === 100) newStatus = "completed";
+                        else if (newProgress > 0 && game.status !== 'completed') newStatus = "active";
+                        updateGame({ id: game.id, playtime: newPlaytime, progress: newProgress, status: newStatus });
+                      }}
                       isLoggingActive={loggingTimeId === game.id}
                     />
                     <AnimatePresence>
