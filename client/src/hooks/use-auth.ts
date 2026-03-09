@@ -40,6 +40,8 @@ export function useAuth() {
         description: `Welcome back, ${user.username}.`,
         className: "border-primary text-primary font-mono",
       });
+      // Sync isPro state if needed
+      queryClient.invalidateQueries({ queryKey: ["/api/games"] });
     },
     onError: (error: Error) => {
       toast({

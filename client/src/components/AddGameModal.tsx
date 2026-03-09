@@ -25,8 +25,8 @@ export function AddGameModal() {
   const [open, setOpen] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["PC"]);
-  const { games, createGame, isCreating } = useGames();
-  const isPro = false;
+  const { user } = useAuth();
+  const isPro = user?.isPro ?? false;
 
   const platforms = ["PC", "PlayStation", "Xbox", "Switch", "Other"];
 
@@ -64,12 +64,19 @@ export function AddGameModal() {
       return;
     }
 
-    const activeGamesCount = games?.filter(g => g.status !== 'completed' && g.status !== 'wishlist').length || 0;
+    const activeGamesCount = games?.filter(g => g.status === 'active').length || 0;
+    const backlogGamesCount = games?.filter(g => g.status === 'backlog').length || 0;
     const totalToCreate = selectedPlatforms.length;
 
-    if (!isPro && data.status !== 'wishlist' && (activeGamesCount + totalToCreate) > 5) {
-      setShowProModal(true);
-      return;
+    if (!isPro) {
+      if (data.status === 'active' && (activeGamesCount + totalToCreate) > 5) {
+        setShowProModal(true);
+        return;
+      }
+      if (data.status === 'backlog' && (backlogGamesCount + totalToCreate) > 10) {
+        setShowProModal(true);
+        return;
+      }
     }
 
     // Create entries for each platform
@@ -137,7 +144,7 @@ export function AddGameModal() {
           </DialogHeader>
           <div className="py-2 space-y-6 text-center">
             <p className="font-mono text-sm text-muted-foreground leading-relaxed px-4">
-              You've reached the <span className="text-white font-bold">5-game limit</span>. Move games to the Vault to stay free, or upgrade to Pro for life.
+              You've reached the system limit (5 Active / 10 Backlog). Move games to the Vault to stay free, or upgrade to Pro for life.
             </p>
             
             <div className="grid grid-cols-1 gap-3 px-4">

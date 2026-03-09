@@ -73,14 +73,21 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   const handleUpdateStatus = async (gameId: number, newStatus: string) => {
-    const activeGamesCount = games?.filter(g => g.status !== 'completed' && g.status !== 'wishlist').length || 0;
+    const activeGamesCount = games?.filter(g => g.status === 'active').length || 0;
+    const backlogGamesCount = games?.filter(g => g.status === 'backlog').length || 0;
     const currentGame = games?.find(g => g.id === gameId);
     
-    // If moving TO an active-like status (active/backlog) FROM a non-active status (wishlist)
-    if (!isPro && (newStatus === 'active' || newStatus === 'backlog') && 
-        currentGame?.status === 'wishlist' && activeGamesCount >= 5) {
-      setShowProModal(true);
-      return;
+    if (!isPro) {
+      // If moving TO active FROM something else
+      if (newStatus === 'active' && currentGame?.status !== 'active' && activeGamesCount >= 5) {
+        setShowProModal(true);
+        return;
+      }
+      // If moving TO backlog FROM something else
+      if (newStatus === 'backlog' && currentGame?.status !== 'backlog' && backlogGamesCount >= 10) {
+        setShowProModal(true);
+        return;
+      }
     }
     
     updateGame({ id: gameId, status: newStatus as any });
@@ -518,7 +525,7 @@ export default function Dashboard() {
           </DialogHeader>
           <div className="py-2 space-y-6 text-center">
             <p className="font-mono text-sm text-muted-foreground leading-relaxed px-4">
-              You've reached the <span className="text-white font-bold">5-game limit</span>. Move games to the Vault to stay free, or upgrade to Pro for life.
+              You've reached the system limit (5 Active / 10 Backlog). Move games to the Vault to stay free, or upgrade to Pro for life.
             </p>
             
             <div className="grid grid-cols-1 gap-3 px-4">
