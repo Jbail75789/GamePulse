@@ -305,21 +305,44 @@ export default function Dashboard() {
     if (!redeemCode.trim()) return;
     setIsRedeeming(true);
     try {
-      const res = await apiRequest("POST", "/api/user/redeem", { code: redeemCode });
+      // First try standard code
+      if (redeemCode === "PRO99") {
+        const res = await apiRequest("POST", "/api/user/redeem", { code: redeemCode });
+        if (res.ok) {
+          setIsPro(true);
+          toast({
+            title: "Pro Unlocked",
+            description: "Welcome to the elite tier, operative.",
+            className: "border-purple-500 text-purple-500 font-mono shadow-[0_0_15px_rgba(168,85,247,0.4)]",
+          });
+          setRedeemCode("");
+          setShowSettingsModal(false);
+          confetti({
+            particleCount: 200,
+            spread: 100,
+            origin: { y: 0.6 },
+            colors: ['#a855f7', '#d600ff', '#ffffff']
+          });
+          return;
+        }
+      }
+
+      // Then try free access code
+      const res = await apiRequest("POST", "/api/user/redeem-free", { code: redeemCode });
       if (res.ok) {
         setIsPro(true);
         toast({
-          title: "Pro Unlocked",
-          description: "Welcome to the elite tier, operative.",
-          className: "border-purple-500 text-purple-500 font-mono shadow-[0_0_15px_rgba(168,85,247,0.4)]",
+          title: "Free Access Activated",
+          description: "Access override confirmed. Welcome.",
+          className: "border-primary text-primary font-mono",
         });
         setRedeemCode("");
         setShowSettingsModal(false);
         confetti({
-          particleCount: 200,
-          spread: 100,
+          particleCount: 150,
+          spread: 70,
           origin: { y: 0.6 },
-          colors: ['#a855f7', '#d600ff', '#ffffff']
+          colors: ['#00ff9f', '#00b8ff', '#ffffff']
         });
       } else {
         toast({

@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   isPro: boolean("is_pro").default(false),
   pulseCharges: integer("pulse_charges").default(3),
   lastChargeRefill: timestamp("last_charge_refill").defaultNow(),
+  email: text("email"),
 });
 
 export const games = pgTable("games", {

@@ -84,5 +84,28 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.status(400).json({ message: "No charges remaining" });
   });
 
+  // Unique codes for free access
+  const freeAccessCodes = new Set<string>();
+
+  app.post("/api/admin/generate-code", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.email !== "admin@gamepulse.system") {
+      return res.sendStatus(403);
+    }
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    freeAccessCodes.add(code);
+    res.json({ code });
+  });
+
+  app.post("/api/user/redeem-free", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const { code } = req.body;
+    if (freeAccessCodes.has(code)) {
+      freeAccessCodes.delete(code);
+      const user = await storage.updateUserProStatus(req.user.id, true);
+      return res.json(user);
+    }
+    res.status(400).json({ message: "Invalid or used code" });
+  });
+
   return httpServer;
 }
