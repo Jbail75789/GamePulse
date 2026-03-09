@@ -102,6 +102,7 @@ export function useAuth() {
         description: "Session terminated.",
         className: "font-mono",
       });
+      window.location.href = "/";
     },
   });
 
