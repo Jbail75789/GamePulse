@@ -22,6 +22,7 @@ export const games = pgTable("games", {
   platform: text("platform").default("PC"),
   vibe: text("vibe", { enum: ["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"] }),
   progress: integer("progress").default(0),
+  targetHours: integer("target_hours").default(20),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({

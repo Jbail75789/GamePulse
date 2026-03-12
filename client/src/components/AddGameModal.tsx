@@ -13,6 +13,7 @@ import { CyberInput } from "./CyberInput";
 import { useGames } from "@/hooks/use-games";
 import { Plus, Zap, Check, LayoutGrid } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Select,
   SelectContent,
@@ -25,6 +26,7 @@ export function AddGameModal() {
   const [open, setOpen] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["PC"]);
+  const { games, createGame, isCreating } = useGames();
   const { user } = useAuth();
   const isPro = user?.isPro ?? false;
 

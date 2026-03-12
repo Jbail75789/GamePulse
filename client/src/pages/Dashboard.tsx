@@ -20,7 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import confetti from "canvas-confetti";
@@ -94,18 +93,27 @@ export default function Dashboard() {
   };
 
   const handleLogTime = async (game: Game) => {
-    const hours = parseInt(logHours);
+    const hours = parseFloat(logHours);
     if (isNaN(hours) || hours <= 0) return;
 
     setIsLoggingTime(true);
     try {
+      const newTotal = (game.playtime || 0) + hours;
+      const target = game.targetHours || 20;
+      const newProgress = Math.min(100, Math.floor((newTotal / target) * 100));
+      let newStatus = game.status;
+      if (newProgress >= 100) newStatus = "completed";
+      else if (newProgress > 0 && game.status !== 'completed') newStatus = "active";
+
       await updateGame({
         id: game.id,
-        playtime: (game.playtime || 0) + hours,
+        playtime: newTotal,
+        progress: newProgress,
+        status: newStatus,
       });
       toast({
-        title: "Playtime Logged",
-        description: `Added ${hours}h to ${game.title}. Total: ${(game.playtime || 0) + hours}h`,
+        title: "Time Logged",
+        description: `+${hours}h → ${newTotal}h / ${target}h (${newProgress}%)`,
         className: "border-primary text-primary font-mono",
       });
       setLoggingTimeId(null);
@@ -782,34 +790,25 @@ export default function Dashboard() {
                       game={game} 
                       onDelete={() => deleteGame(game.id)} 
                       onStatusUpdate={(status) => handleUpdateStatus(game.id, status)}
-                      onProgressUpdate={(progress) => {
-                        let status = game.status;
-                        if (progress === 100) status = "completed";
-                        else if (progress > 0) status = "active";
-                        updateGame({ id: game.id, progress, status });
-                      }}
-                      onLogTimeClick={() => { 
-                        const newPlaytime = (game.playtime || 0) + 1;
-                        const newProgress = Math.min(100, Math.floor((newPlaytime / 50) * 100));
-                        let newStatus = game.status;
-                        if (newProgress === 100) newStatus = "completed";
-                        else if (newProgress > 0 && game.status !== 'completed') newStatus = "active";
-                        updateGame({ id: game.id, playtime: newPlaytime, progress: newProgress, status: newStatus });
-                      }}
+                      onAddTimeClick={() => { setLoggingTimeId(game.id); setLogHours("1"); }}
                       isLoggingActive={loggingTimeId === game.id}
                     />
                     <AnimatePresence>
                       {loggingTimeId === game.id && (
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="absolute inset-0 z-20 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 rounded-lg border border-primary/30">
-                          <div className="text-[10px] font-mono text-primary uppercase mb-4">Neural Link: Add Hours</div>
-                          <div className="flex items-center gap-3 mb-6">
-                            <button onClick={() => setLogHours(prev => Math.max(1, parseInt(prev) - 1).toString())} className="w-8 h-8 flex items-center justify-center bg-black border border-white/10 rounded-sm">-</button>
-                            <input type="number" value={logHours} onChange={(e) => setLogHours(e.target.value)} className="w-16 bg-black border border-primary/40 text-center font-mono text-primary" />
-                            <button onClick={() => setLogHours(prev => (parseInt(prev) + 1).toString())} className="w-8 h-8 flex items-center justify-center bg-black border border-white/10 rounded-sm">+</button>
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="absolute inset-0 z-20 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 rounded-lg border border-primary/30">
+                          <div className="text-[10px] font-mono text-primary uppercase mb-1">+ Add Time</div>
+                          <div className="text-[9px] font-mono text-muted-foreground mb-4">
+                            {game.playtime || 0}h / {game.targetHours || 20}h logged
                           </div>
-                          <div className="flex flex-col gap-2 w-full max-w-[120px]">
-                            <button onClick={() => handleLogTime(game)} disabled={isLoggingTime} className="py-2 bg-primary text-background text-[10px] font-black uppercase rounded-sm">{isLoggingTime ? "UPLOADING..." : "LOG TIME"}</button>
-                            <button onClick={() => setLoggingTimeId(null)} className="py-2 bg-white/5 border border-white/10 text-[10px] font-mono uppercase rounded-sm">ABORT</button>
+                          <div className="flex items-center gap-3 mb-4">
+                            <button onClick={() => setLogHours(prev => Math.max(0.5, parseFloat(prev) - 0.5).toString())} className="w-8 h-8 flex items-center justify-center bg-black border border-white/10 rounded-sm text-sm">-</button>
+                            <input type="number" step="0.5" min="0.5" value={logHours} onChange={(e) => setLogHours(e.target.value)} className="w-16 bg-black border border-primary/40 text-center font-mono text-primary rounded-sm p-1" />
+                            <button onClick={() => setLogHours(prev => (parseFloat(prev) + 0.5).toString())} className="w-8 h-8 flex items-center justify-center bg-black border border-white/10 rounded-sm text-sm">+</button>
+                          </div>
+                          <div className="text-[9px] font-mono text-muted-foreground mb-5">hours</div>
+                          <div className="flex flex-col gap-2 w-full max-w-[130px]">
+                            <button onClick={() => handleLogTime(game)} disabled={isLoggingTime} className="py-2 bg-primary text-background text-[10px] font-black uppercase rounded-sm">{isLoggingTime ? "SAVING..." : "CONFIRM"}</button>
+                            <button onClick={() => setLoggingTimeId(null)} className="py-2 bg-white/5 border border-white/10 text-[10px] font-mono uppercase rounded-sm">CANCEL</button>
                           </div>
                         </motion.div>
                       )}
@@ -847,46 +846,62 @@ export default function Dashboard() {
   );
 }
 
-function GameCardItem({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVault, isPop, onLogTimeClick, isLoggingActive }: { game: Game, onDelete: () => void, onStatusUpdate: (status: any) => void, onProgressUpdate: (progress: number) => void, isInVault?: boolean, isPop?: boolean, onLogTimeClick: () => void, isLoggingActive: boolean }) {
+function GameCardItem({ game, onDelete, onStatusUpdate, onAddTimeClick, isPop }: { game: Game, onDelete: () => void, onStatusUpdate: (status: any) => void, onAddTimeClick: () => void, isPop?: boolean, isLoggingActive: boolean }) {
   const statusColors: Record<string, "primary" | "secondary" | "accent" | "none"> = { active: "primary", completed: "secondary", backlog: "accent", wishlist: "none" };
   
-  const getVibeGlowClass = (vibe: string | null) => {
-    if (!vibe) return "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]";
+  const getVibeColor = (vibe: string | null) => {
+    if (!vibe) return "#00ff9f";
     switch (vibe) {
-      case "Chill": return "bg-green-400 shadow-[0_0_15px_rgba(74,222,128,0.7)]";
-      case "Epic": return "bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.7)]";
-      case "Gritty": return "bg-orange-700 shadow-[0_0_15px_rgba(194,65,12,0.7)]";
-      case "Quick Fix": return "bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.7)]";
-      case "Competitive": return "bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.7)]";
-      default: return "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]";
+      case "Chill": return "#4ade80";
+      case "Epic": return "#3b82f6";
+      case "Gritty": return "#c2410c";
+      case "Quick Fix": return "#facc15";
+      case "Competitive": return "#dc2626";
+      default: return "#00ff9f";
     }
   };
 
-  const { toast } = useToast();
+  const totalHours = game.playtime || 0;
+  const targetHours = game.targetHours || 20;
+  const progress = game.progress || 0;
+  const vibeColor = getVibeColor(game.vibe);
+
   return (
     <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: isPop ? 1.05 : 1 }} exit={{ opacity: 0, scale: 0.9 }}>
       <CyberCard glowColor={statusColors[game.status]} className="h-full flex flex-col p-0 group overflow-hidden">
         <div className="relative aspect-[16/9] overflow-hidden">
           <img src={game.coverUrl || ""} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-          <div className="absolute top-2 right-2 flex gap-1">
-            <button onClick={(e) => { e.stopPropagation(); onLogTimeClick(); }} className="bg-black/80 p-1 border border-white/10 text-white rounded-sm"><Clock className="w-[18px] h-[18px]" /></button>
+          <div className="absolute top-2 right-2">
             <span className="bg-black/80 text-[10px] font-mono px-2 py-0.5 border border-white/10 text-white rounded-sm">{game.platform}</span>
           </div>
+          {game.status !== 'wishlist' && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/40">
+              <div
+                className="h-full transition-all duration-500"
+                style={{ width: `${progress}%`, backgroundColor: vibeColor, boxShadow: `0 0 8px ${vibeColor}80` }}
+              />
+            </div>
+          )}
         </div>
         <div className="p-4 flex flex-col flex-1">
-          <h3 className="font-display font-black text-lg leading-tight mb-2 truncate text-white">{game.title}</h3>
-          <div className="flex justify-between items-center text-[10px] font-mono text-muted-foreground mb-4">
-            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {game.playtime || 0}h</span>
-            <span className="text-primary">{game.progress || 0}%</span>
-          </div>
-          <Slider 
-            value={[game.progress || 0]} 
-            onValueChange={(v) => onProgressUpdate(v[0])} 
-            max={100} 
-            className="mb-4"
-            rangeClassName={getVibeGlowClass(game.vibe)}
-          />
-          {game.vibe && <div className="text-[8px] font-mono text-muted-foreground/60 uppercase mb-4 tracking-widest">// {game.vibe}</div>}
+          <h3 className="font-display font-black text-lg leading-tight mb-1 truncate text-white">{game.title}</h3>
+          {game.vibe && <div className="text-[8px] font-mono text-muted-foreground/60 uppercase mb-3 tracking-widest">// {game.vibe}</div>}
+          
+          {game.status !== 'wishlist' && (
+            <div className="mb-3">
+              <div className="flex justify-between items-center text-[10px] font-mono text-muted-foreground mb-1.5">
+                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {totalHours}h / {targetHours}h</span>
+                <span style={{ color: vibeColor }}>{progress}%</span>
+              </div>
+              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%`, backgroundColor: vibeColor, boxShadow: `0 0 6px ${vibeColor}60` }}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="mt-auto flex justify-between items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger className="text-[10px] font-mono uppercase text-muted-foreground focus:outline-none">[{game.status}]</DropdownMenuTrigger>
@@ -896,7 +911,17 @@ function GameCardItem({ game, onDelete, onStatusUpdate, onProgressUpdate, isInVa
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <button onClick={onDelete} className="text-muted-foreground hover:text-destructive p-1"><Trash2 className="w-3 h-3" /></button>
+            <div className="flex items-center gap-1">
+              {game.status !== 'wishlist' && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onAddTimeClick(); }}
+                  className="text-[9px] font-mono font-bold uppercase px-2 py-1 bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 rounded-sm transition-colors flex items-center gap-1"
+                >
+                  <Clock className="w-3 h-3" /> + Time
+                </button>
+              )}
+              <button onClick={onDelete} className="text-muted-foreground hover:text-destructive p-1"><Trash2 className="w-3 h-3" /></button>
+            </div>
           </div>
         </div>
       </CyberCard>
