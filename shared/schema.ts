@@ -39,6 +39,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertGameSchema = createInsertSchema(games).omit({ 
   id: true, 
   userId: true 
+}).extend({
+  playtime: z.number().transform(v => Math.round(v ?? 0)).optional().default(0),
+  targetHours: z.number().int().transform(v => v ?? 20).optional().default(20),
 });
 
 export type User = typeof users.$inferSelect;
