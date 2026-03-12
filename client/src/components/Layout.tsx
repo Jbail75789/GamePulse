@@ -54,13 +54,13 @@ export function Layout({ children }: { children: ReactNode }) {
                     <DropdownMenuSeparator className="bg-border" />
                     <Link href="/profile">
                       <DropdownMenuItem className="cursor-pointer font-mono hover:bg-primary/20 hover:text-primary">
-                        <User className="w-4 h-4 mr-2" />
+                        <User className="w-5 h-5 mr-2" />
                         Profile
                       </DropdownMenuItem>
                     </Link>
                     <Link href="/dashboard">
                       <DropdownMenuItem className="cursor-pointer font-mono hover:bg-primary/20 hover:text-primary">
-                        <LayoutDashboard className="w-4 h-4 mr-2" />
+                        <LayoutDashboard className="w-5 h-5 mr-2" />
                         Dashboard
                       </DropdownMenuItem>
                     </Link>
@@ -69,7 +69,7 @@ export function Layout({ children }: { children: ReactNode }) {
                       className="cursor-pointer text-destructive font-mono hover:bg-destructive/10"
                       onClick={() => logout()}
                     >
-                      <LogOut className="w-4 h-4 mr-2" />
+                      <LogOut className="w-5 h-5 mr-2" />
                       Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>

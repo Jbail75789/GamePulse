@@ -498,7 +498,7 @@ export default function Dashboard() {
           <div className="space-y-6 py-4">
             <section className="space-y-3">
               <h4 className="flex items-center gap-2 font-display text-sm text-primary">
-                <Zap className="w-4 h-4" /> Redeem Access
+                <Zap className="w-6 h-6" /> Redeem Access
               </h4>
               <div className="flex gap-2">
                 <input 
@@ -519,7 +519,7 @@ export default function Dashboard() {
 
             <section className="pt-4 border-t border-white/5">
               <h4 className="flex items-center gap-2 font-display text-sm text-destructive mb-2">
-                <AlertTriangle className="w-4 h-4" /> Danger Zone
+                <AlertTriangle className="w-6 h-6" /> Danger Zone
               </h4>
               {!showResetConfirm ? (
                 <button onClick={() => setShowResetConfirm(true)} className="w-full py-2 bg-destructive/10 border border-destructive/30 text-destructive text-xs font-mono rounded-sm hover:bg-destructive/20 transition-all tactile-press">
@@ -610,7 +610,7 @@ export default function Dashboard() {
           <div className="flex gap-2 w-full md:w-auto">
             <div className="flex flex-col gap-1 flex-1 md:flex-none">
               <button onClick={() => setShowRoulette(true)} disabled={!isPro && pulseCharges === 0} className="w-full px-3 md:px-6 py-2 md:py-3 bg-gradient-to-r from-secondary to-secondary/80 text-background font-display font-bold uppercase tracking-wider text-xs md:text-base rounded-md hover:from-secondary/90 hover:to-secondary/70 transition-all flex items-center justify-center gap-1 md:gap-2 tactile-press disabled:opacity-50 disabled:grayscale">
-                <Dices className="w-[18px] md:w-[24px] h-[18px] md:h-[24px]" />
+                <Dices className="w-5 h-5" />
                 <span className="hidden sm:inline">Pick a Game</span>
                 <span className="sm:hidden">Game</span>
               </button>
@@ -631,7 +631,7 @@ export default function Dashboard() {
         {activeTab === "completed" && filteredGames.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center md:justify-end">
             <button onClick={handleShareVault} className="flex items-center gap-2 px-4 py-2 bg-secondary/10 border border-secondary text-secondary text-xs font-display font-bold uppercase tracking-widest rounded-sm hover:bg-secondary/20 transition-all tactile-press">
-              <Share2 className="w-4 h-4" /> Share My Vault
+              <Share2 className="w-5 h-5" /> Share My Vault
             </button>
           </motion.div>
         )}
@@ -645,7 +645,7 @@ export default function Dashboard() {
                     <span className="text-yellow-400 text-4xl font-bold drop-shadow-[0_0_10px_rgba(250,204,21,0.6)] leading-none">∞</span>
                   ) : (
                     [...Array(3)].map((_, i) => (
-                      <Bolt key={i} className={`w-[20px] h-[20px] transition-all duration-500 ${i < pulseCharges ? "text-yellow-400 fill-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" : "text-white/10 fill-transparent"}`} />
+                      <Bolt key={i} className={`w-6 h-6 transition-all duration-500 ${i < pulseCharges ? "text-yellow-400 fill-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" : "text-white/10 fill-transparent"}`} />
                     ))
                   )}
                 </div>
@@ -665,7 +665,7 @@ export default function Dashboard() {
                 { id: "chaos", label: "Chaos Mode", desc: "Total Randomization", icon: Dices, color: "text-foreground", bg: "bg-white/5" },
               ].map((opt) => (
                 <button key={opt.id} onClick={() => handlePickGame(opt.id as any)} className={`flex items-center gap-4 p-4 ${opt.bg} border border-white/5 rounded-md hover:border-white/20 transition-all tactile-press text-left group`}>
-                  <div className={`p-2 rounded-sm bg-black/40 ${opt.color}`}><opt.icon className="w-[20px] h-[20px]" /></div>
+                  <div className={`p-2 rounded-sm bg-black/40 ${opt.color}`}><opt.icon className="w-6 h-6" /></div>
                   <div className="flex-1">
                     <div className="text-sm font-display font-bold uppercase tracking-wider">{opt.label}</div>
                     <div className="text-[10px] font-mono text-muted-foreground">{opt.desc}</div>
@@ -722,7 +722,7 @@ export default function Dashboard() {
 
         <div className="relative">
           <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-3 py-2">
-            <Search className="w-[18px] h-[18px] text-muted-foreground" />
+            <Search className="w-5 h-5 text-muted-foreground" />
             <input type="text" placeholder="Search games..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none font-mono text-xs md:text-sm" />
           </div>
           {searchResults.length > 0 && (
@@ -855,7 +855,7 @@ export default function Dashboard() {
               const Icon = tab.icon;
               return (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 flex flex-col items-center py-2 ${isActive ? tab.color : 'text-muted-foreground'}`}>
-                  <Icon className="w-[20px] h-[20px] mb-1" />
+                  <Icon className="w-[18px] h-[18px] mb-1" />
                   <span className="text-[10px] font-mono">{tab.label.split(' ')[1] || tab.label}</span>
                 </button>
               );
