@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertGameSchema, type InsertGame } from "@shared/schema";
+import { insertGameSchema } from "@shared/schema";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -11,16 +12,14 @@ import {
 import { CyberButton } from "./CyberButton";
 import { CyberInput } from "./CyberInput";
 import { useGames } from "@/hooks/use-games";
-import { Plus, Zap, Check, LayoutGrid } from "lucide-react";
+import { Plus, Zap, Check } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+const addGameFormSchema = insertGameSchema.extend({
+  coverUrl: z.string().optional(),
+});
+type AddGameForm = z.infer<typeof addGameFormSchema>;
 
 export function AddGameModal() {
   const [open, setOpen] = useState(false);
@@ -32,11 +31,10 @@ export function AddGameModal() {
 
   const platforms = ["PC", "PlayStation", "Xbox", "Switch", "Other"];
 
-  const form = useForm<InsertGame>({
-    resolver: zodResolver(insertGameSchema),
+  const form = useForm<AddGameForm>({
+    resolver: zodResolver(addGameFormSchema),
     defaultValues: {
       title: "",
-      coverUrl: "",
       status: "backlog",
       playtime: 0,
     },
@@ -52,7 +50,7 @@ export function AddGameModal() {
     );
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: AddGameForm) => {
     // Check for duplicates across all selected platforms
     const duplicates = selectedPlatforms.filter(p => 
       games?.some(g => g.title.toLowerCase() === data.title.toLowerCase() && g.platform === p)
@@ -86,6 +84,7 @@ export function AddGameModal() {
       for (const platform of selectedPlatforms) {
         await createGame({
           ...data,
+          coverUrl: data.coverUrl || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80",
           platform,
         });
       }
