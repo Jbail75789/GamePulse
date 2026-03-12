@@ -98,6 +98,7 @@ export default function Dashboard() {
 
     setIsLoggingTime(true);
     try {
+      const prevProgress = game.progress || 0;
       const newTotal = (game.playtime || 0) + hours;
       const target = game.targetHours || 20;
       const newProgress = Math.min(100, Math.floor((newTotal / target) * 100));
@@ -111,11 +112,32 @@ export default function Dashboard() {
         progress: newProgress,
         status: newStatus,
       });
-      toast({
-        title: "Time Logged",
-        description: `+${hours}h → ${newTotal}h / ${target}h (${newProgress}%)`,
-        className: "border-primary text-primary font-mono",
-      });
+
+      if (newProgress >= 100 && prevProgress < 100) {
+        toast({
+          title: "🏆 Mastered!",
+          description: "Move to Vault?",
+          className: "border-secondary text-secondary font-mono",
+        });
+      } else if (newProgress >= 50 && prevProgress < 50) {
+        toast({
+          title: "⚡ Halfway there!",
+          description: `${newTotal}h / ${target}h completed.`,
+          className: "border-primary text-primary font-mono",
+        });
+      } else if (newProgress >= 25 && prevProgress < 25) {
+        toast({
+          title: "✨ Nice start!",
+          description: `${newProgress}% through ${game.title}.`,
+          className: "border-primary text-primary font-mono",
+        });
+      } else {
+        toast({
+          title: "Time Logged",
+          description: `+${hours}h → ${newTotal}h / ${target}h (${newProgress}%)`,
+          className: "border-primary text-primary font-mono",
+        });
+      }
       setLoggingTimeId(null);
       setLogHours("1");
     } catch (error) {
