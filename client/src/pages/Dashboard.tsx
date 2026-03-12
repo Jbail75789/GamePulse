@@ -89,7 +89,13 @@ export default function Dashboard() {
       }
     }
     
-    updateGame({ id: gameId, status: newStatus as any });
+    const updates: any = { status: newStatus };
+    // Reset progress when removing from The Vault
+    if (currentGame?.status === 'completed' && newStatus !== 'completed') {
+      updates.progress = 0;
+      updates.playtime = 0;
+    }
+    updateGame({ id: gameId, ...updates });
   };
 
   const handleLogTime = async (game: Game) => {
@@ -934,13 +940,18 @@ function GameCardItem({ game, onDelete, onStatusUpdate, onAddTimeClick, isPop }:
               </DropdownMenuContent>
             </DropdownMenu>
             <div className="flex items-center gap-1">
-              {game.status !== 'wishlist' && (
+              {game.status !== 'wishlist' && game.status !== 'completed' && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onAddTimeClick(); }}
                   className="text-[9px] font-mono font-bold uppercase px-2 py-1 bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 rounded-sm transition-colors flex items-center gap-1"
                 >
                   <Clock className="w-3 h-3" /> + Time
                 </button>
+              )}
+              {game.status === 'completed' && (
+                <span className="text-[9px] font-mono text-secondary/60 uppercase flex items-center gap-1">
+                  <Trophy className="w-3 h-3" /> Vaulted
+                </span>
               )}
               <button onClick={onDelete} className="text-muted-foreground hover:text-destructive p-1"><Trash2 className="w-3 h-3" /></button>
             </div>
