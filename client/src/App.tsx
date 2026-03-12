@@ -51,15 +51,16 @@ function Router() {
 
 function App() {
   useEffect(() => {
-    // Keep-alive query for Supabase free tier
     const keepAlive = async () => {
       try {
         await supabase.from('games').select('id').limit(1);
       } catch (e) {
-        console.error('Supabase keep-alive failed:', e);
+        // silent — keep-alive failures shouldn't surface to the user
       }
     };
     keepAlive();
+    const interval = setInterval(keepAlive, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
