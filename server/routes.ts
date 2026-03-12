@@ -58,11 +58,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const lastRefill = user.lastChargeRefill || now;
     const hoursSinceLastRefill = (now.getTime() - lastRefill.getTime()) / (1000 * 60 * 60);
 
-    if (hoursSinceLastRefill >= 24) {
+    if (hoursSinceLastRefill >= 10) {
       user = await storage.updateUserCharges(user.id, 3, now);
     }
 
-    const nextRefill = new Date(lastRefill.getTime() + 24 * 60 * 60 * 1000);
+    const nextRefill = new Date(lastRefill.getTime() + 10 * 60 * 60 * 1000);
     res.json({ charges: user.pulseCharges, nextRefill: nextRefill.toISOString() });
   });
 

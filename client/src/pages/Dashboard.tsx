@@ -477,7 +477,7 @@ export default function Dashboard() {
   const currentTab = tabData.find(t => t.id === activeTab)?.label || "Library";
 
   const getTimeRemaining = () => {
-    if (!nextRefill) return "23h 59m";
+    if (!nextRefill) return "9h 59m";
     const now = new Date();
     const refill = new Date(nextRefill);
     const diff = refill.getTime() - now.getTime();
