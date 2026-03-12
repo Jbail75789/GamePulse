@@ -1,6 +1,6 @@
-import { users, games, type User, type InsertUser, type Game, type InsertGame } from "@shared/schema";
+import { users, games, promoCodes, type User, type InsertUser, type Game, type InsertGame } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -17,6 +17,9 @@ export interface IStorage {
   createGame(userId: number, game: InsertGame): Promise<Game>;
   updateGame(id: number, game: Partial<InsertGame>): Promise<Game>;
   deleteGame(id: number): Promise<void>;
+
+  createPromoCode(code: string): Promise<void>;
+  redeemPromoCode(code: string, userId: number): Promise<boolean>;
   
   sessionStore: session.Store;
 }
@@ -74,6 +77,19 @@ export class DatabaseStorage implements IStorage {
 
   async deleteGame(id: number): Promise<void> {
     await db.delete(games).where(eq(games.id, id));
+  }
+
+  async createPromoCode(code: string): Promise<void> {
+    await db.insert(promoCodes).values({ code });
+  }
+
+  async redeemPromoCode(code: string, userId: number): Promise<boolean> {
+    const [existing] = await db.select().from(promoCodes)
+      .where(eq(promoCodes.code, code));
+    if (!existing || existing.usedBy !== null) return false;
+    await db.update(promoCodes).set({ usedBy: userId }).where(eq(promoCodes.code, code));
+    await this.updateUserProStatus(userId, true);
+    return true;
   }
 }
 

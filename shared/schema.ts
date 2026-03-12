@@ -25,6 +25,12 @@ export const games = pgTable("games", {
   targetHours: integer("target_hours").default(20),
 });
 
+export const promoCodes = pgTable("promo_codes", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  usedBy: integer("used_by"),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,

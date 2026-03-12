@@ -84,27 +84,22 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.status(400).json({ message: "No charges remaining" });
   });
 
-  // Unique codes for free access
-  const freeAccessCodes = new Set<string>();
+  const ADMIN_SECRET = process.env.ADMIN_SECRET || "GAMEPULSE_ADMIN_2025";
 
   app.post("/api/admin/generate-code", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.email !== "admin@gamepulse.system") {
-      return res.sendStatus(403);
-    }
+    const { adminSecret } = req.body;
+    if (adminSecret !== ADMIN_SECRET) return res.sendStatus(403);
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    freeAccessCodes.add(code);
+    await storage.createPromoCode(code);
     res.json({ code });
   });
 
   app.post("/api/user/redeem-free", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const { code } = req.body;
-    if (freeAccessCodes.has(code)) {
-      freeAccessCodes.delete(code);
-      const user = await storage.updateUserProStatus(req.user.id, true);
-      return res.json(user);
-    }
-    res.status(400).json({ message: "Invalid or used code" });
+    const redeemed = await storage.redeemPromoCode(code, req.user.id);
+    if (redeemed) return res.json({ success: true });
+    res.status(400).json({ message: "Invalid or already used code" });
   });
 
   return httpServer;
