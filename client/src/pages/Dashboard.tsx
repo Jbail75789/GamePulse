@@ -624,7 +624,6 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
-            <AddGameModal />
           </div>
         </div>
 
@@ -720,21 +719,24 @@ export default function Dashboard() {
           </DialogContent>
         </Dialog>
 
-        <div className="relative">
-          <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-3 py-2">
-            <Search className="w-5 h-5 text-muted-foreground" />
-            <input type="text" placeholder="Search games..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none font-mono text-xs md:text-sm" />
+        <div className="flex items-start gap-2">
+          <div className="relative flex-1">
+            <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-3 py-2">
+              <Search className="w-5 h-5 text-muted-foreground" />
+              <input type="text" placeholder="Search games..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none font-mono text-xs md:text-sm" />
+            </div>
+            {searchResults.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="absolute top-full left-0 right-0 mt-2 bg-black/80 border border-border/50 rounded-md overflow-hidden backdrop-blur-sm z-20 max-h-96 overflow-y-auto">
+                {searchResults.slice(0, 8).map((result) => (
+                  <div key={result.id} onClick={() => handleGameSelect(result)} className="flex items-center gap-3 px-4 py-3 hover:bg-primary/20 cursor-pointer border-b border-border/30 last:border-b-0">
+                    <img src={result.background_image || ""} alt="" className="w-12 h-12 object-cover rounded-sm" />
+                    <span className="flex-1 text-sm font-mono text-foreground">{result.name}</span>
+                  </div>
+                ))}
+              </motion.div>
+            )}
           </div>
-          {searchResults.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="absolute top-full left-0 right-0 mt-2 bg-black/80 border border-border/50 rounded-md overflow-hidden backdrop-blur-sm z-20 max-h-96 overflow-y-auto">
-              {searchResults.slice(0, 8).map((result) => (
-                <div key={result.id} onClick={() => handleGameSelect(result)} className="flex items-center gap-3 px-4 py-3 hover:bg-primary/20 cursor-pointer border-b border-border/30 last:border-b-0">
-                  <img src={result.background_image || ""} alt="" className="w-12 h-12 object-cover rounded-sm" />
-                  <span className="flex-1 text-sm font-mono text-foreground">{result.name}</span>
-                </div>
-              ))}
-            </motion.div>
-          )}
+          <AddGameModal />
         </div>
 
         <Dialog open={showPlatformModal} onOpenChange={setShowPlatformModal}>
