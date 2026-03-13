@@ -28,6 +28,9 @@ interface SearchResult {
   id: number;
   name: string;
   background_image: string | null;
+  released: string | null;
+  rating: number | null;
+  genres: { name: string }[];
 }
 
 export default function Dashboard() {
@@ -55,6 +58,7 @@ export default function Dashboard() {
   const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
   const [logHours, setLogHours] = useState<string>("1");
   const [isLoggingTime, setIsLoggingTime] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [pulseCharges, setPulseCharges] = useState(3);
   const [nextRefill, setNextRefill] = useState<string | null>(null);
   const [justUpdatedId, setJustUpdatedId] = useState<number | null>(null);
@@ -408,19 +412,25 @@ export default function Dashboard() {
   useEffect(() => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     if (searchQuery.trim()) {
+      setIsSearching(true);
       searchTimeoutRef.current = setTimeout(async () => {
         const apiKey = import.meta.env.VITE_RAWG_API_KEY;
-        if (!apiKey) return;
+        if (!apiKey) { setIsSearching(false); return; }
         try {
-          const response = await fetch(`https://api.rawg.io/api/games?search=${encodeURIComponent(searchQuery)}&key=${apiKey}`);
+          const response = await fetch(
+            `https://api.rawg.io/api/games?search=${encodeURIComponent(searchQuery)}&key=${apiKey}&page_size=6`
+          );
           const data = await response.json();
           setSearchResults(data.results || []);
-        } catch (error) {
+        } catch {
           setSearchResults([]);
+        } finally {
+          setIsSearching(false);
         }
-      }, 500);
+      }, 400);
     } else {
       setSearchResults([]);
+      setIsSearching(false);
     }
     return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
   }, [searchQuery]);
@@ -721,20 +731,99 @@ export default function Dashboard() {
 
         <div className="flex items-start gap-2">
           <div className="relative flex-1">
-            <div className="flex items-center gap-2 bg-black/50 border border-border/50 rounded-md px-3 py-2">
-              <Search className="w-5 h-5 text-muted-foreground" />
-              <input type="text" placeholder="Search games..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none font-mono text-xs md:text-sm" />
+            <div className={`flex items-center gap-2 bg-black/50 border rounded-md px-3 py-2 transition-colors ${searchQuery ? 'border-primary/40' : 'border-border/50'}`}>
+              {isSearching ? (
+                <div className="w-5 h-5 flex items-center justify-center">
+                  <div className="w-3.5 h-3.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                </div>
+              ) : (
+                <Search className="w-5 h-5 text-muted-foreground" />
+              )}
+              <input
+                type="text"
+                placeholder="Search RAWG database..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none font-mono text-xs md:text-sm"
+                data-testid="input-search-games"
+              />
+              {searchQuery && (
+                <button onClick={() => { setSearchQuery(""); setSearchResults([]); }} className="text-muted-foreground hover:text-foreground transition-colors text-xs font-mono">✕</button>
+              )}
             </div>
-            {searchResults.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="absolute top-full left-0 right-0 mt-2 bg-black/80 border border-border/50 rounded-md overflow-hidden backdrop-blur-sm z-20 max-h-96 overflow-y-auto">
-                {searchResults.slice(0, 8).map((result) => (
-                  <div key={result.id} onClick={() => handleGameSelect(result)} className="flex items-center gap-3 px-4 py-3 hover:bg-primary/20 cursor-pointer border-b border-border/30 last:border-b-0">
-                    <img src={result.background_image || ""} alt="" className="w-12 h-12 object-cover rounded-sm" />
-                    <span className="flex-1 text-sm font-mono text-foreground">{result.name}</span>
+
+            <AnimatePresence>
+              {(searchResults.length > 0 || (isSearching && searchQuery)) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-[#0d0d0d]/95 border border-primary/20 rounded-md overflow-hidden backdrop-blur-xl z-30 shadow-[0_8px_32px_rgba(0,255,159,0.08)]"
+                >
+                  {isSearching && searchResults.length === 0 ? (
+                    <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground font-mono text-xs">
+                      <div className="w-3.5 h-3.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                      Scanning RAWG database...
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-white/5">
+                      {searchResults.slice(0, 6).map((result) => {
+                        const year = result.released ? new Date(result.released).getFullYear() : null;
+                        const genre = result.genres?.[0]?.name;
+                        return (
+                          <div
+                            key={result.id}
+                            onClick={() => handleGameSelect(result)}
+                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-primary/10 cursor-pointer transition-colors group"
+                            data-testid={`result-game-${result.id}`}
+                          >
+                            <div className="relative w-20 h-12 flex-shrink-0 rounded-sm overflow-hidden bg-white/5">
+                              {result.background_image ? (
+                                <img
+                                  src={result.background_image}
+                                  alt={result.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Gamepad2 className="w-5 h-5 text-white/20" />
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-display font-bold text-sm text-white truncate group-hover:text-primary transition-colors">
+                                {result.name}
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {year && (
+                                  <span className="text-[10px] font-mono text-muted-foreground">{year}</span>
+                                )}
+                                {genre && (
+                                  <span className="text-[9px] font-mono text-primary/60 uppercase tracking-wider px-1.5 py-0.5 bg-primary/5 border border-primary/10 rounded-sm">
+                                    {genre}
+                                  </span>
+                                )}
+                                {result.rating != null && result.rating > 0 && (
+                                  <span className="text-[10px] font-mono text-yellow-400/70">★ {result.rating.toFixed(1)}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-[9px] font-mono text-primary/40 group-hover:text-primary/80 transition-colors uppercase tracking-wider pr-1">
+                              Add →
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="px-3 py-1.5 border-t border-white/5 text-[9px] font-mono text-muted-foreground/40 uppercase tracking-widest text-right">
+                    Powered by RAWG
                   </div>
-                ))}
-              </motion.div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           <AddGameModal />
         </div>
