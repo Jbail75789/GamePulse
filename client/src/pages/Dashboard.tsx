@@ -788,7 +788,6 @@ export default function Dashboard() {
               )}
             </AnimatePresence>
           </div>
-          <AddGameModal />
           <AddGameModal
             open={searchAddOpen}
             onOpenChange={(val) => {
