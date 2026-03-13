@@ -7,13 +7,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { CyberButton } from "./CyberButton";
 import { CyberInput } from "./CyberInput";
 import { useGames } from "@/hooks/use-games";
-import { Plus, Zap, Check } from "lucide-react";
-import { useState } from "react";
+import { Plus, Zap, Check, Gamepad2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
 const addGameFormSchema = insertGameSchema.extend({
@@ -21,105 +20,205 @@ const addGameFormSchema = insertGameSchema.extend({
 });
 type AddGameForm = z.infer<typeof addGameFormSchema>;
 
-export function AddGameModal() {
-  const [open, setOpen] = useState(false);
+interface AddGameModalProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  prefill?: { title: string; coverUrl?: string | null };
+}
+
+const PLATFORMS = ["PC", "Steam", "PS5", "Xbox", "Switch", "Other"];
+const VIBES = ["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"];
+const STATUSES = [
+  { value: "active", label: "Playing Now" },
+  { value: "backlog", label: "Backlog" },
+  { value: "wishlist", label: "Wish List" },
+  { value: "completed", label: "Completed" },
+];
+
+export function AddGameModal({ open: controlledOpen, onOpenChange, prefill }: AddGameModalProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["PC"]);
+  const [selectedVibe, setSelectedVibe] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("backlog");
   const { games, createGame, isCreating } = useGames();
   const { user } = useAuth();
   const isPro = user?.isPro ?? false;
 
-  const platforms = ["PC", "PlayStation", "Xbox", "Switch", "Other"];
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (val: boolean) => {
+    if (isControlled) onOpenChange?.(val);
+    else setInternalOpen(val);
+  };
 
   const form = useForm<AddGameForm>({
     resolver: zodResolver(addGameFormSchema),
-    defaultValues: {
-      title: "",
-      status: "backlog",
-      playtime: 0,
-    },
+    defaultValues: { title: "", status: "backlog", playtime: 0 },
   });
 
-  const vibes = ["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"];
+  useEffect(() => {
+    if (open && prefill) {
+      form.reset({ title: prefill.title, status: "backlog", playtime: 0 });
+      setSelectedStatus("backlog");
+      setSelectedPlatforms(["PC"]);
+      setSelectedVibe(null);
+    }
+    if (!open) {
+      form.reset({ title: "", status: "backlog", playtime: 0 });
+      setSelectedStatus("backlog");
+      setSelectedPlatforms(["PC"]);
+      setSelectedVibe(null);
+    }
+  }, [open, prefill]);
 
   const togglePlatform = (p: string) => {
-    setSelectedPlatforms(prev => 
-      prev.includes(p) 
+    setSelectedPlatforms(prev =>
+      prev.includes(p)
         ? prev.length > 1 ? prev.filter(x => x !== p) : prev
         : [...prev, p]
     );
   };
 
   const onSubmit = async (data: AddGameForm) => {
-    // Check for duplicates across all selected platforms
-    const duplicates = selectedPlatforms.filter(p => 
+    const duplicates = selectedPlatforms.filter(p =>
       games?.some(g => g.title.toLowerCase() === data.title.toLowerCase() && g.platform === p)
     );
-
     if (duplicates.length > 0) {
-      form.setError("title", {
-        type: "manual",
-        message: `Already in Pulse on: ${duplicates.join(", ")}.`,
-      });
+      form.setError("title", { type: "manual", message: `Already in Pulse on: ${duplicates.join(", ")}.` });
       return;
     }
 
-    const activeGamesCount = games?.filter(g => g.status === 'active').length || 0;
-    const backlogGamesCount = games?.filter(g => g.status === 'backlog').length || 0;
-    const totalToCreate = selectedPlatforms.length;
+    const activeCount = games?.filter(g => g.status === "active").length || 0;
+    const backlogCount = games?.filter(g => g.status === "backlog").length || 0;
+    const total = selectedPlatforms.length;
 
     if (!isPro) {
-      if (data.status === 'active' && (activeGamesCount + totalToCreate) > 5) {
-        setShowProModal(true);
-        return;
-      }
-      if (data.status === 'backlog' && (backlogGamesCount + totalToCreate) > 10) {
-        setShowProModal(true);
-        return;
-      }
+      if (selectedStatus === "active" && activeCount + total > 5) { setShowProModal(true); return; }
+      if (selectedStatus === "backlog" && backlogCount + total > 10) { setShowProModal(true); return; }
     }
 
-    // Create entries for each platform
     try {
       for (const platform of selectedPlatforms) {
         await createGame({
           ...data,
-          coverUrl: data.coverUrl || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80",
+          status: selectedStatus as AddGameForm["status"],
+          vibe: selectedVibe as AddGameForm["vibe"],
+          coverUrl: prefill?.coverUrl || data.coverUrl || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80",
           platform,
         });
       }
       setOpen(false);
-      form.reset();
-      setSelectedPlatforms(["PC"]);
     } catch (error) {
-      console.error("Failed to create multi-platform entries", error);
+      console.error("Failed to create game entries", error);
     }
   };
+
+  const coverUrl = prefill?.coverUrl;
 
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <CyberButton className="w-full sm:w-auto">
+        {!isControlled && (
+          <CyberButton className="w-full sm:w-auto" onClick={() => setOpen(true)}>
             <Plus className="w-5 h-5 mr-2" />
             Add Game
           </CyberButton>
-        </DialogTrigger>
-        <DialogContent className="bg-card border-border font-body sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-display text-primary uppercase tracking-tighter">Database Entry</DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
-            <CyberInput
-              label="Game Title"
-              placeholder="e.g. Cyberpunk 2077"
-              {...form.register("title")}
-              error={form.formState.errors.title?.message}
-            />
-            
-            <div className="flex justify-end pt-4">
-              <CyberButton type="submit" isLoading={isCreating}>
+        )}
+        <DialogContent className="bg-card border-border font-body sm:max-w-md p-0 overflow-hidden">
+          {coverUrl ? (
+            <div className="relative h-36 w-full overflow-hidden">
+              <img src={coverUrl} alt={prefill?.title} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-card" />
+              <div className="absolute bottom-0 left-0 right-0 px-6 pb-3">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-display text-primary uppercase tracking-tighter drop-shadow-lg">
+                    {prefill?.title || "Add Game"}
+                  </DialogTitle>
+                </DialogHeader>
+              </div>
+            </div>
+          ) : (
+            <div className="px-6 pt-6 pb-2">
+              <DialogHeader>
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-10 h-10 rounded-sm bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <Gamepad2 className="w-5 h-5 text-primary/60" />
+                  </div>
+                  <DialogTitle className="text-2xl font-display text-primary uppercase tracking-tighter">
+                    Database Entry
+                  </DialogTitle>
+                </div>
+              </DialogHeader>
+            </div>
+          )}
+
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 px-6 pb-6 pt-4">
+            {!prefill && (
+              <CyberInput
+                label="Game Title"
+                placeholder="e.g. Cyberpunk 2077"
+                {...form.register("title")}
+                error={form.formState.errors.title?.message}
+              />
+            )}
+            {prefill && form.formState.errors.title?.message && (
+              <p className="text-xs font-mono text-destructive -mt-3">{form.formState.errors.title.message}</p>
+            )}
+
+            <div>
+              <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-2 block">Status</label>
+              <div className="grid grid-cols-2 gap-2">
+                {STATUSES.map(s => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => setSelectedStatus(s.value)}
+                    className={`px-3 py-2 rounded-md font-mono text-xs transition-all ${selectedStatus === s.value ? "bg-primary/30 border border-primary text-primary" : "bg-black/50 border border-border/50 text-muted-foreground hover:bg-primary/10 hover:text-foreground"}`}
+                    data-testid={`status-option-${s.value}`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-2 block">Platform</label>
+              <div className="grid grid-cols-3 gap-2">
+                {PLATFORMS.map(p => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => togglePlatform(p)}
+                    className={`py-2 rounded-md font-mono text-xs transition-all ${selectedPlatforms.includes(p) ? "bg-secondary/30 border border-secondary text-secondary" : "bg-black/50 border border-border/50 text-muted-foreground hover:bg-secondary/10 hover:text-foreground"}`}
+                    data-testid={`platform-option-${p}`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-2 block">Vibe <span className="opacity-50">(optional)</span></label>
+              <div className="grid grid-cols-3 gap-2">
+                {VIBES.map(v => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setSelectedVibe(selectedVibe === v ? null : v)}
+                    className={`px-2 py-2 rounded-md font-mono text-[10px] transition-all ${selectedVibe === v ? "bg-accent/30 border border-accent text-accent" : "bg-black/50 border border-border/50 text-muted-foreground hover:bg-accent/10 hover:text-foreground"}`}
+                    data-testid={`vibe-option-${v}`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <CyberButton type="submit" isLoading={isCreating} data-testid="button-save-game">
                 {selectedPlatforms.length > 1 ? `Sync ${selectedPlatforms.length} Systems` : "Save to Database"}
               </CyberButton>
             </div>
@@ -147,7 +246,6 @@ export function AddGameModal() {
             <p className="font-mono text-sm text-muted-foreground leading-relaxed px-4">
               You've reached the system limit (5 Active / 10 Backlog). Move games to the Vault to stay free, or upgrade to Pro for life.
             </p>
-            
             <div className="grid grid-cols-1 gap-3 px-4">
               {[
                 "∞ Unlimited Backlog & Vault",
@@ -161,16 +259,14 @@ export function AddGameModal() {
                 </div>
               ))}
             </div>
-
             <div className="px-4 pt-4">
-              <CyberButton 
+              <CyberButton
                 className="w-full py-8 text-xl font-black italic tracking-tighter bg-purple-600 hover:bg-purple-500 border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all duration-300 animate-pulse"
                 onClick={() => setShowProModal(false)}
               >
                 UPGRADE FOR $0.99
               </CyberButton>
             </div>
-            
             <p className="text-[10px] font-mono text-muted-foreground/30 uppercase tracking-[0.2em]">
               Authorization Status: Level 1 Technician
             </p>

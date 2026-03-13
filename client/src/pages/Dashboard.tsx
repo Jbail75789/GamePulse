@@ -39,15 +39,13 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog" | "wishlist">("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [selectedGame, setSelectedGame] = useState<SearchResult | null>(null);
-  const [showPlatformModal, setShowPlatformModal] = useState(false);
+  const [searchAddOpen, setSearchAddOpen] = useState(false);
+  const [searchAddPrefill, setSearchAddPrefill] = useState<{ title: string; coverUrl?: string | null } | undefined>();
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [redeemCode, setRedeemCode] = useState("");
   const [isRedeeming, setIsRedeeming] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<"active" | "completed" | "backlog" | "wishlist">("backlog");
-  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [spotlightGame, setSpotlightGame] = useState<Game | null>(null);
   const [showRoulette, setShowRoulette] = useState(false);
   const [rouletteSource, setRouletteSource] = useState<"backlog" | "active">("backlog");
@@ -69,7 +67,6 @@ export default function Dashboard() {
       setIsPro(user.isPro);
     }
   }, [user]);
-  const [selectedVibe, setSelectedVibe] = useState<"Chill" | "Epic" | "Gritty" | "Quick Fix" | "Competitive" | null>(null);
   const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
   const [showProModal, setShowProModal] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
@@ -436,44 +433,10 @@ export default function Dashboard() {
   }, [searchQuery]);
 
   const handleGameSelect = (game: SearchResult) => {
-    setSelectedGame(game);
-    setSelectedStatus("backlog");
-    setSelectedVibe(null);
-    setSelectedPlatform(null);
-    setShowPlatformModal(true);
-  };
-
-  const handleSaveGame = async () => {
-    if (!selectedGame || !selectedPlatform) {
-      toast({ title: "Error", description: "Please select a platform", variant: "destructive" });
-      return;
-    }
-
-    try {
-      const activeGamesCount = games?.filter(g => g.status === "active").length || 0;
-      if (!isPro && selectedStatus === "active" && activeGamesCount >= 5) {
-        toast({ title: "Pulse Limit Reached", description: "Free tier is limited to 5 active games.", variant: "destructive" });
-        return;
-      }
-
-      await createGame({
-        title: selectedGame.name,
-        coverUrl: selectedGame.background_image || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80",
-        platform: selectedPlatform,
-        status: selectedStatus,
-        playtime: 0,
-        progress: 0,
-        vibe: selectedVibe,
-      });
-
-      toast({ title: "Link Established", description: `${selectedGame.name} added to your library.`, className: "border-primary text-primary font-mono" });
-      setShowPlatformModal(false);
-      setSelectedGame(null);
-      setSearchQuery("");
-      setSearchResults([]);
-    } catch (error) {
-      toast({ title: "Link Error", description: "Failed to synchronize game data.", variant: "destructive" });
-    }
+    setSearchAddPrefill({ title: game.name, coverUrl: game.background_image });
+    setSearchAddOpen(true);
+    setSearchQuery("");
+    setSearchResults([]);
   };
 
   const tabData = [
@@ -826,52 +789,15 @@ export default function Dashboard() {
             </AnimatePresence>
           </div>
           <AddGameModal />
+          <AddGameModal
+            open={searchAddOpen}
+            onOpenChange={(val) => {
+              setSearchAddOpen(val);
+              if (!val) setSearchAddPrefill(undefined);
+            }}
+            prefill={searchAddPrefill}
+          />
         </div>
-
-        <Dialog open={showPlatformModal} onOpenChange={setShowPlatformModal}>
-          <DialogContent className="bg-card border-border sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="font-display uppercase tracking-widest text-primary">{selectedGame?.name}</DialogTitle>
-              <DialogDescription className="font-mono text-xs">Configure before adding to library</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6 py-4">
-              <div>
-                <label className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2 block">Status</label>
-                <div className="grid grid-cols-1 gap-2">
-                  {["active", "backlog", "completed"].map((status) => (
-                    <button key={status} onClick={() => setSelectedStatus(status as any)} className={`px-4 py-2 rounded-md font-mono text-sm capitalize transition-all ${selectedStatus === status ? "bg-primary/30 border border-primary text-primary" : "bg-black/50 border border-border text-foreground hover:bg-primary/20"}`}>
-                      {status === "active" ? "Playing Now" : status}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2 block">Vibe</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"].map((v) => (
-                    <button key={v} onClick={() => setSelectedVibe(selectedVibe === v ? null : (v as any))} className={`px-3 py-2 rounded-md font-mono text-[10px] transition-all ${selectedVibe === v ? "bg-accent/30 border border-accent text-accent" : "bg-black/50 border border-border text-foreground hover:bg-accent/20"}`}>
-                      {v}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2 block">Platform</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {["Steam", "Xbox", "PS5"].map((p) => (
-                    <button key={p} onClick={() => setSelectedPlatform(p)} className={`py-2 rounded-md font-mono text-xs transition-all ${selectedPlatform === p ? "bg-secondary/30 border border-secondary text-secondary" : "bg-black/50 border border-border text-foreground hover:bg-secondary/20"}`}>
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={handleSaveGame} disabled={!selectedPlatform} className={`flex-1 py-3 rounded-md font-mono font-bold transition-all ${selectedPlatform ? "bg-primary text-background" : "bg-black/30 text-muted-foreground"}`}>Add to Library</button>
-                <button onClick={() => setShowPlatformModal(false)} className="px-4 py-3 bg-white/5 border border-border text-xs font-mono rounded-md">Cancel</button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         <div className="hidden md:flex flex-wrap gap-2 border-b border-border/50 pb-1">
           {tabData.map((tab) => {
