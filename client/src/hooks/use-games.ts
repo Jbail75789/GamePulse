@@ -30,11 +30,12 @@ export function useGames() {
       }
       return api.games.create.responses[201].parse(await res.json());
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [api.games.list.path] });
+      const hasCover = variables.coverUrl && !variables.coverUrl.includes("unsplash");
       toast({
-        title: "Database Updated",
-        description: "Game entry added successfully.",
+        title: "Link Established",
+        description: `"${variables.title}" saved${hasCover ? " with RAWG artwork" : ""}.`,
         className: "border-primary text-primary font-mono",
       });
     },
