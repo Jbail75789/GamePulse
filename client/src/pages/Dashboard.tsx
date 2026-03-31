@@ -50,6 +50,7 @@ export default function Dashboard() {
   const [showRoulette, setShowRoulette] = useState(false);
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [spinMode, setSpinMode] = useState<string>("chill");
   const [spinGame, setSpinGame] = useState<Game | null>(null);
   const [isStartingAdventure, setIsStartingAdventure] = useState(false);
   const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
@@ -247,6 +248,7 @@ export default function Dashboard() {
       winner = filtered[Math.floor(Math.random() * filtered.length)];
     }
     
+    setSpinMode(mode);
     setIsSpinning(true);
     let iterations = 0;
     const maxIterations = 20;
@@ -662,13 +664,66 @@ export default function Dashboard() {
 
         <AnimatePresence>
           {isSpinning && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] flex flex-col items-center justify-center">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 backdrop-blur-xl z-[100] flex flex-col items-center justify-center"
+              style={{ backgroundColor: spinMode === "chaos" ? "rgba(20,0,0,0.95)" : "rgba(0,0,0,0.90)" }}
+            >
+              {spinMode === "chaos" && (
+                <motion.div
+                  className="absolute inset-0 pointer-events-none"
+                  animate={{ opacity: [0.08, 0.22, 0.06, 0.18, 0.04, 0.2, 0.08] }}
+                  transition={{ duration: 0.6, repeat: Infinity, ease: "linear" }}
+                  style={{ background: "radial-gradient(ellipse at center, #dc143c 0%, transparent 70%)" }}
+                />
+              )}
               <div className="relative w-full max-w-lg px-6 text-center">
-                <div className="text-[10px] font-mono text-primary uppercase tracking-[0.3em] mb-2 animate-pulse">Scanning Neural Pathways...</div>
-                <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent mb-8" />
+                {spinMode === "chaos" ? (
+                  <motion.div
+                    className="text-[10px] font-mono uppercase tracking-[0.3em] mb-2"
+                    animate={{ color: ["#dc143c", "#c0c0c0", "#ff1744", "#e8e8e8", "#dc143c"], opacity: [1, 0.7, 1, 0.5, 1] }}
+                    transition={{ duration: 0.5, repeat: Infinity, ease: "linear" }}
+                  >
+                    Initiating Chaos Protocol...
+                  </motion.div>
+                ) : (
+                  <div className="text-[10px] font-mono text-primary uppercase tracking-[0.3em] mb-2 animate-pulse">Scanning Neural Pathways...</div>
+                )}
+                <motion.div
+                  className="h-px w-full mb-8"
+                  style={spinMode === "chaos"
+                    ? { background: "linear-gradient(to right, transparent, #dc143c, #c0c0c0, #dc143c, transparent)" }
+                    : { background: "linear-gradient(to right, transparent, hsl(var(--primary)/0.5), transparent)" }
+                  }
+                  {...(spinMode === "chaos" ? {
+                    animate: { opacity: [1, 0.4, 1, 0.6, 1] },
+                    transition: { duration: 0.4, repeat: Infinity, ease: "linear" }
+                  } : {})}
+                />
                 <AnimatePresence mode="wait">
                   <motion.div key={spinGame?.id || 'empty'} initial={{ y: 50, opacity: 0, scale: 0.8, filter: "blur(10px)" }} animate={{ y: 0, opacity: 1, scale: 1, filter: "blur(0px)" }} exit={{ y: -50, opacity: 0, scale: 1.2, filter: "blur(10px)" }} transition={{ duration: 0.1 }} className="min-h-[120px] flex items-center justify-center">
-                    <h2 className="text-3xl md:text-5xl lg:text-7xl font-display font-black uppercase tracking-tighter text-white drop-shadow-[0_0_20px_rgba(var(--primary),0.8)] leading-none break-words">{spinGame?.title || "???"}</h2>
+                    {spinMode === "chaos" ? (
+                      <motion.h2
+                        className="text-3xl md:text-5xl lg:text-7xl font-display font-black uppercase tracking-tighter leading-none break-words"
+                        animate={{
+                          color: ["#ff1744", "#c0c0c0", "#ff2222", "#e8e8e8", "#dc143c", "#d0d0d0", "#ff1744"],
+                          textShadow: [
+                            "0 0 30px #dc143c, 0 0 60px #8b0000",
+                            "0 0 20px #c0c0c0, 0 0 40px #808080",
+                            "0 0 40px #ff1744, 0 0 80px #dc143c",
+                            "0 0 15px #e8e8e8",
+                            "0 0 35px #dc143c, 0 0 70px #8b0000",
+                            "0 0 25px #c0c0c0",
+                            "0 0 30px #dc143c, 0 0 60px #8b0000",
+                          ]
+                        }}
+                        transition={{ duration: 0.55, repeat: Infinity, ease: "linear" }}
+                      >
+                        {spinGame?.title || "???"}
+                      </motion.h2>
+                    ) : (
+                      <h2 className="text-3xl md:text-5xl lg:text-7xl font-display font-black uppercase tracking-tighter text-white drop-shadow-[0_0_20px_rgba(var(--primary),0.8)] leading-none break-words">{spinGame?.title || "???"}</h2>
+                    )}
                   </motion.div>
                 </AnimatePresence>
               </div>
