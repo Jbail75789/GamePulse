@@ -677,7 +677,13 @@ export default function Dashboard() {
                   style={{ background: "radial-gradient(ellipse at center, #dc143c 0%, transparent 70%)" }}
                 />
               )}
-              <div className="relative w-full max-w-lg px-6 text-center">
+              <motion.div
+                className="relative w-full max-w-lg px-6 text-center"
+                {...(spinMode === "chaos" ? {
+                  animate: { x: [0, -5, 4, -3, 5, -2, 3, -4, 2, 0], y: [0, 1, -2, 2, -1, 2, -1, 1, 0] },
+                  transition: { duration: 0.18, repeat: Infinity, ease: "linear" }
+                } : {})}
+              >
                 {spinMode === "chaos" ? (
                   <motion.div
                     className="text-[10px] font-mono uppercase tracking-[0.3em] mb-2"
@@ -707,6 +713,7 @@ export default function Dashboard() {
                         className="text-3xl md:text-5xl lg:text-7xl font-display font-black uppercase tracking-tighter leading-none break-words"
                         animate={{
                           color: ["#ff1744", "#c0c0c0", "#ff2222", "#e8e8e8", "#dc143c", "#d0d0d0", "#ff1744"],
+                          filter: ["blur(0px)", "blur(5px)", "blur(1px)", "blur(7px)", "blur(0px)", "blur(4px)", "blur(0px)"],
                           textShadow: [
                             "0 0 30px #dc143c, 0 0 60px #8b0000",
                             "0 0 20px #c0c0c0, 0 0 40px #808080",
@@ -726,7 +733,7 @@ export default function Dashboard() {
                     )}
                   </motion.div>
                 </AnimatePresence>
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
