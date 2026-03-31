@@ -223,7 +223,6 @@ export default function Dashboard() {
     const moods: Record<string, { filter: (g: Game) => boolean; label: string }> = {
       chill:       { filter: (g: Game) => g.vibe?.toLowerCase() === 'chill',       label: 'Chill' },
       epic:        { filter: (g: Game) => g.vibe?.toLowerCase() === 'epic',        label: 'Epic' },
-      gritty:      { filter: (g: Game) => g.vibe?.toLowerCase() === 'gritty',      label: 'Gritty' },
       quickfix:    { filter: (g: Game) => g.vibe?.toLowerCase() === 'quick fix',   label: 'Quick Fix' },
       competitive: { filter: (g: Game) => g.vibe?.toLowerCase() === 'competitive', label: 'Competitive' },
       chaos:       { filter: () => true,                                            label: 'Chaos Mode' },
@@ -639,7 +638,6 @@ export default function Dashboard() {
                 { id: "chaos",       label: "Chaos Mode",  desc: "Every game — no filter",    icon: Dices,  hex: "#ffffff" },
                 { id: "chill",       label: "Chill",       desc: "Relaxed & low-stakes",      icon: Sofa,   hex: "#4ade80" },
                 { id: "epic",        label: "Epic",        desc: "Big adventures & RPGs",     icon: Trophy, hex: "#3b82f6" },
-                { id: "gritty",      label: "Gritty",      desc: "Dark, tense & brutal",      icon: Sword,  hex: "#c2410c" },
                 { id: "quickfix",    label: "Quick Fix",   desc: "Short sessions, fast fun",  icon: Bolt,   hex: "#facc15" },
                 { id: "competitive", label: "Competitive", desc: "Ranked & skill-based",      icon: Zap,    hex: "#dc2626" },
               ].map((opt) => (
@@ -999,7 +997,6 @@ function GameCardItem({ game, onDelete, onStatusUpdate, onAddTimeClick, isPop }:
     switch (vibe) {
       case "Chill": return "#4ade80";
       case "Epic": return "#3b82f6";
-      case "Gritty": return "#c2410c";
       case "Quick Fix": return "#facc15";
       case "Competitive": return "#dc2626";
       default: return "#00ff9f";

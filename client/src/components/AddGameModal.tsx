@@ -26,7 +26,7 @@ interface AddGameModalProps {
 }
 
 const PLATFORMS = ["PC", "Steam", "PS5", "Xbox", "Switch", "Other"];
-const VIBES = ["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"];
+const VIBES = ["Chill", "Epic", "Quick Fix", "Competitive"];
 const STATUSES = [
   { value: "active", label: "Playing Now" },
   { value: "backlog", label: "Backlog" },
