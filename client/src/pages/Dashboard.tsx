@@ -214,12 +214,14 @@ export default function Dashboard() {
     fetchCharges();
   }, [isPro]);
 
-  const handlePickGame = (mode: "epic" | "quick" | "chill" | "chaos") => {
-    const moods = {
-      epic: { filter: (g: Game) => g.vibe === 'Epic', label: 'Epic Quest' },
-      quick: { filter: (g: Game) => g.vibe === 'Quick Fix' || g.vibe === 'Competitive', label: 'Quick Hit' },
-      chill: { filter: (g: Game) => g.vibe === 'Chill', label: 'Chill Vibe' },
-      chaos: { filter: () => true, label: 'Chaos Mode' }
+  const handlePickGame = (mode: string) => {
+    const moods: Record<string, { filter: (g: Game) => boolean; label: string }> = {
+      chill:       { filter: (g: Game) => g.vibe?.toLowerCase() === 'chill',       label: 'Chill' },
+      epic:        { filter: (g: Game) => g.vibe?.toLowerCase() === 'epic',        label: 'Epic' },
+      gritty:      { filter: (g: Game) => g.vibe?.toLowerCase() === 'gritty',      label: 'Gritty' },
+      quickfix:    { filter: (g: Game) => g.vibe?.toLowerCase() === 'quick fix',   label: 'Quick Fix' },
+      competitive: { filter: (g: Game) => g.vibe?.toLowerCase() === 'competitive', label: 'Competitive' },
+      chaos:       { filter: () => true,                                            label: 'Chaos Mode' },
     };
 
     const eligibleGames = (games || [])
@@ -631,12 +633,14 @@ export default function Dashboard() {
             </DialogHeader>
             <div className="grid grid-cols-1 gap-3 py-4">
               {[
-                { id: "epic", label: "Epic Quest", desc: "RPG / Strategy", icon: Trophy, color: "text-secondary", bg: "bg-secondary/10" },
-                { id: "quick", label: "Quick Hit", desc: "Action / Sports", icon: Gamepad2, color: "text-primary", bg: "bg-primary/10" },
-                { id: "chill", label: "Chill Vibe", desc: "Indie / Platformer", icon: Sofa, color: "text-accent", bg: "bg-accent/10" },
-                { id: "chaos", label: "Chaos Mode", desc: "Total Randomization", icon: Dices, color: "text-foreground", bg: "bg-white/5" },
+                { id: "chill",       label: "Chill",       desc: "Relaxed & low-stakes",    icon: Sofa,    color: "text-accent",     bg: "bg-accent/10" },
+                { id: "epic",        label: "Epic",        desc: "Big adventures & RPGs",   icon: Trophy,  color: "text-secondary",  bg: "bg-secondary/10" },
+                { id: "gritty",      label: "Gritty",      desc: "Dark, tense & brutal",    icon: Sword,   color: "text-red-400",    bg: "bg-red-900/10" },
+                { id: "quickfix",    label: "Quick Fix",   desc: "Short sessions, fast fun", icon: Bolt,    color: "text-yellow-400", bg: "bg-yellow-900/10" },
+                { id: "competitive", label: "Competitive", desc: "Ranked & skill-based",     icon: Zap,     color: "text-primary",    bg: "bg-primary/10" },
+                { id: "chaos",       label: "Chaos Mode",  desc: "Total randomization",      icon: Dices,   color: "text-foreground", bg: "bg-white/5" },
               ].map((opt) => (
-                <button key={opt.id} onClick={() => handlePickGame(opt.id as any)} className={`flex items-center gap-4 p-4 ${opt.bg} border border-white/5 rounded-md hover:border-white/20 transition-all tactile-press text-left group`}>
+                <button key={opt.id} onClick={() => handlePickGame(opt.id)} className={`flex items-center gap-4 p-4 ${opt.bg} border border-white/5 rounded-md hover:border-white/20 transition-all tactile-press text-left group`}>
                   <div className={`p-2 rounded-sm bg-black/40 ${opt.color}`}><opt.icon className="w-6 h-6" /></div>
                   <div className="flex-1">
                     <div className="text-sm font-display font-bold uppercase tracking-wider">{opt.label}</div>
