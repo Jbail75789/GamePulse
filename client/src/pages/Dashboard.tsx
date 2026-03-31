@@ -48,7 +48,6 @@ export default function Dashboard() {
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [spotlightGame, setSpotlightGame] = useState<Game | null>(null);
   const [showRoulette, setShowRoulette] = useState(false);
-  const [rouletteSource, setRouletteSource] = useState<"backlog" | "active">("backlog");
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinGame, setSpinGame] = useState<Game | null>(null);
@@ -225,7 +224,7 @@ export default function Dashboard() {
     };
 
     const eligibleGames = (games || [])
-      .filter(g => g.status === rouletteSource)
+      .filter(g => g.status === "backlog" || g.status === "active")
       .filter(g => moods[mode].filter(g));
 
     if (eligibleGames.length <= 1) {
@@ -625,11 +624,8 @@ export default function Dashboard() {
                 </div>
                 {!isPro && pulseCharges < 3 && <div className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-tighter animate-pulse">Next charge in {getTimeRemaining()}</div>}
               </div>
-              <DialogTitle className="font-display uppercase tracking-widest text-secondary text-center mb-4">Mood-Based Roulette</DialogTitle>
-              <div className="flex bg-black/40 p-1 rounded-md border border-white/5 mb-6">
-                <button onClick={() => setRouletteSource("backlog")} className={`flex-1 py-2 text-[10px] font-mono uppercase tracking-widest transition-all rounded-sm ${rouletteSource === "backlog" ? "bg-primary text-background font-bold shadow-[0_0_10px_rgba(var(--primary),0.3)]" : "text-muted-foreground hover:text-foreground"}`}>Backlog (0%)</button>
-                <button onClick={() => setRouletteSource("active")} className={`flex-1 py-2 text-[10px] font-mono uppercase tracking-widest transition-all rounded-sm ${rouletteSource === "active" ? "bg-secondary text-background font-bold shadow-[0_0_10px_rgba(var(--secondary),0.3)]" : "text-muted-foreground hover:text-foreground"}`}>Active (1-99%)</button>
-              </div>
+              <DialogTitle className="font-display uppercase tracking-widest text-secondary text-center mb-2">Mood-Based Roulette</DialogTitle>
+              <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-widest text-center mb-4">Spinning across Backlog + Active games</p>
             </DialogHeader>
             <div className="grid grid-cols-1 gap-3 py-4">
               {[
