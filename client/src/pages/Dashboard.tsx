@@ -5,7 +5,7 @@ import { Layout } from "@/components/Layout";
 import { CyberCard } from "@/components/CyberCard";
 import { AddGameModal } from "@/components/AddGameModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search, Dices, Share2, Settings, AlertTriangle, Info, Sword, Sofa, Bolt, Hourglass, Zap, Check } from "lucide-react";
+import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search, Plus, Dices, Share2, Settings, AlertTriangle, Info, Sword, Sofa, Bolt, Hourglass, Zap, Check } from "lucide-react";
 import { type Game } from "@shared/schema";
 import {
   DropdownMenu,
@@ -700,11 +700,14 @@ export default function Dashboard() {
                   <div className="w-3.5 h-3.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                 </div>
               ) : (
-                <Search className="w-5 h-5 text-muted-foreground" />
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Search className="w-4 h-4" />
+                  <Plus className="w-3 h-3" />
+                </div>
               )}
               <input
                 type="text"
-                placeholder="Search RAWG database..."
+                placeholder="Search to add a new game..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none font-mono text-xs md:text-sm"
