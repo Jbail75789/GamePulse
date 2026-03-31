@@ -9,9 +9,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CyberButton } from "./CyberButton";
-import { CyberInput } from "./CyberInput";
 import { useGames } from "@/hooks/use-games";
-import { Plus, Zap, Check, Gamepad2 } from "lucide-react";
+import { Zap, Check, Gamepad2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -21,8 +20,8 @@ const addGameFormSchema = insertGameSchema.extend({
 type AddGameForm = z.infer<typeof addGameFormSchema>;
 
 interface AddGameModalProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   prefill?: { title: string; coverUrl?: string | null };
 }
 
@@ -35,8 +34,7 @@ const STATUSES = [
   { value: "completed", label: "Completed" },
 ];
 
-export function AddGameModal({ open: controlledOpen, onOpenChange, prefill }: AddGameModalProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
+export function AddGameModal({ open, onOpenChange, prefill }: AddGameModalProps) {
   const [showProModal, setShowProModal] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["PC"]);
   const [selectedVibe, setSelectedVibe] = useState<string | null>(null);
@@ -45,12 +43,7 @@ export function AddGameModal({ open: controlledOpen, onOpenChange, prefill }: Ad
   const { user } = useAuth();
   const isPro = user?.isPro ?? false;
 
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = (val: boolean) => {
-    if (isControlled) onOpenChange?.(val);
-    else setInternalOpen(val);
-  };
+  const setOpen = onOpenChange;
 
   const form = useForm<AddGameForm>({
     resolver: zodResolver(addGameFormSchema),
@@ -119,12 +112,6 @@ export function AddGameModal({ open: controlledOpen, onOpenChange, prefill }: Ad
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        {!isControlled && (
-          <CyberButton className="w-full sm:w-auto" onClick={() => setOpen(true)}>
-            <Plus className="w-5 h-5 mr-2" />
-            Add Game
-          </CyberButton>
-        )}
         <DialogContent className="bg-card border-border font-body sm:max-w-md p-0 overflow-hidden">
           {coverUrl ? (
             <div className="relative h-36 w-full overflow-hidden">
@@ -154,16 +141,8 @@ export function AddGameModal({ open: controlledOpen, onOpenChange, prefill }: Ad
           )}
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 px-6 pb-6 pt-4">
-            {!prefill && (
-              <CyberInput
-                label="Game Title"
-                placeholder="e.g. Cyberpunk 2077"
-                {...form.register("title")}
-                error={form.formState.errors.title?.message}
-              />
-            )}
-            {prefill && form.formState.errors.title?.message && (
-              <p className="text-xs font-mono text-destructive -mt-3">{form.formState.errors.title.message}</p>
+            {form.formState.errors.title?.message && (
+              <p className="text-xs font-mono text-destructive">{form.formState.errors.title.message}</p>
             )}
 
             <div>
