@@ -686,11 +686,11 @@ export default function Dashboard() {
               >
                 {spinMode === "chaos" ? (
                   <motion.div
-                    className="text-[10px] font-mono uppercase tracking-[0.3em] mb-2"
+                    className="font-display font-black italic uppercase tracking-widest text-2xl mb-3 leading-none"
                     animate={{ color: ["#dc143c", "#c0c0c0", "#ff1744", "#e8e8e8", "#dc143c"], opacity: [1, 0.7, 1, 0.5, 1] }}
                     transition={{ duration: 0.5, repeat: Infinity, ease: "linear" }}
                   >
-                    Initiating Chaos Protocol...
+                    Chaos Mode
                   </motion.div>
                 ) : (
                   <div className="text-[10px] font-mono text-primary uppercase tracking-[0.3em] mb-2 animate-pulse">Scanning Neural Pathways...</div>
