@@ -629,17 +629,24 @@ export default function Dashboard() {
             </DialogHeader>
             <div className="grid grid-cols-1 gap-3 py-4">
               {[
-                { id: "chaos",       label: "Chaos Mode",  desc: "Every game — no filter",   icon: Dices,   color: "text-foreground", bg: "bg-white/5" },
-                { id: "chill",       label: "Chill",       desc: "Relaxed & low-stakes",    icon: Sofa,    color: "text-accent",     bg: "bg-accent/10" },
-                { id: "epic",        label: "Epic",        desc: "Big adventures & RPGs",   icon: Trophy,  color: "text-secondary",  bg: "bg-secondary/10" },
-                { id: "gritty",      label: "Gritty",      desc: "Dark, tense & brutal",    icon: Sword,   color: "text-red-400",    bg: "bg-red-900/10" },
-                { id: "quickfix",    label: "Quick Fix",   desc: "Short sessions, fast fun", icon: Bolt,    color: "text-yellow-400", bg: "bg-yellow-900/10" },
-                { id: "competitive", label: "Competitive", desc: "Ranked & skill-based",     icon: Zap,     color: "text-primary",    bg: "bg-primary/10" },
+                { id: "chaos",       label: "Chaos Mode",  desc: "Every game — no filter",    icon: Dices,  hex: "#ffffff" },
+                { id: "chill",       label: "Chill",       desc: "Relaxed & low-stakes",      icon: Sofa,   hex: "#4ade80" },
+                { id: "epic",        label: "Epic",        desc: "Big adventures & RPGs",     icon: Trophy, hex: "#3b82f6" },
+                { id: "gritty",      label: "Gritty",      desc: "Dark, tense & brutal",      icon: Sword,  hex: "#c2410c" },
+                { id: "quickfix",    label: "Quick Fix",   desc: "Short sessions, fast fun",  icon: Bolt,   hex: "#facc15" },
+                { id: "competitive", label: "Competitive", desc: "Ranked & skill-based",      icon: Zap,    hex: "#dc2626" },
               ].map((opt) => (
-                <button key={opt.id} onClick={() => handlePickGame(opt.id)} className={`flex items-center gap-4 p-4 ${opt.bg} border border-white/5 rounded-md hover:border-white/20 transition-all tactile-press text-left group`}>
-                  <div className={`p-2 rounded-sm bg-black/40 ${opt.color}`}><opt.icon className="w-6 h-6" /></div>
+                <button
+                  key={opt.id}
+                  onClick={() => handlePickGame(opt.id)}
+                  className="flex items-center gap-4 p-4 border border-white/5 rounded-md hover:border-white/20 transition-all tactile-press text-left group"
+                  style={{ background: `${opt.hex}0d` }}
+                >
+                  <div className="p-2 rounded-sm bg-black/40" style={{ color: opt.hex }}>
+                    <opt.icon className="w-6 h-6" />
+                  </div>
                   <div className="flex-1">
-                    <div className="text-sm font-display font-bold uppercase tracking-wider">{opt.label}</div>
+                    <div className="text-sm font-display font-bold uppercase tracking-wider" style={{ color: opt.hex }}>{opt.label}</div>
                     <div className="text-[10px] font-mono text-muted-foreground">{opt.desc}</div>
                   </div>
                 </button>
