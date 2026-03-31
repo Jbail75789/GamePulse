@@ -214,6 +214,11 @@ export default function Dashboard() {
   }, [isPro]);
 
   const handlePickGame = (mode: string) => {
+    if (!isPro && pulseCharges <= 0) {
+      toast({ title: "No Charges", description: "Wait for your next ⚡ refill to spin again.", variant: "destructive" });
+      return;
+    }
+
     const moods: Record<string, { filter: (g: Game) => boolean; label: string }> = {
       chill:       { filter: (g: Game) => g.vibe?.toLowerCase() === 'chill',       label: 'Chill' },
       epic:        { filter: (g: Game) => g.vibe?.toLowerCase() === 'epic',        label: 'Epic' },
