@@ -823,11 +823,35 @@ export default function Dashboard() {
           {isLoading ? (
             <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary" /></div>
           ) : filteredGames.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
-              <Gamepad2 className="w-16 h-16 mb-4" />
-              <h3 className="text-xl font-display font-bold mb-2">Sector Empty</h3>
-              <p className="font-mono text-sm max-w-xs text-muted-foreground">No game signals detected in this quadrant.</p>
-            </div>
+            (games?.length ?? 0) === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center py-24 text-center"
+              >
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full" />
+                  <div className="relative w-20 h-20 rounded-full border border-primary/20 bg-black/40 flex items-center justify-center">
+                    <Gamepad2 className="w-9 h-9 text-primary/40" />
+                  </div>
+                </div>
+                <h3 className="text-2xl font-display font-bold text-primary/60 uppercase tracking-tight mb-2">
+                  Your Pulse is flat.
+                </h3>
+                <p className="font-mono text-sm text-muted-foreground max-w-xs leading-relaxed">
+                  Search above to add your first game!
+                </p>
+                <div className="mt-6 flex items-center gap-2 text-[10px] font-mono text-primary/30 uppercase tracking-widest">
+                  <Search className="w-3 h-3" />
+                  <span>Use the search bar to get started</span>
+                </div>
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
+                <Gamepad2 className="w-12 h-12 mb-3" />
+                <p className="font-mono text-sm text-muted-foreground">No signals in this sector.</p>
+              </div>
+            )
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
               <AnimatePresence mode="popLayout">
