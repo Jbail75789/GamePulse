@@ -182,3 +182,22 @@
 .chaos-flame-c { animation: flame-c 0.42s ease-in-out infinite; }
 
 .chaos-hellfire { animation: hellfire-glow 0.3s ease-in-out infinite; }
+
+/* Mode-specific winner dialog overlays */
+@keyframes chill-win-pulse {
+  0%,100% { opacity: 0.07; transform: scale(0.88); }
+  50%     { opacity: 0.22; transform: scale(1.18); }
+}
+@keyframes epic-shimmer {
+  0%,100% { opacity: 0.2;  transform: scale(0.85); }
+  50%     { opacity: 0.95; transform: scale(1.45); }
+}
+@keyframes qf-lightning {
+  0%,84%,100% { opacity: 0;   transform: scaleX(0.1) skewX(-18deg); }
+  88%,93%     { opacity: 1;   transform: scaleX(1)   skewX(-18deg); }
+  96%         { opacity: 0.3; transform: scaleX(0.7) skewX(-12deg); }
+}
+@keyframes radar-sweep {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

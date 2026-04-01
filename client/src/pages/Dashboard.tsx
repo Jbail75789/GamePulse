@@ -255,6 +255,100 @@ export default function Dashboard() {
     }
   };
 
+  const playWinSound = (mode: string) => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (mode === 'chaos') {
+        playSound('clank');
+        setTimeout(() => playSound('win'), 60);
+      } else if (mode === 'chill') {
+        // Soft piano chord — C major (C4 E4 G4 C5), staggered like a real piano keystroke
+        [261.63, 329.63, 392.0, 523.25].forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          const t = audioCtx.currentTime + i * 0.07;
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(0.055, t + 0.09);
+          gain.gain.setValueAtTime(0.055, t + 0.5);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+          osc.start(t); osc.stop(t + 1.6);
+        });
+      } else if (mode === 'epic') {
+        // Orchestral swell — triangle + sawtooth harmonics rising with LFO vibrato
+        const base = 220;
+        [1, 1.25, 1.5, 2, 2.5].forEach((ratio, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = i < 2 ? 'triangle' : 'sawtooth';
+          osc.frequency.setValueAtTime(base * ratio, audioCtx.currentTime);
+          osc.frequency.linearRampToValueAtTime(base * ratio * 1.06, audioCtx.currentTime + 0.9);
+          const lfo = audioCtx.createOscillator();
+          const lfoGain = audioCtx.createGain();
+          lfo.frequency.value = 5.5; lfoGain.gain.value = 3;
+          lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          gain.gain.setValueAtTime(0, audioCtx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.038, audioCtx.currentTime + 0.35 + i * 0.04);
+          gain.gain.setValueAtTime(0.038, audioCtx.currentTime + 0.9);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.9);
+          osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 2.0);
+          lfo.start(audioCtx.currentTime); lfo.stop(audioCtx.currentTime + 2.0);
+        });
+      } else if (mode === 'quickfix') {
+        // Arcade coin — classic ascending square-wave blips (B5 → E6 → B5 → E7)
+        [988, 1319, 988, 2637].forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.value = freq;
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          const t = audioCtx.currentTime + i * 0.07;
+          gain.gain.setValueAtTime(0.08, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+          osc.start(t); osc.stop(t + 0.09);
+        });
+      } else if (mode === 'competitive') {
+        // Sharp double digital beep — square wave, crisp attack
+        [0, 0.14].forEach(delay => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.value = 1200;
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          const t = audioCtx.currentTime + delay;
+          gain.gain.setValueAtTime(0.1, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+          osc.start(t); osc.stop(t + 0.1);
+        });
+      }
+    } catch (e) {}
+  };
+
+  const fireWinConfetti = (mode: string) => {
+    if (mode === 'chaos') {
+      confetti({ particleCount: 80, spread: 55, startVelocity: 42, origin: { x: 0.5, y: 0.45 }, colors: ['#ffb700', '#ffa500', '#e8e8e8', '#ffffff', '#c0c0c0', '#ff8c00'], shapes: ['circle'], scalar: 0.45, ticks: 60, gravity: 1.1, disableForReducedMotion: true });
+      confetti({ particleCount: 40, spread: 90, startVelocity: 28, origin: { x: 0.5, y: 0.45 }, colors: ['#ffe066', '#ffffff', '#c0c0c0'], shapes: ['circle'], scalar: 0.3, ticks: 50, gravity: 0.9, disableForReducedMotion: true });
+    } else if (mode === 'chill') {
+      // Slow-floating blue particles, low gravity, long life
+      confetti({ particleCount: 65, spread: 90, startVelocity: 16, origin: { x: 0.5, y: 0.5 }, colors: ['#00b8ff', '#60a5fa', '#93c5fd', '#bfdbfe', '#ffffff'], scalar: 0.7, ticks: 230, gravity: 0.22, disableForReducedMotion: true });
+    } else if (mode === 'epic') {
+      // Wide golden shimmer shower — two overlapping bursts
+      confetti({ particleCount: 110, spread: 130, startVelocity: 34, origin: { x: 0.5, y: 0.4 }, colors: ['#ffd700', '#ffb700', '#ffa500', '#ffe066', '#f5c842', '#ffffff'], scalar: 0.65, ticks: 190, gravity: 0.45, disableForReducedMotion: true });
+      confetti({ particleCount: 50, spread: 60, startVelocity: 48, origin: { x: 0.5, y: 0.4 }, colors: ['#ffd700', '#fffde0', '#ffffff'], scalar: 0.4, ticks: 130, gravity: 0.5, disableForReducedMotion: true });
+    } else if (mode === 'quickfix') {
+      // Neon green lightning streaks firing from both sides simultaneously
+      confetti({ particleCount: 55, angle: 60, spread: 22, startVelocity: 78, origin: { x: 0, y: 0.5 }, colors: ['#00ff9f', '#39ff14', '#00ffcc', '#ffffff'], shapes: ['circle'], scalar: 0.35, ticks: 55, gravity: 1.25, disableForReducedMotion: true });
+      confetti({ particleCount: 55, angle: 120, spread: 22, startVelocity: 78, origin: { x: 1, y: 0.5 }, colors: ['#00ff9f', '#39ff14', '#00ffcc', '#ffffff'], shapes: ['circle'], scalar: 0.35, ticks: 55, gravity: 1.25, disableForReducedMotion: true });
+    } else if (mode === 'competitive') {
+      // Tight red/white bursts — two columns like a stadium
+      confetti({ particleCount: 75, spread: 20, startVelocity: 58, origin: { x: 0.5, y: 0.5 }, colors: ['#ef4444', '#ffffff', '#dc2626', '#fca5a5'], scalar: 0.5, ticks: 95, gravity: 0.95, disableForReducedMotion: true });
+      confetti({ particleCount: 30, spread: 8, startVelocity: 68, origin: { x: 0.5, y: 0.5 }, colors: ['#ffffff', '#ffffff'], scalar: 0.28, ticks: 70, gravity: 1.0, disableForReducedMotion: true });
+    }
+  };
+
   useEffect(() => {
     const fetchCharges = async () => {
       try {
@@ -325,35 +419,9 @@ export default function Dashboard() {
             }
           });
         }
-        playSound('clank');
-        setTimeout(() => playSound('win'), 60);
-        if ('vibrate' in navigator) navigator.vibrate([80, 30, 120]);
-        // Spark burst — tight, fast, metallic
-        confetti({
-          particleCount: 80,
-          spread: 55,
-          startVelocity: 42,
-          origin: { x: 0.5, y: 0.45 },
-          colors: ['#ffb700', '#ffa500', '#e8e8e8', '#ffffff', '#c0c0c0', '#ff8c00'],
-          shapes: ['circle'],
-          scalar: 0.45,
-          ticks: 60,
-          gravity: 1.1,
-          disableForReducedMotion: true
-        });
-        // Secondary wider shower
-        confetti({
-          particleCount: 40,
-          spread: 90,
-          startVelocity: 28,
-          origin: { x: 0.5, y: 0.45 },
-          colors: ['#ffe066', '#ffffff', '#c0c0c0'],
-          shapes: ['circle'],
-          scalar: 0.3,
-          ticks: 50,
-          gravity: 0.9,
-          disableForReducedMotion: true
-        });
+        playWinSound(mode);
+        if ('vibrate' in navigator) navigator.vibrate(mode === 'chaos' ? [80, 30, 120] : mode === 'competitive' ? [50, 20, 50] : 150);
+        fireWinConfetti(mode);
       }
     }, 150);
     setShowRoulette(false);
@@ -841,6 +909,33 @@ export default function Dashboard() {
                 transition={{ type: "spring", stiffness: 650, damping: 16, mass: 0.9 }}
                 className="relative"
               >
+                {/* Chill: slow blue radial pulse */}
+                {spinMode === 'chill' && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden z-10 rounded-[inherit]" style={{ background: 'radial-gradient(ellipse at center, rgba(0,184,255,0.18) 0%, transparent 65%)', animation: 'chill-win-pulse 2.6s ease-in-out infinite' }} />
+                )}
+                {/* Epic: scattered golden shimmer dots */}
+                {spinMode === 'epic' && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                    {[{x:14,y:16,s:7,d:0},{x:53,y:9,s:4,d:0.3},{x:83,y:21,s:6,d:0.55},{x:27,y:63,s:5,d:0.15},{x:73,y:54,s:4,d:0.42},{x:7,y:79,s:6,d:0.75},{x:89,y:71,s:5,d:0.2},{x:45,y:89,s:4,d:0.6}].map((p,i) => (
+                      <div key={i} className="absolute rounded-full" style={{ width: p.s, height: p.s, left: `${p.x}%`, top: `${p.y}%`, background: '#ffd700', boxShadow: `0 0 ${p.s+3}px #ffd700, 0 0 ${p.s*2}px #ffb700`, animation: `epic-shimmer ${1.1+p.d*0.7}s ease-in-out infinite`, animationDelay: `${p.d}s` }} />
+                    ))}
+                  </div>
+                )}
+                {/* Quick Fix: neon green horizontal lightning streaks */}
+                {spinMode === 'quickfix' && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                    {[{top:'21%',delay:'0ms',w:'60%'},{top:'53%',delay:'200ms',w:'74%'},{top:'79%',delay:'100ms',w:'45%'}].map((s,i) => (
+                      <div key={i} className="absolute h-px" style={{ top: s.top, left: 0, width: s.w, background: 'linear-gradient(to right, transparent, #00ff9f, #00ffcc, transparent)', animation: 'qf-lightning 0.85s ease-in-out infinite', animationDelay: s.delay }} />
+                    ))}
+                  </div>
+                )}
+                {/* Competitive: rotating red/white radar sweep */}
+                {spinMode === 'competitive' && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                    <div className="absolute inset-0" style={{ animation: 'radar-sweep 1.6s linear infinite', background: 'conic-gradient(from 0deg, transparent 0deg, rgba(239,68,68,0.16) 45deg, transparent 90deg)' }} />
+                    <div className="absolute inset-0 border border-red-500/20" />
+                  </div>
+                )}
                 <div className="h-48 w-full relative">
                   <img src={winnerGame.coverUrl} className="w-full h-full object-cover" alt="" />
                   <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
