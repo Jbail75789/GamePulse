@@ -647,13 +647,13 @@ export default function Dashboard() {
                   <div key={opt.id} className="relative" style={{ overflow: "visible" }}>
                     {isChaos && chaosHovered && (
                       <>
-                        <span className="chaos-flame chaos-flame-a" style={{ width: 10, height: 18, bottom: "100%", left: "12%",  background: "radial-gradient(ellipse at bottom, #ffcc00 0%, #ff4500 50%, transparent 100%)", animationDelay: "0ms" }} />
-                        <span className="chaos-flame chaos-flame-b" style={{ width: 8,  height: 14, bottom: "100%", left: "28%",  background: "radial-gradient(ellipse at bottom, #ff6400 0%, #dc143c 55%, transparent 100%)", animationDelay: "60ms" }} />
-                        <span className="chaos-flame chaos-flame-c" style={{ width: 12, height: 20, bottom: "100%", left: "44%",  background: "radial-gradient(ellipse at bottom, #ffcc00 0%, #ff4500 50%, transparent 100%)", animationDelay: "20ms" }} />
-                        <span className="chaos-flame chaos-flame-b" style={{ width: 9,  height: 16, bottom: "100%", left: "60%",  background: "radial-gradient(ellipse at bottom, #ff8c00 0%, #ff1744 55%, transparent 100%)", animationDelay: "90ms" }} />
-                        <span className="chaos-flame chaos-flame-a" style={{ width: 7,  height: 13, bottom: "100%", left: "76%",  background: "radial-gradient(ellipse at bottom, #ff6400 0%, #dc143c 50%, transparent 100%)", animationDelay: "40ms" }} />
-                        <span className="chaos-flame chaos-flame-c" style={{ width: 8,  height: 15, bottom: "85%", left: "-4%",   background: "radial-gradient(ellipse at bottom, #ff4500 0%, #8b0000 55%, transparent 100%)", animationDelay: "10ms", transform: "rotate(-20deg)" }} />
-                        <span className="chaos-flame chaos-flame-b" style={{ width: 8,  height: 15, bottom: "85%", right: "-4%",  background: "radial-gradient(ellipse at bottom, #ff4500 0%, #8b0000 55%, transparent 100%)", animationDelay: "70ms", transform: "rotate(20deg)" }} />
+                        <span className="chaos-flame chaos-flame-a" style={{ width: 10, height: 18, bottom: "100%", left: "12%",  background: "radial-gradient(ellipse at bottom, #ffe066 0%, #ffa500 50%, transparent 100%)", animationDelay: "0ms" }} />
+                        <span className="chaos-flame chaos-flame-b" style={{ width: 8,  height: 14, bottom: "100%", left: "28%",  background: "radial-gradient(ellipse at bottom, #c0c0c0 0%, #ff8c00 55%, transparent 100%)", animationDelay: "60ms" }} />
+                        <span className="chaos-flame chaos-flame-c" style={{ width: 12, height: 20, bottom: "100%", left: "44%",  background: "radial-gradient(ellipse at bottom, #ffe066 0%, #ffa500 50%, transparent 100%)", animationDelay: "20ms" }} />
+                        <span className="chaos-flame chaos-flame-b" style={{ width: 9,  height: 16, bottom: "100%", left: "60%",  background: "radial-gradient(ellipse at bottom, #e8e8e8 0%, #ffb700 55%, transparent 100%)", animationDelay: "90ms" }} />
+                        <span className="chaos-flame chaos-flame-a" style={{ width: 7,  height: 13, bottom: "100%", left: "76%",  background: "radial-gradient(ellipse at bottom, #ffa500 0%, #e67e00 50%, transparent 100%)", animationDelay: "40ms" }} />
+                        <span className="chaos-flame chaos-flame-c" style={{ width: 8,  height: 15, bottom: "85%", left: "-4%",   background: "radial-gradient(ellipse at bottom, #c0c0c0 0%, #ff8c00 55%, transparent 100%)", animationDelay: "10ms", transform: "rotate(-20deg)" }} />
+                        <span className="chaos-flame chaos-flame-b" style={{ width: 8,  height: 15, bottom: "85%", right: "-4%",  background: "radial-gradient(ellipse at bottom, #c0c0c0 0%, #ff8c00 55%, transparent 100%)", animationDelay: "70ms", transform: "rotate(20deg)" }} />
                       </>
                     )}
                     <button
@@ -683,14 +683,14 @@ export default function Dashboard() {
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 backdrop-blur-xl z-[100] flex flex-col items-center justify-center"
-              style={{ backgroundColor: spinMode === "chaos" ? "rgba(20,0,0,0.95)" : "rgba(0,0,0,0.90)" }}
+              style={{ backgroundColor: spinMode === "chaos" ? "rgba(8,6,0,0.95)" : "rgba(0,0,0,0.90)" }}
             >
               {spinMode === "chaos" && (
                 <motion.div
                   className="absolute inset-0 pointer-events-none"
-                  animate={{ opacity: [0.08, 0.22, 0.06, 0.18, 0.04, 0.2, 0.08] }}
+                  animate={{ opacity: [0.07, 0.20, 0.05, 0.16, 0.04, 0.18, 0.07] }}
                   transition={{ duration: 0.6, repeat: Infinity, ease: "linear" }}
-                  style={{ background: "radial-gradient(ellipse at center, #dc143c 0%, transparent 70%)" }}
+                  style={{ background: "radial-gradient(ellipse at center, #ff8c00 0%, transparent 70%)" }}
                 />
               )}
               <motion.div
@@ -703,7 +703,7 @@ export default function Dashboard() {
                 {spinMode === "chaos" ? (
                   <motion.div
                     className="font-display font-black italic uppercase tracking-widest text-2xl mb-3 leading-none"
-                    animate={{ color: ["#dc143c", "#c0c0c0", "#ff1744", "#e8e8e8", "#dc143c"], opacity: [1, 0.7, 1, 0.5, 1] }}
+                    animate={{ color: ["#ffa500", "#c0c0c0", "#ffb700", "#e8e8e8", "#ffa500"], opacity: [1, 0.7, 1, 0.5, 1] }}
                     transition={{ duration: 0.5, repeat: Infinity, ease: "linear" }}
                   >
                     Chaos Mode
@@ -714,7 +714,7 @@ export default function Dashboard() {
                 <motion.div
                   className="h-px w-full mb-8"
                   style={spinMode === "chaos"
-                    ? { background: "linear-gradient(to right, transparent, #dc143c, #c0c0c0, #dc143c, transparent)" }
+                    ? { background: "linear-gradient(to right, transparent, #ff8c00, #c0c0c0, #ff8c00, transparent)" }
                     : { background: "linear-gradient(to right, transparent, hsl(var(--primary)/0.5), transparent)" }
                   }
                   {...(spinMode === "chaos" ? {
@@ -728,16 +728,18 @@ export default function Dashboard() {
                       <motion.h2
                         className="text-3xl md:text-5xl lg:text-7xl font-display font-black uppercase tracking-tighter leading-none break-words"
                         animate={{
-                          color: ["#ff1744", "#c0c0c0", "#ff2222", "#e8e8e8", "#dc143c", "#d0d0d0", "#ff1744"],
+                          color: ["#ffa500", "#c0c0c0", "#ffb700", "#e8e8e8", "#e67e00", "#d4d4d4", "#ffa500"],
                           filter: ["blur(0px)", "blur(5px)", "blur(1px)", "blur(7px)", "blur(0px)", "blur(4px)", "blur(0px)"],
+                          x: [0, -3, 4, -2, 3, -4, 2, -1, 3, 0],
+                          y: [0, 2, -3, 1, -2, 3, -1, 2, -1, 0],
                           textShadow: [
-                            "0 0 30px #dc143c, 0 0 60px #8b0000",
+                            "0 0 30px #ffa500, 0 0 60px #cc6600",
                             "0 0 20px #c0c0c0, 0 0 40px #808080",
-                            "0 0 40px #ff1744, 0 0 80px #dc143c",
-                            "0 0 15px #e8e8e8",
-                            "0 0 35px #dc143c, 0 0 70px #8b0000",
-                            "0 0 25px #c0c0c0",
-                            "0 0 30px #dc143c, 0 0 60px #8b0000",
+                            "0 0 40px #ffb700, 0 0 80px #ff8c00",
+                            "0 0 15px #e8e8e8, 0 0 30px #c0c0c0",
+                            "0 0 35px #ffa500, 0 0 70px #cc6600",
+                            "0 0 25px #d4d4d4",
+                            "0 0 30px #ffa500, 0 0 60px #cc6600",
                           ]
                         }}
                         transition={{ duration: 0.55, repeat: Infinity, ease: "linear" }}

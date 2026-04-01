@@ -154,11 +154,11 @@
 
 /* Chaos Mode hellfire button effect */
 @keyframes hellfire-glow {
-  0%   { box-shadow: 0 0 8px #ff4500, 0 0 20px #ff6400, 0 0 40px #ff0000, 0 0 65px #8b0000; border-color: #ff4500; }
-  25%  { box-shadow: 0 0 14px #ff6400, 0 0 32px #ff4500, 0 0 58px #ff1744, 0 0 90px #dc143c; border-color: #ff6400; }
-  50%  { box-shadow: 0 0 4px #ff8c00, 0 0 12px #ff4500, 0 0 28px #ff0000, 0 0 50px #8b0000; border-color: #ff8c00; }
-  75%  { box-shadow: 0 0 18px #ff4500, 0 0 38px #ff6400, 0 0 62px #ff1744, 0 0 95px #dc143c; border-color: #ff4500; }
-  100% { box-shadow: 0 0 8px #ff4500, 0 0 20px #ff6400, 0 0 40px #ff0000, 0 0 65px #8b0000; border-color: #ff4500; }
+  0%   { box-shadow: 0 0 8px #ffa500, 0 0 20px #ff8c00, 0 0 40px #e67e00, 0 0 65px #cc6600, 0 0 10px #c0c0c0 inset; border-color: #ffa500; }
+  25%  { box-shadow: 0 0 14px #c0c0c0, 0 0 30px #ffb700, 0 0 55px #ff8c00, 0 0 85px #e67e00; border-color: #d4d4d4; }
+  50%  { box-shadow: 0 0 5px #ffb700, 0 0 14px #ffa500, 0 0 30px #e67e00, 0 0 52px #cc6600, 0 0 8px #e8e8e8 inset; border-color: #ffa500; }
+  75%  { box-shadow: 0 0 18px #e8e8e8, 0 0 35px #ff8c00, 0 0 60px #ffb700, 0 0 90px #e67e00; border-color: #c0c0c0; }
+  100% { box-shadow: 0 0 8px #ffa500, 0 0 20px #ff8c00, 0 0 40px #e67e00, 0 0 65px #cc6600, 0 0 10px #c0c0c0 inset; border-color: #ffa500; }
 }
 
 @keyframes flame-a {
