@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinMode, setSpinMode] = useState<string>("chill");
+  const [chaosHovered, setChaosHovered] = useState(false);
   const [spinGame, setSpinGame] = useState<Game | null>(null);
   const [isStartingAdventure, setIsStartingAdventure] = useState(false);
   const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
@@ -640,22 +641,39 @@ export default function Dashboard() {
                 { id: "epic",        label: "Epic",        desc: "Big adventures & RPGs",     icon: Trophy, hex: "#3b82f6" },
                 { id: "quickfix",    label: "Quick Fix",   desc: "Short sessions, fast fun",  icon: Bolt,   hex: "#facc15" },
                 { id: "competitive", label: "Competitive", desc: "Ranked & skill-based",      icon: Zap,    hex: "#dc2626" },
-              ].map((opt) => (
-                <button
-                  key={opt.id}
-                  onClick={() => handlePickGame(opt.id)}
-                  className="flex items-center gap-4 p-4 border border-white/5 rounded-md hover:border-white/20 transition-all tactile-press text-left group"
-                  style={{ background: `${opt.hex}0d` }}
-                >
-                  <div className="p-2 rounded-sm bg-black/40" style={{ color: opt.hex }}>
-                    <opt.icon className="w-6 h-6" />
+              ].map((opt) => {
+                const isChaos = opt.id === "chaos";
+                return (
+                  <div key={opt.id} className="relative" style={{ overflow: "visible" }}>
+                    {isChaos && chaosHovered && (
+                      <>
+                        <span className="chaos-flame chaos-flame-a" style={{ width: 10, height: 18, bottom: "100%", left: "12%",  background: "radial-gradient(ellipse at bottom, #ffcc00 0%, #ff4500 50%, transparent 100%)", animationDelay: "0ms" }} />
+                        <span className="chaos-flame chaos-flame-b" style={{ width: 8,  height: 14, bottom: "100%", left: "28%",  background: "radial-gradient(ellipse at bottom, #ff6400 0%, #dc143c 55%, transparent 100%)", animationDelay: "60ms" }} />
+                        <span className="chaos-flame chaos-flame-c" style={{ width: 12, height: 20, bottom: "100%", left: "44%",  background: "radial-gradient(ellipse at bottom, #ffcc00 0%, #ff4500 50%, transparent 100%)", animationDelay: "20ms" }} />
+                        <span className="chaos-flame chaos-flame-b" style={{ width: 9,  height: 16, bottom: "100%", left: "60%",  background: "radial-gradient(ellipse at bottom, #ff8c00 0%, #ff1744 55%, transparent 100%)", animationDelay: "90ms" }} />
+                        <span className="chaos-flame chaos-flame-a" style={{ width: 7,  height: 13, bottom: "100%", left: "76%",  background: "radial-gradient(ellipse at bottom, #ff6400 0%, #dc143c 50%, transparent 100%)", animationDelay: "40ms" }} />
+                        <span className="chaos-flame chaos-flame-c" style={{ width: 8,  height: 15, bottom: "85%", left: "-4%",   background: "radial-gradient(ellipse at bottom, #ff4500 0%, #8b0000 55%, transparent 100%)", animationDelay: "10ms", transform: "rotate(-20deg)" }} />
+                        <span className="chaos-flame chaos-flame-b" style={{ width: 8,  height: 15, bottom: "85%", right: "-4%",  background: "radial-gradient(ellipse at bottom, #ff4500 0%, #8b0000 55%, transparent 100%)", animationDelay: "70ms", transform: "rotate(20deg)" }} />
+                      </>
+                    )}
+                    <button
+                      onClick={() => handlePickGame(opt.id)}
+                      onMouseEnter={() => isChaos && setChaosHovered(true)}
+                      onMouseLeave={() => isChaos && setChaosHovered(false)}
+                      className={`w-full flex items-center gap-4 p-4 border rounded-md tactile-press text-left group transition-all ${isChaos && chaosHovered ? "chaos-hellfire" : "border-white/5 hover:border-white/20"}`}
+                      style={{ background: `${opt.hex}0d` }}
+                    >
+                      <div className="p-2 rounded-sm bg-black/40" style={{ color: opt.hex }}>
+                        <opt.icon className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-display font-bold uppercase tracking-wider" style={{ color: opt.hex }}>{opt.label}</div>
+                        <div className="text-[10px] font-mono text-muted-foreground">{opt.desc}</div>
+                      </div>
+                    </button>
                   </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-display font-bold uppercase tracking-wider" style={{ color: opt.hex }}>{opt.label}</div>
-                    <div className="text-[10px] font-mono text-muted-foreground">{opt.desc}</div>
-                  </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           </DialogContent>
         </Dialog>
