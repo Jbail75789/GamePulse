@@ -159,9 +159,39 @@ export default function Dashboard() {
     }
   };
 
-  const playSound = (type: 'tick' | 'win') => {
+  const playSound = (type: 'tick' | 'win' | 'clank') => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+      if (type === 'clank') {
+        const bufferSize = Math.floor(audioCtx.sampleRate * 0.22);
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.12));
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const bp = audioCtx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(5000, audioCtx.currentTime);
+        bp.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.22);
+        bp.Q.value = 15;
+        const hp = audioCtx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = 400;
+        const clankGain = audioCtx.createGain();
+        clankGain.gain.setValueAtTime(1.1, audioCtx.currentTime);
+        clankGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+        noise.connect(bp);
+        bp.connect(hp);
+        hp.connect(clankGain);
+        clankGain.connect(audioCtx.destination);
+        noise.start();
+        noise.stop(audioCtx.currentTime + 0.25);
+        return;
+      }
+
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
@@ -295,13 +325,33 @@ export default function Dashboard() {
             }
           });
         }
-        playSound('win');
-        if ('vibrate' in navigator) navigator.vibrate(200);
+        playSound('clank');
+        setTimeout(() => playSound('win'), 60);
+        if ('vibrate' in navigator) navigator.vibrate([80, 30, 120]);
+        // Spark burst — tight, fast, metallic
         confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#00ff9f', '#00b8ff', '#d600ff'],
+          particleCount: 80,
+          spread: 55,
+          startVelocity: 42,
+          origin: { x: 0.5, y: 0.45 },
+          colors: ['#ffb700', '#ffa500', '#e8e8e8', '#ffffff', '#c0c0c0', '#ff8c00'],
+          shapes: ['circle'],
+          scalar: 0.45,
+          ticks: 60,
+          gravity: 1.1,
+          disableForReducedMotion: true
+        });
+        // Secondary wider shower
+        confetti({
+          particleCount: 40,
+          spread: 90,
+          startVelocity: 28,
+          origin: { x: 0.5, y: 0.45 },
+          colors: ['#ffe066', '#ffffff', '#c0c0c0'],
+          shapes: ['circle'],
+          scalar: 0.3,
+          ticks: 50,
+          gravity: 0.9,
           disableForReducedMotion: true
         });
       }
@@ -785,7 +835,12 @@ export default function Dashboard() {
         <Dialog open={!!winnerGame} onOpenChange={(open) => !open && setWinnerGame(null)}>
           <DialogContent className="bg-card border-secondary sm:max-w-sm overflow-hidden p-0 animate-haptic-pop">
             {winnerGame && (
-              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative">
+              <motion.div
+                initial={{ y: -220, scale: 1.06, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 650, damping: 16, mass: 0.9 }}
+                className="relative"
+              >
                 <div className="h-48 w-full relative">
                   <img src={winnerGame.coverUrl} className="w-full h-full object-cover" alt="" />
                   <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
