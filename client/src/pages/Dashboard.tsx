@@ -177,21 +177,47 @@ export default function Dashboard() {
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.1);
       } else {
-        const notes = [440, 554.37, 659.25, 880];
-        notes.forEach((freq, i) => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'sine';
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          const startTime = audioCtx.currentTime + (i * 0.05);
-          osc.frequency.setValueAtTime(freq, startTime);
-          osc.frequency.exponentialRampToValueAtTime(freq * 1.05, startTime + 0.3);
-          gain.gain.setValueAtTime(0, startTime);
-          gain.gain.linearRampToValueAtTime(0.05, startTime + 0.05);
-          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
-          osc.start(startTime);
-          osc.stop(startTime + 0.4);
+        // Heavy metal guitar riff — distorted power chords
+        const makeCurve = (amount: number) => {
+          const samples = 512;
+          const curve = new Float32Array(samples);
+          for (let i = 0; i < samples; i++) {
+            const x = (i * 2) / samples - 1;
+            curve[i] = ((Math.PI + amount) * x) / (Math.PI + amount * Math.abs(x));
+          }
+          return curve;
+        };
+        const dist = audioCtx.createWaveShaper();
+        dist.curve = makeCurve(700);
+        dist.oversample = '4x';
+        const masterGain = audioCtx.createGain();
+        dist.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+        masterGain.gain.setValueAtTime(0.38, audioCtx.currentTime);
+        masterGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 1.3);
+        // Riff: E5 chunk × 2 → G5 chunk → A5 power chord sustain
+        const riff: [number, number, number, number][] = [
+          [659.25, 0.00, 0.08, 0.5],
+          [659.25, 0.10, 0.08, 0.5],
+          [783.99, 0.21, 0.08, 0.45],
+          [880.00, 0.32, 0.55, 0.6],
+        ];
+        riff.forEach(([freq, start, dur, pk]) => {
+          // Root + perfect fifth + octave = power chord
+          ([1, 1.4983, 2.0] as number[]).forEach((ratio, j) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = j === 0 ? 'sawtooth' : 'square';
+            osc.frequency.setValueAtTime(freq * ratio, audioCtx.currentTime + start);
+            osc.detune.setValueAtTime(j === 1 ? -10 : j === 2 ? 14 : 0, audioCtx.currentTime + start);
+            osc.connect(gain);
+            gain.connect(dist);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime + start);
+            gain.gain.linearRampToValueAtTime(pk * (j === 0 ? 1 : 0.45), audioCtx.currentTime + start + 0.007);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + dur);
+            osc.start(audioCtx.currentTime + start);
+            osc.stop(audioCtx.currentTime + start + dur + 0.12);
+          });
         });
       }
     } catch (e) {
