@@ -207,7 +207,7 @@ export default function Dashboard() {
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.1);
       } else {
-        // Heavy metal guitar riff — distorted power chords
+        // Dark mechanical power-up: sub-bass thud + engine growl + drop-D chugs → pitch-rising swell
         const makeCurve = (amount: number) => {
           const samples = 512;
           const curve = new Float32Array(samples);
@@ -218,35 +218,69 @@ export default function Dashboard() {
           return curve;
         };
         const dist = audioCtx.createWaveShaper();
-        dist.curve = makeCurve(700);
+        dist.curve = makeCurve(900);
         dist.oversample = '4x';
         const masterGain = audioCtx.createGain();
         dist.connect(masterGain);
         masterGain.connect(audioCtx.destination);
-        masterGain.gain.setValueAtTime(0.38, audioCtx.currentTime);
-        masterGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 1.3);
-        // Riff: E5 chunk × 2 → G5 chunk → A5 power chord sustain
-        const riff: [number, number, number, number][] = [
-          [659.25, 0.00, 0.08, 0.5],
-          [659.25, 0.10, 0.08, 0.5],
-          [783.99, 0.21, 0.08, 0.45],
-          [880.00, 0.32, 0.55, 0.6],
+        masterGain.gain.setValueAtTime(0.26, audioCtx.currentTime);
+        masterGain.gain.setValueAtTime(0.26, audioCtx.currentTime + 0.75);
+        masterGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+
+        // Sub-bass thud — sine wave A1 (55 Hz), hits hard then decays fast
+        const sub = audioCtx.createOscillator();
+        const subGain = audioCtx.createGain();
+        sub.type = 'sine';
+        sub.frequency.value = 55;
+        sub.connect(subGain); subGain.connect(audioCtx.destination);
+        subGain.gain.setValueAtTime(0.65, audioCtx.currentTime);
+        subGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.28);
+        sub.start(audioCtx.currentTime); sub.stop(audioCtx.currentTime + 0.32);
+
+        // Engine growl — filtered noise burst, resonant lowpass ~180 Hz
+        const bufLen = Math.floor(audioCtx.sampleRate * 0.38);
+        const nBuf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+        const nData = nBuf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) nData[i] = Math.random() * 2 - 1;
+        const nSrc = audioCtx.createBufferSource();
+        nSrc.buffer = nBuf;
+        const nFilt = audioCtx.createBiquadFilter();
+        nFilt.type = 'lowpass'; nFilt.frequency.value = 180; nFilt.Q.value = 9;
+        const nGain = audioCtx.createGain();
+        nGain.gain.setValueAtTime(0.32, audioCtx.currentTime);
+        nGain.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.38);
+        nSrc.connect(nFilt); nFilt.connect(nGain); nGain.connect(audioCtx.destination);
+        nSrc.start(audioCtx.currentTime);
+
+        // Drop-D power chord: D2 (73.4 Hz) root + A2 (110 Hz) fifth + D3 (146.8 Hz) octave
+        // 3 staccato chugs then a sustained pitch-bend swell
+        const chugPattern: [number, number][] = [
+          [0.00, 0.08], // chug 1
+          [0.10, 0.08], // chug 2
+          [0.20, 0.08], // chug 3
+          [0.31, 0.95], // sustain + rising swell
         ];
-        riff.forEach(([freq, start, dur, pk]) => {
-          // Root + perfect fifth + octave = power chord
-          ([1, 1.4983, 2.0] as number[]).forEach((ratio, j) => {
+        const dropD: number[] = [73.41, 110.0, 146.83];
+        chugPattern.forEach(([tStart, dur], ci) => {
+          dropD.forEach((freq, j) => {
             const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+            const oscGain = audioCtx.createGain();
             osc.type = j === 0 ? 'sawtooth' : 'square';
-            osc.frequency.setValueAtTime(freq * ratio, audioCtx.currentTime + start);
-            osc.detune.setValueAtTime(j === 1 ? -10 : j === 2 ? 14 : 0, audioCtx.currentTime + start);
-            osc.connect(gain);
-            gain.connect(dist);
-            gain.gain.setValueAtTime(0, audioCtx.currentTime + start);
-            gain.gain.linearRampToValueAtTime(pk * (j === 0 ? 1 : 0.45), audioCtx.currentTime + start + 0.007);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + dur);
-            osc.start(audioCtx.currentTime + start);
-            osc.stop(audioCtx.currentTime + start + dur + 0.12);
+            osc.detune.value = j === 1 ? -8 : j === 2 ? 14 : 0;
+            if (ci === 3) {
+              // Pitch creeps up 9% over 650 ms — the "engine spooling" power-up feel
+              osc.frequency.setValueAtTime(freq, audioCtx.currentTime + tStart);
+              osc.frequency.linearRampToValueAtTime(freq * 1.09, audioCtx.currentTime + tStart + 0.65);
+            } else {
+              osc.frequency.value = freq;
+            }
+            osc.connect(oscGain); oscGain.connect(dist);
+            const pk = (ci === 3 ? 0.78 : 0.68) * (j === 0 ? 1 : 0.48);
+            oscGain.gain.setValueAtTime(0, audioCtx.currentTime + tStart);
+            oscGain.gain.linearRampToValueAtTime(pk, audioCtx.currentTime + tStart + 0.006);
+            oscGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + tStart + dur);
+            osc.start(audioCtx.currentTime + tStart);
+            osc.stop(audioCtx.currentTime + tStart + dur + 0.1);
           });
         });
       }
