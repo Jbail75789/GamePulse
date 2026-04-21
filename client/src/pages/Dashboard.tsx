@@ -192,10 +192,10 @@ export default function Dashboard() {
 
   // --- UI Helpers ---
   const tabData = [
-    { id: "active", label: "My Pulse", icon: Gamepad2, color: "text-primary" },
-    { id: "completed", label: "The Vault", icon: Trophy, color: "text-secondary" },
-    { id: "backlog", label: "The Backlog", icon: Clock, color: "text-accent" },
-    { id: "wishlist", label: "Wish List", icon: Sword, color: "text-foreground" },
+    { id: "active",    label: "My Pulse",    icon: Gamepad2, color: "text-primary",    hover: "hover:text-primary" },
+    { id: "completed", label: "The Vault",   icon: Trophy,   color: "text-secondary",  hover: "hover:text-secondary" },
+    { id: "backlog",   label: "The Backlog", icon: Clock,    color: "text-accent",     hover: "hover:text-accent" },
+    { id: "wishlist",  label: "Wish List",   icon: Sword,    color: "text-foreground", hover: "hover:text-foreground" },
   ] as const;
 
   const filteredGames = games?.filter(game => game.status === activeTab) || [];
@@ -246,20 +246,32 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* 4. Tab Navigation */}
-        <div className="flex gap-2 border-b border-white/5 pb-2 overflow-x-auto">
-          {tabData.map((tab) => (
-           <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 font-display uppercase tracking-widest text-xs transition-all ${
-                activeTab === tab.id ? `${tab.color} border-b-2 border-current` : "text-muted-foreground"
-              }`}
-            >
-             <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          ))}
+        {/* 4. Tab Navigation — Staggered Hover (only hovered category glows) */}
+        <div className="group/tabs flex gap-2 border-b border-white/5 pb-2 overflow-x-auto" data-testid="nav-categories">
+          {tabData.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                data-testid={`tab-${tab.id}`}
+                className={[
+                  "relative flex items-center gap-2 px-4 py-2 font-display uppercase tracking-widest text-xs",
+                  "transition-all duration-300 ease-out",
+                  // Base color
+                  isActive ? `${tab.color} border-b-2 border-current` : "text-muted-foreground",
+                  // Staggered: dim & desaturate every tab when ANY sibling is hovered
+                  "group-hover/tabs:opacity-40 group-hover/tabs:saturate-50 group-hover/tabs:blur-[0.3px]",
+                  // Reverse it on the actual hovered tab — full glow + scale
+                  "hover:!opacity-100 hover:!saturate-100 hover:!blur-0 hover:scale-105 hover:drop-shadow-[0_0_10px_currentColor]",
+                  tab.hover,
+                ].join(" ")}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* 5. Game Grid */}

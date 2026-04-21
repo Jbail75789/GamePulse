@@ -2,7 +2,8 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { CyberButton } from "./CyberButton";
-import { User, LogOut, Gamepad2, LayoutDashboard } from "lucide-react";
+import { User, LogOut, Gamepad2, LayoutDashboard, Sparkles } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +15,20 @@ import {
 
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  const handleLogout = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        queryClient.clear();
+        setLocation("/");
+      },
+      onError: () => {
+        queryClient.clear();
+        setLocation("/");
+      },
+    } as any);
+  };
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -67,7 +81,8 @@ export function Layout({ children }: { children: ReactNode }) {
                     <DropdownMenuSeparator className="bg-border" />
                     <DropdownMenuItem 
                       className="cursor-pointer text-destructive font-mono hover:bg-destructive/10"
-                      onClick={() => logout()}
+                      onClick={handleLogout}
+                      data-testid="button-logout"
                     >
                       <LogOut className="w-5 h-5 mr-2" />
                       Logout
@@ -94,10 +109,17 @@ export function Layout({ children }: { children: ReactNode }) {
       </main>
 
       <footer className="border-t border-border/40 py-8 bg-background/50 backdrop-blur-sm relative z-10">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
           <p className="text-muted-foreground font-mono text-sm">
             © 2024 GAME PULSE SYSTEM. ALL RIGHTS RESERVED.
           </p>
+          <span
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-mono text-[11px] uppercase tracking-widest hover:bg-primary/15 transition-colors"
+            data-testid="badge-powered-by-gpt4o"
+          >
+            <Sparkles className="w-3 h-3" />
+            Powered by GPT-4o
+          </span>
         </div>
       </footer>
     </div>
