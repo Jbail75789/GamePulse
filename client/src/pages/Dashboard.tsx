@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useGames } from "@/hooks/use-games";
 import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/Layout";
-import { CyberCard } from "@/components/CyberCard";
+import { GameCard } from "@/components/GameCard";
 import { AddGameModal } from "@/components/AddGameModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -279,7 +279,7 @@ export default function Dashboard() {
           <AnimatePresence mode="popLayout">
             {filteredGames.map((game) => (
               <motion.div key={game.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <CyberCard 
+                <GameCard
                   game={game}
                   onUpdateStatus={handleUpdateStatus}
                   onLogTime={() => setLoggingTimeId(game.id)}
