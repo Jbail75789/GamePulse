@@ -8,8 +8,8 @@ import { CyberInput } from "@/components/CyberInput";
 import { CyberButton } from "@/components/CyberButton";
 import { CyberCard } from "@/components/CyberCard";
 import { motion, AnimatePresence } from "framer-motion";
-import { Gamepad2, ShieldCheck, Copy, Check } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { Gamepad2, ShieldCheck, Copy, Check, KeyRound, Zap, Sparkles } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const ADMIN_SECRET = "GAMEPULSE_ADMIN_2025";
@@ -20,6 +20,8 @@ export default function Auth() {
   const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
 
   const [mode, setMode] = useState<"login" | "register">(initialMode);
+  const [accessCode, setAccessCode] = useState("");
+  const [codeStatus, setCodeStatus] = useState<"idle" | "valid" | "invalid">("idle");
   const { login, register, isLoggingIn, isRegistering, user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -44,11 +46,34 @@ export default function Auth() {
     defaultValues: { username: "", password: "" },
   });
 
-  const onSubmit = (data: InsertUser) => {
+  const redeemAfterAuth = async () => {
+    const code = accessCode.trim().toUpperCase();
+    if (!code) return;
+    try {
+      const res = await apiRequest("POST", "/api/user/redeem", { code });
+      if (res.ok) {
+        await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        toast({
+          title: "Pro Mode Unlocked",
+          description: "Infinite charges and Live AI Codex enabled.",
+        });
+      }
+    } catch {
+      // silent — invalid codes already validated client-side
+    }
+  };
+
+  const onSubmit = async (data: InsertUser) => {
+    const code = accessCode.trim().toUpperCase();
+    if (code && code !== "PRO99") {
+      setCodeStatus("invalid");
+      toast({ title: "Invalid Access Code", description: "Leave blank for Free Mode.", variant: "destructive" });
+      return;
+    }
     if (mode === "login") {
-      login(data);
+      login(data, { onSuccess: () => { void redeemAfterAuth(); } } as any);
     } else {
-      register(data);
+      register(data, { onSuccess: () => { void redeemAfterAuth(); } } as any);
     }
   };
 
@@ -217,6 +242,51 @@ export default function Auth() {
               error={form.formState.errors.password?.message}
               data-testid="input-password"
             />
+
+            {/* Access Code Box — visible at login. Empty = Free Mode (3 ⚡ / 10h). */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs font-display uppercase tracking-widest text-muted-foreground">
+                <KeyRound className="w-3.5 h-3.5" /> Access Code
+                <span className="ml-auto text-[10px] font-mono text-muted-foreground/70 normal-case tracking-normal">
+                  optional
+                </span>
+              </label>
+              <input
+                type="text"
+                value={accessCode}
+                onChange={(e) => {
+                  const v = e.target.value.toUpperCase();
+                  setAccessCode(v);
+                  setCodeStatus(v === "" ? "idle" : v === "PRO99" ? "valid" : "idle");
+                }}
+                placeholder="Enter access code"
+                spellCheck={false}
+                autoCapitalize="characters"
+                className={`w-full bg-black/40 border rounded-sm px-3 py-2 text-sm font-mono tracking-[0.3em] uppercase text-white placeholder:tracking-normal placeholder:normal-case placeholder-gray-600 outline-none focus:ring-1 transition-colors ${
+                  codeStatus === "valid"
+                    ? "border-primary/70 focus:ring-primary/60 text-primary"
+                    : codeStatus === "invalid"
+                    ? "border-red-500/70 focus:ring-red-500/60"
+                    : "border-white/10 focus:ring-primary/40"
+                }`}
+                data-testid="input-access-code"
+              />
+              {codeStatus === "valid" ? (
+                <p className="flex items-center gap-1.5 text-[11px] font-mono text-primary" data-testid="text-code-valid">
+                  <Sparkles className="w-3 h-3" />
+                  Pro Mode detected — infinite ⚡ + Live AI Codex on login.
+                </p>
+              ) : codeStatus === "invalid" ? (
+                <p className="text-[11px] font-mono text-red-400" data-testid="text-code-invalid">
+                  Unknown code. Leave blank to continue in Free Mode.
+                </p>
+              ) : (
+                <p className="flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground" data-testid="text-code-hint">
+                  <Zap className="w-3 h-3" />
+                  Empty = Free Mode · 3 ⚡ charges · refills every 10h.
+                </p>
+              )}
+            </div>
 
             <CyberButton
               type="submit"
