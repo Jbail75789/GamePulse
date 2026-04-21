@@ -101,6 +101,51 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     if (redeemed) return res.json({ success: true });
     res.status(400).json({ message: "Invalid or already used code" });
   });
+  app.post("/api/ai/vibe" , async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const { title } = req.body;
+    if (!title) return res.status(400).json({ message: "Game title required" });
 
+    if (!process.env.OPEN_AI_KEY) {
+      return res.status(500).json({ vibe: "AI link severed. (Check Replit Secrets)" });
+    }
+
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "You are a witty gaming AI. Briefly describe the 'vibe' of the game in 2 short sentences. Use gamer slang like 'chef's kiss', 'goated', or 'comfy'. Stay hyped!"
+            },
+            {
+              role: "user",
+              content: `What vibe is this game: ${title}?`
+            }
+          ],
+          max_tokens: 100,
+          temperature: 0.3,
+        }),
+      });
+      
+      const data: any = await response.json();
+      
+      if (data.error) {
+        return res.status(500).json({ vibe: "OpenAI says: " + data.error.message });
+      }
+
+      const vibe = data.choices[0].message.content;
+      res.json({ vibe });
+    } catch (error) {
+      res.status(500).json({ vibe: "Codex connection timed out. The signal is weak." });
+    }
+  });
+    
   return httpServer;
 }

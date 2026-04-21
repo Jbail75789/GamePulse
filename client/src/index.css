@@ -201,3 +201,21 @@
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+/* AI Vibe Check Animations */
+@keyframes ai-glow {
+  0% { box-shadow: 0 0 5px rgba(168, 85, 247, 0.4); border-color: rgba(168, 85, 247, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.8); border-color: rgba(168, 85, 247, 0.8); }
+  100% { box-shadow: 0 0 5px rgba(168, 85, 247, 0.4); border-color: rgba(168, 85, 247, 0.4); }
+}
+
+.ai-loading-glow {
+  animation: ai-glow 1.5s infinite ease-in-out;
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), rgba(139, 92, 246, 0.1));
+}  
+  .vibe-text-gradient {
+  background: linear-gradient(to right, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
+}
