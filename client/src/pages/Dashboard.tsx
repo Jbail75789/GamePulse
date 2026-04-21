@@ -63,7 +63,7 @@ interface SearchResult {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { games, updateGame } = useGames();
+  const { games, updateGame, deleteGame } = useGames();
   const { toast } = useToast();
   // --- States ---
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog" | "wishlist">("active");
@@ -378,6 +378,7 @@ export default function Dashboard() {
                   isLogging={loggingTimeId === game.id}
                   isAILoading={isAILoading === game.id}
                   onAIVibeCheck={() => handleAIVibeCheck(game.title, game.id)}
+                  onDelete={(id) => deleteGame(id)}
                 />
               </motion.div>
             ))}

@@ -17,6 +17,7 @@ import {
   Sparkles,
   Loader2,
   Plus,
+  Trash2,
 } from "lucide-react";
 
 type GlowColor = "primary" | "secondary" | "accent" | "none";
@@ -190,19 +191,33 @@ export function CyberCard(props: CyberCardProps) {
             />
           </div>
 
-          {(game.status === "active" || game.status === "backlog") && (
-            <Button
-              onClick={onLogTime}
-              disabled={isLogging}
-              variant="outline"
-              size="sm"
-              className="w-full font-mono text-xs uppercase tracking-widest"
-              data-testid={`button-log-time-${game.id}`}
-            >
-              <Plus className="w-3.5 h-3.5 mr-1.5" />
-              {isLogging ? "Logging…" : "Log Time"}
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {(game.status === "active" || game.status === "backlog") && (
+              <Button
+                onClick={onLogTime}
+                disabled={isLogging}
+                variant="outline"
+                size="sm"
+                className="flex-1 font-mono text-xs uppercase tracking-widest"
+                data-testid={`button-log-time-${game.id}`}
+              >
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                {isLogging ? "Logging…" : "Log Time"}
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                onClick={() => onDelete(game.id)}
+                variant="outline"
+                size="sm"
+                className="font-mono text-xs uppercase tracking-widest text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+                data-testid={`button-delete-${game.id}`}
+                title="Delete game"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
