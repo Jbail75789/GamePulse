@@ -161,6 +161,53 @@ export default function Dashboard() {
     }
    };
 
+  // RAWG search — debounced
+  useEffect(() => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const key = import.meta.env.VITE_RAWG_API_KEY;
+        const res = await fetch(
+          `https://api.rawg.io/api/games?key=${key}&search=${encodeURIComponent(q)}&page_size=8`
+        );
+        const data = await res.json();
+        setSearchResults(
+          (data.results || []).map((g: any) => ({
+            id: g.id,
+            name: g.name,
+            background_image: g.background_image,
+          }))
+        );
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 350);
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [searchQuery]);
+
+  const handlePickSearchResult = (r: SearchResult) => {
+    setSearchAddPrefill({ title: r.name, coverUrl: r.background_image ?? null });
+    setSearchAddOpen(true);
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
+  const handleOpenAddManual = () => {
+    setSearchAddPrefill(undefined);
+    setSearchAddOpen(true);
+  };
+
   const handleSpinRoulette = (mood: MoodMode) => {
     const pool = (games || []).filter(g => g.status === "backlog" && (mood === "chaos" || g.vibe === mood || !g.vibe));
     const candidates = pool.length > 0 ? pool : (games || []).filter(g => g.status === "backlog");
@@ -222,28 +269,73 @@ export default function Dashboard() {
             </div>
 
           <div className="flex gap-3 w-full md:w-auto">
+            <Button
+              onClick={handleOpenAddManual}
+              className="flex-1 md:flex-none bg-primary text-background font-bold uppercase"
+              data-testid="button-add-game"
+            >
+              <Plus className="mr-2 h-5 w-5" /> Add Game
+            </Button>
             <Button 
               onClick={() => setShowRoulette(true)} 
               className="flex-1 md:flex-none bg-secondary text-background font-bold uppercase"
               disabled={!isPro && pulseCharges === 0}
+              data-testid="button-pick-game"
             >
               <Dices className="mr-2 h-5 w-5" /> Pick a Game
             </Button>
-            <Button variant="outline" size="icon" onClick={() => setShowSettingsModal(true)}>
+            <Button variant="outline" size="icon" onClick={() => setShowSettingsModal(true)} data-testid="button-settings">
               <Settings className="h-5 w-5" />
             </Button>
           </div>
         </div>
 
-        {/* 3. Search Bar Section */}
-        <div className="relative max-w-2xl mx-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <input 
+        {/* 3. Search Bar Section — RAWG search-to-add */}
+        <div className="relative max-w-2xl mx-auto" data-testid="container-search">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
+          <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for a new target..."
-            className="w-full bg-card/50 border border-border rounded-lg pl-10 pr-4 py-3 font-mono focus:border-primary outline-none"
+            placeholder="Search RAWG to add a new game..."
+            className="w-full bg-card/50 border border-border rounded-lg pl-10 pr-10 py-3 font-mono focus:border-primary outline-none"
+            data-testid="input-search-rawg"
           />
+          {isSearching && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary animate-spin" />
+          )}
+
+          {/* RAWG Results Dropdown */}
+          {searchQuery.trim().length >= 2 && (searchResults.length > 0 || !isSearching) && (
+            <div
+              className="absolute left-0 right-0 top-full mt-2 bg-card border border-border/50 rounded-lg shadow-2xl shadow-primary/10 overflow-hidden z-30 max-h-96 overflow-y-auto"
+              data-testid="dropdown-rawg-results"
+            >
+              {searchResults.length === 0 && !isSearching ? (
+                <div className="px-4 py-6 text-center text-sm font-mono text-muted-foreground">
+                  No matches. Try a different title or click <button onClick={handleOpenAddManual} className="text-primary underline">Add manually</button>.
+                </div>
+              ) : (
+                searchResults.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => handlePickSearchResult(r)}
+                    className="w-full flex items-center gap-3 px-3 py-2 hover:bg-primary/10 hover:text-primary transition-colors text-left border-b border-border/30 last:border-b-0"
+                    data-testid={`result-rawg-${r.id}`}
+                  >
+                    {r.background_image ? (
+                      <img src={r.background_image} alt="" className="w-12 h-12 object-cover rounded" />
+                    ) : (
+                      <div className="w-12 h-12 bg-black/40 rounded flex items-center justify-center">
+                        <Gamepad2 className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <span className="font-mono text-sm flex-1 truncate">{r.name}</span>
+                    <Plus className="w-4 h-4 opacity-50" />
+                  </button>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         {/* 4. Tab Navigation — Staggered Hover (only hovered category glows) */}
