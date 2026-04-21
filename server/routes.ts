@@ -4,6 +4,12 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+});
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   setupAuth(app);
@@ -101,49 +107,35 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     if (redeemed) return res.json({ success: true });
     res.status(400).json({ message: "Invalid or already used code" });
   });
-  app.post("/api/ai/vibe" , async (req, res) => {
+  app.post("/api/ai/vibe", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const { title } = req.body;
     if (!title) return res.status(400).json({ message: "Game title required" });
 
-    if (!process.env.OPEN_AI_KEY) {
-      return res.status(500).json({ vibe: "AI link severed. (Check Replit Secrets)" });
+    if (!openai.apiKey) {
+      return res.status(500).json({ vibe: "AI link severed. (Missing OpenAI key)" });
     }
 
     try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: "You are a witty gaming AI. Briefly describe the 'vibe' of the game in 2 short sentences. Use gamer slang like 'chef's kiss', 'goated', or 'comfy'. Stay hyped!"
-            },
-            {
-              role: "user",
-              content: `What vibe is this game: ${title}?`
-            }
-          ],
-          max_tokens: 100,
-          temperature: 0.3,
-        }),
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        max_tokens: 140,
+        temperature: 0.8,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are the Cyber-Cynic: a jaded, neon-soaked gaming oracle. In 2 short, punchy sentences, deliver a brutally honest 'vibe check' on the given game. Mix gamer slang ('goated', 'mid', 'chef's kiss', 'comfy', 'sweaty') with dry cyberpunk wit. No emojis. No hedging.",
+          },
+          { role: "user", content: `Vibe check this game: ${title}` },
+        ],
       });
-      
-      const data: any = await response.json();
-      
-      if (data.error) {
-        return res.status(500).json({ vibe: "OpenAI says: " + data.error.message });
-      }
 
-      const vibe = data.choices[0].message.content;
+      const vibe = completion.choices[0]?.message?.content?.trim() ?? "Signal lost in the static.";
       res.json({ vibe });
-    } catch (error) {
-      res.status(500).json({ vibe: "Codex connection timed out. The signal is weak." });
+    } catch (error: any) {
+      console.error("[ai/vibe] OpenAI error:", error?.message || error);
+      res.status(500).json({ vibe: `Codex error: ${error?.message ?? "connection failed"}` });
     }
   });
     
