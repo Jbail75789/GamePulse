@@ -26,7 +26,34 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
 import confetti from "canvas-confetti";
+
+type MoodMode = "chill" | "epic" | "quickfix" | "competitive" | "chaos";
+
+const MOODS: { id: MoodMode; label: string; icon: any; color: string; ring: string }[] = [
+  { id: "chill",       label: "Chill",       icon: Sofa,      color: "text-emerald-400", ring: "ring-emerald-400/60" },
+  { id: "epic",        label: "Epic",        icon: Sword,     color: "text-amber-300",   ring: "ring-amber-300/60" },
+  { id: "quickfix",    label: "Quick Fix",   icon: Bolt,      color: "text-lime-400",    ring: "ring-lime-400/60" },
+  { id: "competitive", label: "Competitive", icon: Hourglass, color: "text-red-500",     ring: "ring-red-500/60" },
+  { id: "chaos",       label: "Chaos",       icon: Zap,       color: "text-orange-500",  ring: "ring-orange-500/60" },
+];
+
+function playWinSound(_mode: MoodMode) {
+  try {
+    const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 660;
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+    o.start(); o.stop(ctx.currentTime + 0.45);
+  } catch {}
+}
 
 interface SearchResult {
   id: number;
@@ -50,7 +77,9 @@ export default function Dashboard() {
   const [redeemCode, setRedeemCode] = useState("");
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [showRoulette, setShowRoulette] = useState(false);
+  const [selectedMood, setSelectedMood] = useState<MoodMode | null>(null);
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
+  const [winnerMode, setWinnerMode] = useState<MoodMode | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinGame, setSpinGame] = useState<Game | null>(null);
   const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
@@ -131,6 +160,35 @@ export default function Dashboard() {
       setIsAILoading(null);
     }
    };
+
+  const handleSpinRoulette = (mood: MoodMode) => {
+    const pool = (games || []).filter(g => g.status === "backlog" && (mood === "chaos" || g.vibe === mood || !g.vibe));
+    const candidates = pool.length > 0 ? pool : (games || []).filter(g => g.status === "backlog");
+    if (candidates.length === 0) {
+      toast({ title: "Empty Backlog", description: "Add games to your backlog first.", variant: "destructive" });
+      return;
+    }
+    if (!isPro) setPulseCharges(c => Math.max(0, c - 1));
+    setSelectedMood(mood);
+    setIsSpinning(true);
+    let ticks = 0;
+    const total = 18 + Math.floor(Math.random() * 8);
+    const interval = setInterval(() => {
+      setSpinGame(candidates[Math.floor(Math.random() * candidates.length)]);
+      ticks++;
+      if (ticks >= total) {
+        clearInterval(interval);
+        const winner = candidates[Math.floor(Math.random() * candidates.length)];
+        setSpinGame(null);
+        setIsSpinning(false);
+        setShowRoulette(false);
+        setWinnerMode(mood);
+        setWinnerGame(winner);
+        playWinSound(mood);
+        if (mood !== "chaos") confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+      }
+    }, 80);
+  };
 
   // --- UI Helpers ---
   const tabData = [
@@ -236,6 +294,200 @@ export default function Dashboard() {
         onOpenChange={setSearchAddOpen} 
         prefill={searchAddPrefill}
       />
+
+      {/* Roulette: Mood Selection + Spin */}
+      <Dialog open={showRoulette} onOpenChange={(o) => { if (!isSpinning) setShowRoulette(o); }}>
+        <DialogContent className="bg-[#0a0a0a] border-white/10 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display uppercase tracking-widest text-center">
+              {isSpinning ? "Spinning…" : "Pick Your Mood"}
+            </DialogTitle>
+            <DialogDescription className="text-center font-mono text-xs">
+              {isSpinning ? (spinGame?.title ?? "...") : "We'll roll a backlog game that matches the vibe."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {!isSpinning ? (
+            <div className="grid grid-cols-2 gap-3 pt-2" data-testid="grid-mood-roulette">
+              {MOODS.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => handleSpinRoulette(m.id)}
+                  data-testid={`button-mood-${m.id}`}
+                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white/5 border border-white/10 hover-elevate active-elevate-2 transition-all ${m.color} ring-1 ${m.ring} ring-inset`}
+                >
+                  <m.icon className="w-7 h-7" />
+                  <span className="font-display uppercase text-xs tracking-widest">{m.label}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 flex items-center justify-center">
+              <Dices className="w-16 h-16 text-secondary animate-spin" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Winner Dialog with mode-specific overlays */}
+      <Dialog open={!!winnerGame} onOpenChange={(o) => { if (!o) { setWinnerGame(null); setWinnerMode(null); } }}>
+        <DialogContent
+          className="bg-[#0a0a0a] border-white/10 max-w-lg overflow-hidden p-0"
+          data-testid={`dialog-winner-${winnerMode ?? "none"}`}
+        >
+          <div className={`relative ${winnerMode === "chaos" ? "chaos-shake" : ""}`}>
+            {/* === Mode-specific overlay layers === */}
+            {winnerMode === "chill" && (
+              <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
+                {[0, 0.6, 1.2, 1.8].map((delay, i) => (
+                  <div
+                    key={i}
+                    className="absolute rounded-full border border-emerald-300/70"
+                    style={{
+                      width: 220, height: 220,
+                      animation: `water-ripple 2.4s ease-out ${delay}s infinite`,
+                      boxShadow: "0 0 24px rgba(110, 231, 183, 0.35) inset",
+                    }}
+                  />
+                ))}
+                <div className="absolute inset-0 bg-gradient-radial from-emerald-500/10 via-transparent to-transparent" />
+              </div>
+            )}
+
+            {winnerMode === "epic" && (
+              <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
+                <div
+                  className="absolute"
+                  style={{
+                    width: 600, height: 600,
+                    background:
+                      "conic-gradient(from 0deg, rgba(252,211,77,0.55) 0deg, transparent 18deg, rgba(252,211,77,0.55) 36deg, transparent 54deg, rgba(252,211,77,0.55) 72deg, transparent 90deg, rgba(252,211,77,0.55) 108deg, transparent 126deg, rgba(252,211,77,0.55) 144deg, transparent 162deg, rgba(252,211,77,0.55) 180deg, transparent 198deg, rgba(252,211,77,0.55) 216deg, transparent 234deg, rgba(252,211,77,0.55) 252deg, transparent 270deg, rgba(252,211,77,0.55) 288deg, transparent 306deg, rgba(252,211,77,0.55) 324deg, transparent 342deg)",
+                    maskImage: "radial-gradient(circle, transparent 70px, black 90px, black 280px, transparent 320px)",
+                    WebkitMaskImage: "radial-gradient(circle, transparent 70px, black 90px, black 280px, transparent 320px)",
+                    animation: "sunburst-rotate 14s linear infinite",
+                  }}
+                />
+                <div
+                  className="absolute rounded-full"
+                  style={{
+                    width: 180, height: 180,
+                    background: "radial-gradient(circle, rgba(253,224,71,0.55) 0%, rgba(253,224,71,0) 70%)",
+                    animation: "sunburst-pulse 2.4s ease-in-out infinite",
+                  }}
+                />
+              </div>
+            )}
+
+            {winnerMode === "quickfix" && (
+              <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+                <div
+                  className="absolute inset-0 bg-white"
+                  style={{ animation: "camera-pop-flash 0.7s ease-out forwards" }}
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    boxShadow: "inset 0 0 120px 40px rgba(132, 204, 22, 0.55)",
+                    animation: "camera-pop-vignette 1.4s ease-out forwards",
+                  }}
+                />
+              </div>
+            )}
+
+            {winnerMode === "competitive" && (
+              <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-x-0 h-1 bg-red-500/70" style={{ animation: "reticle-scan 1.6s linear infinite", boxShadow: "0 0 12px rgba(239,68,68,0.9)" }} />
+                <div
+                  className="relative"
+                  style={{ width: 280, height: 280, animation: "reticle-lock 0.7s cubic-bezier(.2,1.4,.4,1) forwards" }}
+                >
+                  <div className="absolute inset-0 rounded-full border-2 border-red-500/80" />
+                  <div className="absolute inset-6 rounded-full border border-red-500/50" />
+                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-red-500/70 -translate-x-1/2" />
+                  <div className="absolute top-1/2 left-0 right-0 h-px bg-red-500/70 -translate-y-1/2" />
+                  {[0, 90, 180, 270].map(a => (
+                    <div key={a} className="absolute left-1/2 top-1/2 w-6 h-6 border-l-2 border-t-2 border-red-500" style={{ transform: `translate(-50%,-50%) rotate(${a}deg) translateY(-130px)` }} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {winnerMode === "chaos" && (
+              <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-t from-orange-900/40 via-transparent to-transparent" />
+                {Array.from({ length: 14 }).map((_, i) => {
+                  const left = 5 + Math.random() * 90;
+                  const drift = (Math.random() - 0.5) * 80;
+                  const size = 4 + Math.random() * 6;
+                  const delay = Math.random() * 1.2;
+                  return (
+                    <div
+                      key={i}
+                      className="absolute rounded-full bg-orange-400"
+                      style={{
+                        left: `${left}%`,
+                        bottom: 0,
+                        width: size, height: size,
+                        boxShadow: "0 0 8px rgba(251,146,60,0.95)",
+                        ['--em-drift' as any]: `${drift}px`,
+                        animation: `ember-rise 2.2s ease-out ${delay}s infinite`,
+                      }}
+                    />
+                  );
+                })}
+                <div className="absolute inset-x-0 top-12 h-8 bg-cyan-400/40 mix-blend-screen" style={{ animation: "glitch-band 1.4s steps(2,end) infinite" }} />
+                <div className="absolute inset-x-0 top-24 h-6 bg-pink-500/40 mix-blend-screen" style={{ animation: "glitch-band 1.7s steps(2,end) 0.2s infinite" }} />
+              </div>
+            )}
+
+            {/* === Winner content === */}
+            <div className="relative z-10 p-8">
+              <DialogHeader>
+                <DialogTitle className="font-display uppercase tracking-widest text-center text-2xl" data-testid="text-winner-title">
+                  {winnerMode === "chaos" ? "CHAOS DEMANDS" : "Your Mission"}
+                </DialogTitle>
+                <DialogDescription className="text-center font-mono text-xs">
+                  {winnerMode ? `Mood: ${winnerMode.toUpperCase()}` : ""}
+                </DialogDescription>
+              </DialogHeader>
+              {winnerGame && (
+                <div className="mt-6 flex flex-col items-center gap-4">
+                  {winnerGame.coverUrl && (
+                    <img
+                      src={winnerGame.coverUrl}
+                      alt={winnerGame.title}
+                      className="w-40 h-56 object-cover rounded-lg border border-white/10 shadow-2xl"
+                      data-testid={`img-winner-${winnerGame.id}`}
+                    />
+                  )}
+                  <h2 className="text-3xl font-display uppercase text-center" data-testid={`text-winner-name-${winnerGame.id}`}>
+                    {winnerGame.title}
+                  </h2>
+                  <div className="flex gap-3 mt-2">
+                    <Button
+                      onClick={() => {
+                        if (winnerGame) handleUpdateStatus(winnerGame.id, "active");
+                        setWinnerGame(null); setWinnerMode(null);
+                      }}
+                      className="bg-primary text-background font-bold uppercase"
+                      data-testid="button-winner-accept"
+                    >
+                      <Check className="mr-2 h-4 w-4" /> Accept
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => { setWinnerGame(null); setWinnerMode(null); }}
+                      data-testid="button-winner-skip"
+                    >
+                      Skip
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
