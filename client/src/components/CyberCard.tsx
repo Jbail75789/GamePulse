@@ -140,6 +140,14 @@ export function CyberCard(props: CyberCardProps) {
               {game.vibe}
             </span>
           )}
+
+          {/* HUD-style total time played — bottom-left */}
+          <span
+            className="absolute bottom-2 left-2 z-20 font-mono text-[11px] tracking-widest text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
+            data-testid={`text-total-time-${game.id}`}
+          >
+            {playtime} HRS
+          </span>
         </div>
 
         {/* Body */}
@@ -180,7 +188,7 @@ export function CyberCard(props: CyberCardProps) {
 
           <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground uppercase tracking-widest">
             <span data-testid={`text-platform-${game.id}`}>{game.platform || "PC"}</span>
-            <span data-testid={`text-playtime-${game.id}`}>{playtime}h / {target}h</span>
+            <span data-testid={`text-target-${game.id}`}>Target: {target}h</span>
           </div>
 
           <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
