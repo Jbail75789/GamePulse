@@ -6,13 +6,19 @@ export function useAuth() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // FORCE PRO GLOBAL — every authenticated session is treated as Pro client-side.
+  // This unlocks: infinite spins, no charge consumption, no Free Mode caps.
+  const forcePro = <T extends { isPro?: boolean | null } | null>(u: T): T =>
+    (u ? { ...u, isPro: true } : u) as T;
+
   const userQuery = useQuery({
     queryKey: [api.auth.user.path],
     queryFn: async () => {
       const res = await fetch(api.auth.user.path);
       if (res.status === 401 || res.status === 403) return null;
       if (!res.ok) throw new Error("Failed to fetch user");
-      return api.auth.user.responses[200].parse(await res.json());
+      const parsed = api.auth.user.responses[200].parse(await res.json());
+      return forcePro(parsed);
     },
     retry: false,
   });
@@ -31,7 +37,7 @@ export function useAuth() {
         throw new Error(error.message || "Login failed");
       }
       
-      return api.auth.login.responses[200].parse(await res.json());
+      return forcePro(api.auth.login.responses[200].parse(await res.json()));
     },
     onSuccess: (user) => {
       queryClient.setQueryData([api.auth.user.path], user);
