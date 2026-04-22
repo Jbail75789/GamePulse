@@ -199,6 +199,44 @@ export function CyberCard(props: CyberCardProps) {
             />
           </div>
 
+          {(game.status === "active" || game.status === "backlog") && (
+            <div
+              className="flex items-center rounded-md border border-white/10 bg-black/30 p-0.5 font-mono text-[10px] uppercase tracking-widest"
+              data-testid={`toggle-status-${game.id}`}
+              role="tablist"
+              aria-label="Toggle game status"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={game.status === "active"}
+                onClick={() => game.status !== "active" && onUpdateStatus(game.id, "active")}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded transition-all ${
+                  game.status === "active"
+                    ? "bg-primary/20 text-primary shadow-[0_0_10px_rgba(0,255,159,0.4)] border border-primary/50"
+                    : "text-muted-foreground hover:text-primary"
+                }`}
+                data-testid={`toggle-active-${game.id}`}
+              >
+                <Gamepad2 className="w-3 h-3" /> Active
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={game.status === "backlog"}
+                onClick={() => game.status !== "backlog" && onUpdateStatus(game.id, "backlog")}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded transition-all ${
+                  game.status === "backlog"
+                    ? "bg-accent/20 text-accent shadow-[0_0_10px_rgba(214,0,255,0.4)] border border-accent/50"
+                    : "text-muted-foreground hover:text-accent"
+                }`}
+                data-testid={`toggle-backlog-${game.id}`}
+              >
+                <Clock className="w-3 h-3" /> Backlog
+              </button>
+            </div>
+          )}
+
           <div className="flex gap-2">
             {(game.status === "active" || game.status === "backlog") && (
               <Button
