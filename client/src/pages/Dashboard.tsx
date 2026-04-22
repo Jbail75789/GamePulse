@@ -988,7 +988,7 @@ export default function Dashboard() {
 
       {/* === PICK A GAME Selection Modal === */}
       <Dialog open={showPickModal} onOpenChange={setShowPickModal}>
-        <DialogContent className="bg-[#0a0a0a] border-secondary/50 max-w-lg shadow-[0_0_40px_rgba(0,184,255,0.25)]" data-testid="dialog-pick-game">
+        <DialogContent className="bg-[#0a0a0a] border-secondary/50 max-w-lg shadow-[0_0_40px_rgba(0,184,255,0.25)] max-h-[90vh] overflow-y-auto" data-testid="dialog-pick-game">
           <DialogHeader>
             <DialogTitle className="font-display uppercase tracking-widest text-center text-2xl text-secondary flex items-center justify-center gap-2">
               <Dices className="w-6 h-6" /> Pick a Game
