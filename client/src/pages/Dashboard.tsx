@@ -184,6 +184,14 @@ export default function Dashboard() {
     if (before && before.status !== newStatus) {
       setGlitchTrigger(t => t + 1);
     }
+    // Vault → Anywhere Else = permanent Legacy upgrade.
+    // Once a game has been beaten and pulled back out, it carries the Legacy
+    // badge forever, even if re-vaulted later.
+    const earnsLegacy =
+      !!before &&
+      before.status === "completed" &&
+      newStatus !== "completed" &&
+      !before.infiniteMode;
     const activeGamesCount = games?.filter(g => g.status === 'active').length || 0;
     const backlogGamesCount = games?.filter(g => g.status === 'backlog').length || 0;
     const currentGame = games?.find(g => g.id === gameId);
@@ -201,7 +209,17 @@ export default function Dashboard() {
     
     // Preserve playtime when moving between lists. Infinite Mode and "Keep in Pulse"
     // both rely on the total hours surviving the status flip.
-    updateGame({ id: gameId, status: newStatus as Game["status"] });
+    updateGame({
+      id: gameId,
+      status: newStatus as Game["status"],
+      ...(earnsLegacy ? { infiniteMode: true } : {}),
+    });
+    if (earnsLegacy) {
+      toast({
+        title: "Legacy Status Earned",
+        description: `${before?.title ?? "Mission"} carries the Legacy badge from now on.`,
+      });
+    }
   };
 
   // Add `decimalHours` to a game's playtime. Returns true on success so callers can toast accurately.

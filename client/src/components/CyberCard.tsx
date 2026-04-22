@@ -102,11 +102,7 @@ export function CyberCard(props: CyberCardProps) {
     const { game, onUpdateStatus, onLogTime, isLogging, isAILoading, onAIVibeCheck, onDelete, onUpdateTarget, onGoInfinite, onRemoveTarget } = props;
     const playtime = game.playtime ?? 0;
     const isInfinite = !!game.infiniteMode;
-    // Vault games inherit the Legacy visual treatment automatically — same badge,
-    // same gradient HUD as Infinite/Legacy runs. Functional Infinite Mode logic
-    // (progress pinning, auto-promote, Go Infinite eligibility) stays gated by
-    // isInfinite and is unaffected.
-    const displayAsLegacy = isInfinite || game.status === "completed";
+    const displayAsLegacy = isInfinite;
     const noTarget = isInfinite && (game.targetHours == null);
     const target = game.targetHours && game.targetHours > 0 ? game.targetHours : 40;
     // Overtime visuals are suppressed when Infinite Mode is active.
@@ -254,8 +250,6 @@ export function CyberCard(props: CyberCardProps) {
               title={
                 isInfinite
                   ? `Infinite Mode — original target ${target}h, played ${fmtHM(playtime)}`
-                  : game.status === "completed"
-                  ? `Vault — ${fmtHM(playtime)} logged`
                   : isOvertime
                   ? `Played ${fmtHM(playtime)} vs ${target}h target`
                   : undefined
@@ -265,8 +259,6 @@ export function CyberCard(props: CyberCardProps) {
                 ? noTarget
                   ? `PLAYTIME: ${fmtHM(playtime)} (INFINITE)`
                   : `PLAYTIME: ${fmtHM(playtime)} / ${target}h (INFINITE)`
-                : game.status === "completed"
-                ? `PLAYTIME: ${fmtHM(playtime)} / ${target}h`
                 : isOvertime
                 ? `OVERTIME +${fmtHM(overtimeHours)}`
                 : `${fmtHM(playtime)} / ${target}h`}
