@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, json, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -18,12 +18,21 @@ export const games = pgTable("games", {
   title: text("title").notNull(),
   status: text("status", { enum: ["active", "completed", "backlog", "wishlist"] }).notNull().default("backlog"),
   coverUrl: text("cover_url").notNull(),
-  playtime: integer("playtime").default(0),
+  playtime: real("playtime").default(0),
   platform: text("platform").default("PC"),
   vibe: text("vibe", { enum: ["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"] }),
   progress: integer("progress").default(0),
   targetHours: integer("target_hours").default(40),
 });
+
+// Declared so drizzle-kit doesn't try to drop the connect-pg-simple session table
+export const sessions = pgTable("session", {
+  sid: varchar("sid").primaryKey(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
+}, (table) => ({
+  expireIdx: index("IDX_session_expire").on(table.expire),
+}));
 
 export const promoCodes = pgTable("promo_codes", {
   id: serial("id").primaryKey(),
@@ -40,7 +49,7 @@ export const insertGameSchema = createInsertSchema(games).omit({
   id: true, 
   userId: true 
 }).extend({
-  playtime: z.number().transform(v => Math.round(v ?? 0)).optional().default(0),
+  playtime: z.number().transform(v => Math.max(0, v ?? 0)).optional().default(0),
   targetHours: z.number().int().transform(v => v ?? 40).optional().default(40),
 });
 

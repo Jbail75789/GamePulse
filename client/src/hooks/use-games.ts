@@ -118,6 +118,7 @@ export function useGames() {
     createGame: createGameMutation.mutate,
     isCreating: createGameMutation.isPending,
     updateGame: updateGameMutation.mutate,
+    updateGameAsync: updateGameMutation.mutateAsync,
     isUpdating: updateGameMutation.isPending,
     deleteGame: deleteGameMutation.mutate,
     isDeleting: deleteGameMutation.isPending,

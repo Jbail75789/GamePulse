@@ -101,6 +101,15 @@ export function CyberCard(props: CyberCardProps) {
     const target = game.targetHours && game.targetHours > 0 ? game.targetHours : 40;
     const overtimeHours = Math.max(0, playtime - target);
     const isOvertime = overtimeHours > 0;
+
+    // Format decimal hours → "45m" (<1h) | "1h 30m" (with mins) | "2h" (whole)
+    const fmtHM = (decH: number) => {
+      const totalMins = Math.round(decH * 60);
+      if (totalMins < 60) return `${totalMins}m`;
+      const h = Math.floor(totalMins / 60);
+      const m = totalMins % 60;
+      return m === 0 ? `${h}h` : `${h}h ${m}m`;
+    };
     const progress = isOvertime
       ? 100
       : game.status === "completed"
@@ -182,9 +191,9 @@ export function CyberCard(props: CyberCardProps) {
                   : "text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
               }`}
               data-testid={`text-total-time-${game.id}`}
-              title={isOvertime ? `Played ${playtime}h vs ${target}h target` : undefined}
+              title={isOvertime ? `Played ${fmtHM(playtime)} vs ${target}h target` : undefined}
             >
-              {isOvertime ? `OVERTIME +${overtimeHours}h` : `${playtime} / ${target}h`}
+              {isOvertime ? `OVERTIME +${fmtHM(overtimeHours)}` : `${fmtHM(playtime)} / ${target}h`}
             </span>
             {onUpdateTarget && (
               <button

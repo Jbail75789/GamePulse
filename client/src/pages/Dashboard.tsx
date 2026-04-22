@@ -128,7 +128,7 @@ function ReelEstimate({ game, onApply }: { game: Game | null; onApply: (hrs: num
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { games, isLoading, deleteGame, updateGame, createGame } = useGames();
+  const { games, isLoading, deleteGame, updateGame, updateGameAsync, createGame } = useGames();
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog" | "wishlist">("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -150,7 +150,8 @@ export default function Dashboard() {
   const [spinGame, setSpinGame] = useState<Game | null>(null);
   const [isStartingAdventure, setIsStartingAdventure] = useState(false);
   const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
-  const [logHours, setLogHours] = useState<string>("1");
+  const [logHrs, setLogHrs] = useState<string>("1");
+  const [logMins, setLogMins] = useState<string>("0");
   const [isLoggingTime, setIsLoggingTime] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [pulseCharges, setPulseCharges] = useState(3);
@@ -193,32 +194,55 @@ export default function Dashboard() {
     updateGame({ id: gameId, ...updates });
   };
 
-  const handleLogTime = async (game: Game) => {
-    const hours = parseFloat(logHours);
-    if (isNaN(hours) || hours <= 0) return;
+  // Add `decimalHours` to a game's playtime. Returns true on success so callers can toast accurately.
+  const logTime = async (game: Game, decimalHours: number): Promise<boolean> => {
+    if (!decimalHours || decimalHours <= 0) return false;
     setIsLoggingTime(true);
     try {
-      const prevProgress = game.progress || 0;
-      const newTotal = (game.playtime || 0) + hours;
-      const target = game.targetHours || 20;
+      const newTotal = Math.round(((game.playtime ?? 0) + decimalHours) * 100) / 100; // 2-decimal precision
+      const target = game.targetHours || 40;
       const newProgress = Math.min(100, Math.floor((newTotal / target) * 100));
+      // Auto-promote backlog → active when time logged; never auto-demote completed.
       let newStatus = game.status;
-      if (newProgress >= 100) newStatus = "completed";
-      else if (newProgress > 0 && game.status !== 'completed') newStatus = "active";
+      if (game.status === "backlog" && newTotal > 0) newStatus = "active";
 
-      await updateGame({
+      await updateGameAsync({
         id: game.id,
         playtime: newTotal,
         progress: newProgress,
         status: newStatus,
       });
-
-      setLoggingTimeId(null);
-      setLogHours("1");
-    } catch (error) {
+      return true;
+    } catch {
       toast({ title: "Update Failed", variant: "destructive" });
+      return false;
     } finally {
       setIsLoggingTime(false);
+    }
+  };
+
+  const handleLogTime = async (game: Game) => {
+    const h = Math.max(0, parseInt(logHrs || "0", 10) || 0);
+    // Clamp minutes to 0–59 — HTML attrs alone don't prevent typed values.
+    const mRaw = parseInt(logMins || "0", 10) || 0;
+    const m = Math.min(59, Math.max(0, mRaw));
+    const decimal = h + m / 60;
+    if (decimal <= 0) return;
+    const ok = await logTime(game, decimal);
+    if (ok) {
+      setLoggingTimeId(null);
+      setLogHrs("1");
+      setLogMins("0");
+    }
+  };
+
+  const handleQuickLog = async (game: Game, mins: number) => {
+    const ok = await logTime(game, mins / 60);
+    if (ok) {
+      toast({
+        title: "Time Logged",
+        description: mins >= 60 ? `+${mins / 60}h to ${game.title}` : `+${mins}m to ${game.title}`,
+      });
     }
   };
 
@@ -637,17 +661,66 @@ export default function Dashboard() {
         <DialogContent className="bg-[#0a0a0a] border-primary/40 max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display uppercase tracking-widest">Log Playtime</DialogTitle>
-            <DialogDescription className="font-mono text-xs">Hours played in this session.</DialogDescription>
+            <DialogDescription className="font-mono text-xs">Time played in this session.</DialogDescription>
           </DialogHeader>
-          <input
-            type="number"
-            min="0.25"
-            step="0.25"
-            value={logHours}
-            onChange={(e) => setLogHours(e.target.value)}
-            className="w-full bg-card/50 border border-border rounded-lg px-3 py-3 font-mono text-lg focus:border-primary outline-none"
-            data-testid="input-log-hours"
-          />
+
+          {/* Hours + Mins side-by-side */}
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <label className="block text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Hours</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={logHrs}
+                onChange={(e) => setLogHrs(e.target.value)}
+                className="w-full bg-card/50 border border-border rounded-lg px-3 py-3 font-mono text-lg text-center focus:border-primary outline-none"
+                data-testid="input-log-hours"
+              />
+            </div>
+            <span className="pb-3 font-mono text-2xl text-muted-foreground">:</span>
+            <div className="flex-1">
+              <label className="block text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">Mins</label>
+              <input
+                type="number"
+                min="0"
+                max="59"
+                step="5"
+                value={logMins}
+                onChange={(e) => setLogMins(e.target.value)}
+                className="w-full bg-card/50 border border-border rounded-lg px-3 py-3 font-mono text-lg text-center focus:border-primary outline-none"
+                data-testid="input-log-mins"
+              />
+            </div>
+          </div>
+
+          {/* Quick presets */}
+          <div className="flex gap-2">
+            {[
+              { label: "+15m", mins: 15 },
+              { label: "+30m", mins: 30 },
+              { label: "+1h", mins: 60 },
+            ].map(p => (
+              <Button
+                key={p.label}
+                onClick={() => {
+                  const g = games?.find(x => x.id === loggingTimeId);
+                  if (g) {
+                    handleQuickLog(g, p.mins);
+                    setLoggingTimeId(null);
+                  }
+                }}
+                disabled={isLoggingTime}
+                variant="outline"
+                size="sm"
+                className="flex-1 font-mono text-xs uppercase tracking-widest border-secondary/50 text-secondary hover:bg-secondary/15"
+                data-testid={`button-quick-log-${p.mins}`}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
+
           <Button
             onClick={() => {
               const g = games?.find(x => x.id === loggingTimeId);
