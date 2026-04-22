@@ -27,6 +27,12 @@ interface AddGameModalProps {
 
 const PLATFORMS = ["PC", "Steam", "PS5", "Xbox", "Switch", "Other"];
 const VIBES = ["Chill", "Epic", "Quick Fix", "Competitive"];
+const VIBE_DEFAULT_HOURS: Record<string, number> = {
+  "Quick Fix": 5,
+  "Chill": 20,
+  "Competitive": 20,
+  "Epic": 60,
+};
 const STATUSES = [
   { value: "active", label: "Playing Now" },
   { value: "backlog", label: "Backlog" },
@@ -69,6 +75,17 @@ export function AddGameModal({ open, onOpenChange, prefill }: AddGameModalProps)
       setSelectedVibe(null);
     }
   }, [open, prefill]);
+
+  const hasRawgTarget = !!(prefill?.targetHours && prefill.targetHours > 0);
+
+  const handleVibeSelect = (v: string) => {
+    const next = selectedVibe === v ? null : v;
+    setSelectedVibe(next);
+    // Only override target hours if RAWG didn't provide one
+    if (!hasRawgTarget && next && VIBE_DEFAULT_HOURS[next]) {
+      form.setValue("targetHours", VIBE_DEFAULT_HOURS[next]);
+    }
+  };
 
   const togglePlatform = (p: string) => {
     setSelectedPlatforms(prev =>
@@ -191,7 +208,7 @@ export function AddGameModal({ open, onOpenChange, prefill }: AddGameModalProps)
                   <button
                     key={v}
                     type="button"
-                    onClick={() => setSelectedVibe(selectedVibe === v ? null : v)}
+                    onClick={() => handleVibeSelect(v)}
                     className={`px-2 py-2 rounded-md font-mono text-[10px] transition-all ${selectedVibe === v ? "bg-accent/30 border border-accent text-accent" : "bg-black/50 border border-border/50 text-muted-foreground hover:bg-accent/10 hover:text-foreground"}`}
                     data-testid={`vibe-option-${v}`}
                   >

@@ -18,7 +18,13 @@ import {
   Loader2,
   Plus,
   Trash2,
+  Pencil,
+  Wand2,
+  Check,
+  X,
 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 type GlowColor = "primary" | "secondary" | "accent" | "none";
 
@@ -97,6 +103,31 @@ export function CyberCard(props: CyberCardProps) {
       : Math.min(100, Math.floor((playtime / target) * 100));
     const [editingTarget, setEditingTarget] = useState(false);
     const [targetDraft, setTargetDraft] = useState<string>(String(target));
+    const [hltbLoading, setHltbLoading] = useState(false);
+    const [hltbSuggestion, setHltbSuggestion] = useState<{ hours: number; note: string } | null>(null);
+    const { toast } = useToast();
+
+    const commitTarget = (val: string) => {
+      const v = parseInt(val, 10);
+      if (!isNaN(v) && v > 0 && v !== target && onUpdateTarget) onUpdateTarget(game.id, v);
+      setEditingTarget(false);
+    };
+
+    const handleHltbCheck = async () => {
+      if (!onUpdateTarget) return;
+      setHltbLoading(true);
+      setHltbSuggestion(null);
+      try {
+        const res = await apiRequest("POST", "/api/ai/hltb", { title: game.title });
+        const data = await res.json();
+        if (data?.hours) setHltbSuggestion({ hours: data.hours, note: data.note });
+        else throw new Error(data?.message || "No estimate");
+      } catch (e: any) {
+        toast({ title: "HLTB Lookup Failed", description: e?.message || "Try again later", variant: "destructive" });
+      } finally {
+        setHltbLoading(false);
+      }
+    };
 
     return (
       <div
@@ -146,13 +177,26 @@ export function CyberCard(props: CyberCardProps) {
             </span>
           )}
 
-          {/* HUD-style playtime / target — bottom-left */}
-          <span
-            className="absolute bottom-2 left-2 z-20 font-mono text-[11px] tracking-widest text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
-            data-testid={`text-total-time-${game.id}`}
-          >
-            {playtime} / {target}h
-          </span>
+          {/* HUD-style playtime / target — bottom-left, with edit pencil */}
+          <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5">
+            <span
+              className="font-mono text-[11px] tracking-widest text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
+              data-testid={`text-total-time-${game.id}`}
+            >
+              {playtime} / {target}h
+            </span>
+            {onUpdateTarget && (
+              <button
+                type="button"
+                onClick={() => { setTargetDraft(String(target)); setEditingTarget(true); }}
+                title="Edit target hours"
+                className="w-5 h-5 rounded-sm bg-black/60 border border-emerald-400/40 flex items-center justify-center text-emerald-300 hover:bg-emerald-400/20 hover:border-emerald-400 transition-all"
+                data-testid={`button-edit-target-${game.id}`}
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Body */}
@@ -193,41 +237,85 @@ export function CyberCard(props: CyberCardProps) {
 
           <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground uppercase tracking-widest">
             <span data-testid={`text-platform-${game.id}`}>{game.platform || "PC"}</span>
-            {editingTarget && onUpdateTarget ? (
-              <span className="flex items-center gap-1">
-                <input
-                  type="number"
-                  min={1}
-                  step={1}
-                  autoFocus
-                  value={targetDraft}
-                  onChange={(e) => setTargetDraft(e.target.value)}
-                  onBlur={() => {
-                    const v = parseInt(targetDraft, 10);
-                    if (!isNaN(v) && v > 0 && v !== target) onUpdateTarget(game.id, v);
-                    setEditingTarget(false);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                    if (e.key === "Escape") { setTargetDraft(String(target)); setEditingTarget(false); }
-                  }}
-                  className="w-14 bg-black/60 border border-primary/40 rounded px-1 py-0.5 text-right text-primary outline-none focus:border-primary"
-                  data-testid={`input-target-${game.id}`}
-                />
-                <span>h</span>
-              </span>
-            ) : (
+            <div className="flex items-center gap-1.5">
+              {editingTarget && onUpdateTarget ? (
+                <span className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    autoFocus
+                    value={targetDraft}
+                    onChange={(e) => setTargetDraft(e.target.value)}
+                    onBlur={() => commitTarget(targetDraft)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      if (e.key === "Escape") { setTargetDraft(String(target)); setEditingTarget(false); }
+                    }}
+                    className="w-14 bg-black/60 border border-primary/40 rounded px-1 py-0.5 text-right text-primary outline-none focus:border-primary"
+                    data-testid={`input-target-${game.id}`}
+                  />
+                  <span>h</span>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onUpdateTarget && (setTargetDraft(String(target)), setEditingTarget(true))}
+                  className={`${onUpdateTarget ? "hover:text-primary" : ""}`}
+                  data-testid={`text-target-${game.id}`}
+                  title={onUpdateTarget ? "Click to edit target" : undefined}
+                >
+                  Target: {target}h
+                </button>
+              )}
+              {onUpdateTarget && !editingTarget && (
+                <button
+                  type="button"
+                  onClick={handleHltbCheck}
+                  disabled={hltbLoading}
+                  title="Ask AI to estimate (HLTB-style)"
+                  className="w-5 h-5 rounded-sm bg-black/60 border border-secondary/40 flex items-center justify-center text-secondary hover:bg-secondary/20 hover:border-secondary transition-all disabled:opacity-50"
+                  data-testid={`button-hltb-${game.id}`}
+                >
+                  {hltbLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* HLTB AI suggestion banner */}
+          {hltbSuggestion && onUpdateTarget && (
+            <div
+              className="flex items-start gap-2 rounded-md border border-secondary/40 bg-secondary/10 p-2 text-[10px] font-mono text-secondary"
+              data-testid={`banner-hltb-${game.id}`}
+            >
+              <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <div className="flex-1 leading-snug">
+                <p className="text-foreground uppercase tracking-widest">
+                  AI suggests <span className="text-secondary font-bold">{hltbSuggestion.hours}h</span>
+                </p>
+                <p className="text-muted-foreground normal-case tracking-normal mt-0.5">{hltbSuggestion.note}</p>
+              </div>
               <button
                 type="button"
-                onClick={() => onUpdateTarget && setEditingTarget(true)}
-                className={`${onUpdateTarget ? "hover:text-primary" : ""}`}
-                data-testid={`text-target-${game.id}`}
-                title={onUpdateTarget ? "Click to edit target" : undefined}
+                onClick={() => { onUpdateTarget(game.id, hltbSuggestion.hours); setHltbSuggestion(null); }}
+                title="Apply suggestion"
+                className="w-6 h-6 rounded bg-secondary/20 hover:bg-secondary/40 text-secondary flex items-center justify-center"
+                data-testid={`button-hltb-apply-${game.id}`}
               >
-                Target: {target}h
+                <Check className="w-3.5 h-3.5" />
               </button>
-            )}
-          </div>
+              <button
+                type="button"
+                onClick={() => setHltbSuggestion(null)}
+                title="Dismiss"
+                className="w-6 h-6 rounded bg-white/5 hover:bg-white/10 text-muted-foreground flex items-center justify-center"
+                data-testid={`button-hltb-dismiss-${game.id}`}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
 
           <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
             <div

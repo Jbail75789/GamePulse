@@ -138,6 +138,48 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.status(500).json({ vibe: `Codex error: ${error?.message ?? "connection failed"}` });
     }
   });
-    
+
+  // === HLTB-style target hours suggestion ===
+  app.post("/api/ai/hltb", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const { title } = req.body;
+    if (!title) return res.status(400).json({ message: "Game title required" });
+
+    if (!openai.apiKey) {
+      return res.status(500).json({ message: "AI link severed. (Missing OpenAI key)" });
+    }
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        max_tokens: 120,
+        temperature: 0.3,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content:
+              "You estimate 'How Long To Beat' main-story hours for video games using publicly known data (HLTB-style averages). Reply ONLY with strict JSON: {\"hours\": <integer>, \"note\": \"<one short sentence>\"}. The hours field MUST be a positive integer between 1 and 300 representing the average main-story playtime. The note must be under 90 characters and reference the source style ('HLTB main story', 'Completionist run', etc.). If unknown, estimate based on genre and reply with your best integer guess — never null.",
+          },
+          { role: "user", content: `Game: ${title}` },
+        ],
+      });
+
+      const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
+      let parsed: { hours?: number; note?: string } = {};
+      try { parsed = JSON.parse(raw); } catch { parsed = {}; }
+      const hours = Math.max(1, Math.min(300, Math.round(Number(parsed.hours) || 0)));
+      const note = (parsed.note || "Estimate based on HLTB averages.").toString().slice(0, 120);
+
+      if (!hours) {
+        return res.status(500).json({ message: "Could not parse AI estimate" });
+      }
+      res.json({ hours, note });
+    } catch (error: any) {
+      console.error("[ai/hltb] OpenAI error:", error?.message || error);
+      res.status(500).json({ message: `Codex error: ${error?.message ?? "connection failed"}` });
+    }
+  });
+
   return httpServer;
 }
