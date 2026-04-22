@@ -104,7 +104,7 @@ export function CyberCard(props: CyberCardProps) {
     const isInfinite = !!game.infiniteMode;
     const noTarget = isInfinite && (game.targetHours == null);
     const target = game.targetHours && game.targetHours > 0 ? game.targetHours : 40;
-    // Overtime visuals are suppressed when Infinite Mode is active (chrome takes over).
+    // Overtime visuals are suppressed when Infinite Mode is active.
     const overtimeHours = Math.max(0, playtime - target);
     const isOvertime = !isInfinite && overtimeHours > 0;
 
@@ -117,7 +117,7 @@ export function CyberCard(props: CyberCardProps) {
       return m === 0 ? `${h}h` : `${h}h ${m}m`;
     };
     // Progress: completed/overtime/infinite peg the bar; otherwise standard ratio.
-    // In Infinite Mode the bar is purely cosmetic (chrome shimmer at 100%).
+    // In Infinite Mode the bar stays pinned at 100% — it's a "completed forever" indicator.
     const progress = isInfinite
       ? 100
       : isOvertime
@@ -195,7 +195,7 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute top-2 left-2 flex items-center gap-1.5">
             {isInfinite && (
               <span
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border border-cyan-400/60 bg-black/70 backdrop-blur text-cyan-300"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border border-primary/60 bg-black/70 backdrop-blur text-primary"
                 data-testid={`badge-legacy-${game.id}`}
                 title="Legacy / Infinite Mode — playtime keeps climbing"
               >
@@ -474,9 +474,9 @@ export function CyberCard(props: CyberCardProps) {
               <Button
                 onClick={() => onGoInfinite!(game.id)}
                 size="sm"
-                className="flex-1 font-mono text-xs uppercase tracking-widest text-black bg-[linear-gradient(90deg,#00ffff,#ff00ff,#ffff00,#00ff9f,#00ffff)] bg-[length:200%_100%] animate-[chromeShift_3s_linear_infinite] border-0 shadow-[0_0_18px_rgba(255,255,255,0.55)] hover:brightness-110 font-bold"
+                className="flex-1 font-mono text-xs uppercase tracking-widest text-black bg-primary border-0 hover:brightness-110 font-bold"
                 data-testid={`button-go-infinite-${game.id}`}
-                title="Lock this run into Infinite Mode — chrome bar, counts up forever"
+                title="Lock this run into Infinite Mode — counts up forever"
               >
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                 Go Infinite

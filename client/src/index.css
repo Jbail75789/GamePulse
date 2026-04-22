@@ -279,12 +279,6 @@
 }
 
 /* Overtime HUD text — gold glow heartbeat */
-/* ChromeShift — flowing RGB/chrome gradient for Infinite Mode bar, HUD text, and button */
-@keyframes chromeShift {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
-}
-
 @keyframes overtimeText {
   0%, 100% { text-shadow: 0 0 6px rgba(250,204,21,0.85), 0 0 14px rgba(168,85,247,0.4); }
   50%      { text-shadow: 0 0 14px rgba(250,204,21,1),    0 0 28px rgba(168,85,247,0.85); }

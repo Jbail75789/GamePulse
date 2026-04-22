@@ -198,7 +198,7 @@ export default function Dashboard() {
     try {
       const newTotal = Math.round(((game.playtime ?? 0) + decimalHours) * 100) / 100; // 2-decimal precision
       const target = game.targetHours || 40;
-      // Infinite Mode: progress bar permanently chromed at 100%; total keeps climbing.
+      // Infinite Mode: progress bar stays pinned at 100%; total keeps climbing.
       const newProgress = game.infiniteMode
         ? 100
         : Math.min(100, Math.floor((newTotal / target) * 100));
@@ -1018,12 +1018,8 @@ export default function Dashboard() {
               <div className="absolute inset-0 flex items-center justify-center px-12">
                 <div
                   key={spinGame?.id ?? "init"}
-                  className={
-                    spinGame?.infiniteMode
-                      ? "font-display uppercase tracking-widest text-4xl md:text-7xl text-center w-full break-words bg-clip-text text-transparent bg-[linear-gradient(90deg,#00ffff,#ff00ff,#ffff00,#00ff9f,#00ffff)] bg-[length:200%_100%] animate-[chromeShift_3s_linear_infinite] drop-shadow-[0_0_18px_rgba(255,255,255,0.7)]"
-                      : "font-display uppercase tracking-widest text-4xl md:text-7xl text-primary text-center w-full break-words"
-                  }
-                  style={spinGame?.infiniteMode ? undefined : { textShadow: "0 0 24px rgba(0,255,159,0.95)" }}
+                  className="font-display uppercase tracking-widest text-4xl md:text-7xl text-primary text-center w-full break-words"
+                  style={{ textShadow: "0 0 24px rgba(0,255,159,0.95)" }}
                   data-testid="text-reel-current"
                 >
                   {spinGame?.infiniteMode ? "∞ " : ""}{spinGame?.title ?? "—"}
