@@ -243,6 +243,29 @@
 }
 .chaos-shake { animation: chaos-slam-shake 0.7s cubic-bezier(.36,.07,.19,.97) 0.1s both; }
 
+/* Chaos shake — short, repeating multi-axis jolt for screen-shake on Slam */
+@keyframes chaosShake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20%      { transform: translate(-6px, 3px) rotate(-0.4deg); }
+  40%      { transform: translate(5px, -4px) rotate(0.3deg); }
+  60%      { transform: translate(-4px, 5px) rotate(-0.2deg); }
+  80%      { transform: translate(3px, -2px) rotate(0.15deg); }
+}
+
+/* Chaos pulse — bright fuchsia heartbeat (no flames) */
+@keyframes chaosPulse {
+  0%, 100% {
+    text-shadow: 0 0 8px rgba(232,121,249,0.8), 0 0 18px rgba(232,121,249,0.5);
+    box-shadow: 0 0 12px rgba(232,121,249,0.5), inset 0 0 6px rgba(232,121,249,0.3);
+    filter: brightness(1);
+  }
+  50% {
+    text-shadow: 0 0 16px rgba(232,121,249,1), 0 0 32px rgba(232,121,249,0.8);
+    box-shadow: 0 0 28px rgba(232,121,249,0.95), inset 0 0 14px rgba(232,121,249,0.6);
+    filter: brightness(1.35);
+  }
+}
+
 /* Chaos — orange ember rises with horizontal drift then fades */
 @keyframes ember-rise {
   0%   { transform: translateY(0) translateX(0) scale(1);   opacity: 0; }

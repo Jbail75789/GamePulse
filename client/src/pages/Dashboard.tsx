@@ -221,13 +221,354 @@ export default function Dashboard() {
     setShowRoulette(false);
   };
 
-  // Remaining dashboard logic...
+  // === AI Vibe Check ===
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiTitle, setAiTitle] = useState<string>("");
+  const [aiVibe, setAiVibe] = useState<string>("");
+  const [aiLoadingId, setAiLoadingId] = useState<number | null>(null);
+
+  const handleAIVibeCheck = async (game: Game) => {
+    setAiLoadingId(game.id);
+    setAiTitle(game.title);
+    setAiVibe("");
+    setAiOpen(true);
+    try {
+      const res = await apiRequest("POST", "/api/ai/vibe", { title: game.title });
+      const data = await res.json();
+      setAiVibe(data.vibe ?? "Signal lost.");
+    } catch {
+      setAiVibe("Codex error: connection failed.");
+    } finally {
+      setAiLoadingId(null);
+    }
+  };
+
+  // === RAWG Search debounce ===
+  useEffect(() => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    const q = searchQuery.trim();
+    if (q.length < 2) { setSearchResults([]); return; }
+    setIsSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const key = (import.meta as any).env.VITE_RAWG_API_KEY;
+        const r = await fetch(`https://api.rawg.io/api/games?key=${key}&search=${encodeURIComponent(q)}&page_size=8`);
+        const d = await r.json();
+        setSearchResults(d.results ?? []);
+      } catch { setSearchResults([]); }
+      finally { setIsSearching(false); }
+    }, 350);
+    return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
+  }, [searchQuery]);
+
+  const handlePickSearchResult = (r: SearchResult) => {
+    setSearchAddPrefill({ title: r.name, coverUrl: r.background_image });
+    setSearchAddOpen(true);
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
+  // === Filtered Games ===
+  const filteredGames = (games || []).filter(g => g.status === activeTab);
+
+  const tabs = [
+    { id: "active",    label: "My Pulse",    icon: Gamepad2, color: "text-primary"   },
+    { id: "completed", label: "The Vault",   icon: Trophy,   color: "text-secondary" },
+    { id: "backlog",   label: "The Backlog", icon: Clock,    color: "text-accent"    },
+    { id: "wishlist",  label: "Wish List",   icon: Sword,    color: "text-foreground"},
+  ] as const;
+
+  const moodOptions = [
+    { id: "chill",       label: "Chill",       icon: Sofa,      glow: "hover:text-emerald-300 hover:shadow-[0_0_15px_rgba(110,231,183,0.6)]" },
+    { id: "epic",        label: "Epic",        icon: Sword,     glow: "hover:text-amber-300  hover:shadow-[0_0_15px_rgba(252,211,77,0.6)]"  },
+    { id: "quickfix",    label: "Quick Fix",   icon: Zap,       glow: "hover:text-lime-300   hover:shadow-[0_0_15px_rgba(190,242,100,0.6)]" },
+    { id: "competitive", label: "Competitive", icon: Bolt,      glow: "hover:text-red-400    hover:shadow-[0_0_15px_rgba(248,113,113,0.6)]" },
+    { id: "chaos",       label: "Chaos Mode",  icon: AlertTriangle, glow: "hover:text-fuchsia-400 hover:shadow-[0_0_25px_rgba(232,121,249,0.9)]" },
+  ];
+
   return (
     <Layout>
-      <div className="p-6">
-        <h1 className="text-2xl font-display text-primary mb-6 uppercase tracking-tighter">Mission Control</h1>
-        {/* Your Original Dashboard UI Rendering goes here */}
+      <div className={`p-4 md:p-8 space-y-8 ${spinMode === "chaos" && winnerGame ? "animate-[chaosShake_0.4s_ease-in-out_infinite]" : ""}`}>
+        {/* === HEADER === */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-display font-bold uppercase tracking-wider">Mission Control</h1>
+            <p className="text-sm text-muted-foreground font-mono">
+              Manage your gaming operations.
+              {!isPro && <span className="ml-2 text-secondary">{pulseCharges} charges left</span>}
+              {isPro && <span className="ml-2 text-primary">PRO ∞</span>}
+            </p>
+          </div>
+
+          <div className="flex gap-3 w-full md:w-auto">
+            <Button
+              onClick={() => { setSearchAddPrefill(undefined); setSearchAddOpen(true); }}
+              className="flex-1 md:flex-none bg-primary text-background font-bold uppercase hover:bg-primary/90"
+              data-testid="button-add-game"
+            >
+              <Plus className="mr-2 h-5 w-5" /> Add Game
+            </Button>
+
+            {/* SPIN THE PULSE — prominent + mood dropdown */}
+            <DropdownMenu open={showRoulette} onOpenChange={setShowRoulette}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="flex-1 md:flex-none bg-gradient-to-r from-secondary via-accent to-secondary bg-[length:200%_100%] hover:bg-[position:100%_0] text-background font-bold uppercase tracking-wider shadow-[0_0_20px_rgba(0,184,255,0.4)]"
+                  disabled={!isPro && pulseCharges === 0}
+                  data-testid="button-spin-pulse"
+                >
+                  <Dices className="mr-2 h-5 w-5" /> Spin the Pulse
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-[#0a0a0a] border-secondary/40 w-56 p-2">
+                <p className="px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Choose a Vibe</p>
+                {moodOptions.map(m => (
+                  <DropdownMenuItem
+                    key={m.id}
+                    onClick={() => handlePickGame(m.id)}
+                    className={`cursor-pointer font-mono uppercase tracking-widest text-xs my-1 transition-all ${m.glow} ${m.id === "chaos" ? "animate-[chaosPulse_1.2s_ease-in-out_infinite] text-fuchsia-400 border border-fuchsia-500/40" : ""}`}
+                    onMouseEnter={() => m.id === "chaos" && setChaosHovered(true)}
+                    onMouseLeave={() => m.id === "chaos" && setChaosHovered(false)}
+                    data-testid={`mood-${m.id}`}
+                  >
+                    <m.icon className="w-4 h-4 mr-2" /> {m.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* === RAWG Search === */}
+        <div className="relative max-w-2xl">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search RAWG to add a new game..."
+            className="w-full bg-card/50 border border-border rounded-lg pl-10 pr-4 py-3 font-mono focus:border-primary outline-none"
+            data-testid="input-search-rawg"
+          />
+          {searchQuery.trim().length >= 2 && (
+            <div className="absolute left-0 right-0 top-full mt-2 bg-card border border-border/50 rounded-lg shadow-2xl shadow-primary/10 overflow-hidden z-30 max-h-96 overflow-y-auto" data-testid="dropdown-rawg-results">
+              {isSearching && <div className="px-4 py-4 text-sm font-mono text-muted-foreground">Searching…</div>}
+              {!isSearching && searchResults.length === 0 && (
+                <div className="px-4 py-4 text-sm font-mono text-muted-foreground">No matches.</div>
+              )}
+              {searchResults.map(r => (
+                <button
+                  key={r.id}
+                  onClick={() => handlePickSearchResult(r)}
+                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-primary/10 hover:text-primary transition-colors text-left border-b border-border/30 last:border-b-0"
+                  data-testid={`result-rawg-${r.id}`}
+                >
+                  {r.background_image
+                    ? <img src={r.background_image} alt="" className="w-12 h-12 object-cover rounded" />
+                    : <div className="w-12 h-12 bg-black/40 rounded flex items-center justify-center"><Gamepad2 className="w-5 h-5 text-muted-foreground" /></div>
+                  }
+                  <span className="font-mono text-sm flex-1 truncate">{r.name}</span>
+                  <Plus className="w-4 h-4 opacity-50" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* === TABS === */}
+        <div className="flex gap-2 border-b border-white/5 pb-2 overflow-x-auto" data-testid="nav-categories">
+          {tabs.map(t => {
+            const isActive = activeTab === t.id;
+            const count = (games || []).filter(g => g.status === t.id).length;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id as any)}
+                data-testid={`tab-${t.id}`}
+                className={`relative flex items-center gap-2 px-4 py-2 font-display uppercase tracking-widest text-xs transition-all duration-300 ${
+                  isActive ? `${t.color} border-b-2 border-current` : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <t.icon className="w-4 h-4" />
+                {t.label}
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-white/5">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* === GAME GRID === */}
+        {isLoading ? (
+          <div className="text-center py-20 font-mono text-muted-foreground">Loading library…</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence mode="popLayout">
+              {filteredGames.map(game => (
+                <motion.div key={game.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+                  <CyberCard
+                    game={game}
+                    onUpdateStatus={handleUpdateStatus}
+                    onLogTime={() => setLoggingTimeId(game.id)}
+                    isLogging={loggingTimeId === game.id}
+                    isAILoading={aiLoadingId === game.id}
+                    onAIVibeCheck={() => handleAIVibeCheck(game)}
+                    onDelete={(id) => deleteGame(id)}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {filteredGames.length === 0 && (
+              <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-xl">
+                <Plus className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+                <p className="text-muted-foreground font-mono">No data found in {activeTab}.</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* === Log Time Dialog === */}
+      <Dialog open={loggingTimeId !== null} onOpenChange={(o) => !o && setLoggingTimeId(null)}>
+        <DialogContent className="bg-[#0a0a0a] border-primary/40 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display uppercase tracking-widest">Log Playtime</DialogTitle>
+            <DialogDescription className="font-mono text-xs">Hours played in this session.</DialogDescription>
+          </DialogHeader>
+          <input
+            type="number"
+            min="0.25"
+            step="0.25"
+            value={logHours}
+            onChange={(e) => setLogHours(e.target.value)}
+            className="w-full bg-card/50 border border-border rounded-lg px-3 py-3 font-mono text-lg focus:border-primary outline-none"
+            data-testid="input-log-hours"
+          />
+          <Button
+            onClick={() => {
+              const g = games?.find(x => x.id === loggingTimeId);
+              if (g) handleLogTime(g);
+            }}
+            disabled={isLoggingTime}
+            className="w-full bg-primary text-background font-bold uppercase"
+            data-testid="button-confirm-log"
+          >
+            {isLoggingTime ? "Logging…" : "Confirm"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* === AI Vibe Dialog (centered modal) === */}
+      <Dialog open={aiOpen} onOpenChange={setAiOpen}>
+        <DialogContent className="bg-[#0a0a0a] border-primary/50 max-w-md shadow-[0_0_40px_rgba(0,255,159,0.25)]" data-testid="dialog-ai-vibe">
+          <DialogHeader>
+            <DialogTitle className="font-display uppercase tracking-widest text-primary flex items-center gap-2">
+              <Sparkles className="w-5 h-5" /> Vibe Check
+            </DialogTitle>
+            <DialogDescription className="font-mono text-xs text-muted-foreground">
+              Cyber-Cynic on <span className="text-foreground">{aiTitle}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 min-h-[80px] flex items-center justify-center text-center">
+            {aiLoadingId !== null ? (
+              <p className="font-mono text-sm text-secondary animate-pulse">Pinging the codex…</p>
+            ) : (
+              <p className="font-display text-lg leading-snug text-foreground" data-testid="text-ai-vibe-result">
+                "{aiVibe}"
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* === Reel / Spinning Dialog === */}
+      <Dialog open={isSpinning} onOpenChange={() => {}}>
+        <DialogContent className="bg-[#0a0a0a] border-secondary/60 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display uppercase tracking-widest text-center">Spinning the Pulse…</DialogTitle>
+            <DialogDescription className="text-center font-mono text-xs">Locking onto your next mission.</DialogDescription>
+          </DialogHeader>
+          <div className="py-6 flex items-center justify-center" data-testid="container-reel">
+            <div className="relative w-full max-w-sm h-28 bg-black border-2 border-secondary/60 rounded-md overflow-hidden shadow-[inset_0_0_30px_rgba(0,184,255,0.4),0_0_25px_rgba(0,184,255,0.3)]">
+              <div className="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
+              <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary shadow-[0_0_8px_rgba(0,255,159,0.9)] z-10" />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary shadow-[0_0_8px_rgba(0,255,159,0.9)] z-10" />
+              <div className="h-full w-full flex items-center justify-center px-8">
+                <div
+                  key={spinGame?.id ?? "init"}
+                  className="font-display uppercase tracking-widest text-2xl text-primary text-center truncate w-full"
+                  style={{ textShadow: "0 0 12px rgba(0,255,159,0.8)" }}
+                  data-testid="text-reel-current"
+                >
+                  {spinGame?.title ?? "—"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* === Winner Dialog === */}
+      <Dialog open={!!winnerGame && !isSpinning} onOpenChange={(o) => !o && setWinnerGame(null)}>
+        <DialogContent
+          className={`bg-[#0a0a0a] border-primary/60 max-w-md ${spinMode === "chaos" ? "animate-[chaosShake_0.18s_ease-in-out_6]" : ""}`}
+          data-testid="dialog-winner"
+        >
+          <DialogHeader>
+            <DialogTitle className={`font-display uppercase tracking-widest text-center text-2xl ${spinMode === "chaos" ? "text-fuchsia-400 animate-[chaosPulse_0.8s_ease-in-out_infinite]" : "text-primary"}`}>
+              {spinMode === "chaos" ? "CHAOS LOCKED IN" : "Mission Selected"}
+            </DialogTitle>
+          </DialogHeader>
+          {winnerGame && (
+            <div className="space-y-4 text-center">
+              {winnerGame.coverUrl && (
+                <img
+                  src={winnerGame.coverUrl}
+                  alt={winnerGame.title}
+                  className="w-full h-48 object-cover rounded-md border border-primary/30 shadow-[0_0_30px_rgba(0,255,159,0.3)]"
+                  onLoad={() => {
+                    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+                    playSound("clank");
+                  }}
+                />
+              )}
+              <h2 className="font-display text-3xl uppercase tracking-tight">{winnerGame.title}</h2>
+              <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest">
+                {winnerGame.platform || "PC"} · {winnerGame.vibe || "—"}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => { handleUpdateStatus(winnerGame.id, "active"); setWinnerGame(null); }}
+                  className="flex-1 bg-primary text-background font-bold uppercase"
+                  data-testid="button-start-adventure"
+                >
+                  <Gamepad2 className="w-4 h-4 mr-2" /> Start
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setWinnerGame(null)}
+                  className="flex-1 font-mono uppercase"
+                  data-testid="button-dismiss-winner"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* === Pro Modal === */}
+      <Dialog open={showProModal} onOpenChange={setShowProModal}>
+        <DialogContent className="bg-[#161616] border-purple-500/50">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-display text-white uppercase">Unlock Full Pulse</DialogTitle>
+            <DialogDescription>System limits reached. Upgrade to Pro for unlimited storage.</DialogDescription>
+          </DialogHeader>
+          <Button className="bg-purple-600 hover:bg-purple-500 w-full py-6 text-lg font-bold">UPGRADE FOR $0.99</Button>
+        </DialogContent>
+      </Dialog>
+
+      <AddGameModal open={searchAddOpen} onOpenChange={setSearchAddOpen} prefill={searchAddPrefill} />
     </Layout>
-    );
+  );
 }
