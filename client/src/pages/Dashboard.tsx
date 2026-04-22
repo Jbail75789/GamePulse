@@ -190,12 +190,46 @@ export default function Dashboard() {
       spinSource === "both" ? (g.status === "active" || g.status === "backlog")
       : g.status === spinSource;
 
-    const eligibleGames = (games || [])
-      .filter(sourceFilter)
-      .filter(g => moods[mode].filter(g));
+    const sourcePool = (games || []).filter(sourceFilter);
 
-    if (eligibleGames.length <= 1) {
-      toast({ title: "Insufficient Variety", variant: "destructive" });
+    if (sourcePool.length === 0) {
+      const label = spinSource === "active" ? "Active Missions"
+        : spinSource === "backlog" ? "Backlog Missions"
+        : "Missions";
+      toast({
+        title: `No ${label} Found`,
+        description: spinSource === "active"
+          ? "Add games to your Pulse first!"
+          : spinSource === "backlog"
+          ? "Add games to your Backlog first!"
+          : "Add some games to spin!",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // CHAOS OVERRIDE: bypass vibe filter entirely
+    const eligibleGames = mode === "chaos"
+      ? sourcePool
+      : sourcePool.filter(g => moods[mode].filter(g));
+
+    console.log(`[PICK] mode=${mode} source=${spinSource} pool=${sourcePool.length} eligible=${eligibleGames.length}`);
+
+    if (eligibleGames.length === 0) {
+      toast({
+        title: "No Matching Vibe",
+        description: `No ${moods[mode].label} games in your ${spinSource} list.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (eligibleGames.length === 1) {
+      // Only one option — just slam it as the winner with no spin
+      const only = eligibleGames[0];
+      setSpinMode(mode);
+      setWinnerGame(only);
+      setLastWinnerId(only.id);
       return;
     }
 
