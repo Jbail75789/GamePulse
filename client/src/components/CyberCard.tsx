@@ -195,11 +195,15 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute top-2 left-2 flex items-center gap-1.5">
             {isInfinite && (
               <span
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border border-primary/60 bg-black/70 backdrop-blur text-primary"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border border-cyan-300/70 bg-black/70 backdrop-blur text-cyan-200 animate-[neonPulse_2.4s_ease-in-out_infinite]"
+                style={{ textShadow: "0 0 6px rgba(0,240,255,0.9)" }}
                 data-testid={`badge-legacy-${game.id}`}
                 title="Legacy / Infinite Mode — playtime keeps climbing"
               >
-                <InfinityIcon className="w-3 h-3" />
+                <InfinityIcon
+                  className="w-3 h-3"
+                  style={{ filter: "drop-shadow(0 0 4px rgba(0,240,255,0.95))" }}
+                />
                 Legacy
               </span>
             )}
@@ -217,7 +221,9 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5">
             <span
               className={`font-mono text-[11px] tracking-widest ${
-                isOvertime
+                isInfinite
+                  ? "text-cyan-200 animate-[neonTextPulse_2.4s_ease-in-out_infinite]"
+                  : isOvertime
                   ? "text-yellow-300 animate-[overtimeText_1.6s_ease-in-out_infinite]"
                   : "text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
               }`}
@@ -332,7 +338,9 @@ export function CyberCard(props: CyberCardProps) {
             return (
             <div
               className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-[10px] font-mono transition-all ${
-                needsAttention
+                isInfinite
+                  ? "border-cyan-300/70 bg-cyan-500/10 text-cyan-100 animate-[neonPulse_2.4s_ease-in-out_infinite]"
+                  : needsAttention
                   ? "border-secondary/70 bg-secondary/15 shadow-[0_0_14px_rgba(0,184,255,0.5)] animate-[pulseSync_1.6s_ease-in-out_infinite]"
                   : "border-secondary/30 bg-secondary/5"
               }`}
