@@ -234,15 +234,14 @@ export default function Dashboard() {
     setSearchAddOpen(true);
   };
 
-  const handleSpinRoulette = (mood: MoodMode) => {
-    const pool = (games || []).filter(g => g.status === "backlog" && (mood === "chaos" || g.vibe === mood || !g.vibe));
-    const candidates = pool.length > 0 ? pool : (games || []).filter(g => g.status === "backlog");
+  const handleSpinRoulette = () => {
+    const candidates = (games || []).filter(g => g.status === "backlog");
     if (candidates.length === 0) {
       toast({ title: "Empty Backlog", description: "Add games to your backlog first.", variant: "destructive" });
       return;
     }
     if (!isPro) setPulseCharges(c => Math.max(0, c - 1));
-    setSelectedMood(mood);
+    setShowRoulette(true);
     setWheelCandidates(candidates);
     setWheelAngle(0);
     setIsSpinning(true);
@@ -283,10 +282,10 @@ export default function Dashboard() {
         const winner = candidates[winnerIdx];
         setIsSpinning(false);
         setShowRoulette(false);
-        setWinnerMode(mood);
+        setWinnerMode(null);
         setWinnerGame(winner);
-        playWinSound(mood);
-        if (mood !== "chaos") confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+        playWinSound("epic");
+        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
       }
     };
     requestAnimationFrame(step);
@@ -332,7 +331,7 @@ export default function Dashboard() {
               <Plus className="mr-2 h-5 w-5" /> Add Game
             </Button>
             <Button 
-              onClick={() => setShowRoulette(true)} 
+              onClick={handleSpinRoulette} 
               className="flex-1 md:flex-none bg-secondary text-background font-bold uppercase"
               disabled={!isPro && pulseCharges === 0}
               data-testid="button-pick-game"
@@ -460,29 +459,14 @@ export default function Dashboard() {
         <DialogContent className="bg-[#0a0a0a] border-white/10 max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display uppercase tracking-widest text-center">
-              {isSpinning ? "Spinning…" : "Pick Your Mood"}
+              Spinning the Wheel…
             </DialogTitle>
             <DialogDescription className="text-center font-mono text-xs">
-              {isSpinning ? "Hold on to your seat." : "We'll roll a backlog game that matches the vibe."}
+              Locking onto your next mission.
             </DialogDescription>
           </DialogHeader>
 
-          {!isSpinning ? (
-            <div className="grid grid-cols-2 gap-3 pt-2" data-testid="grid-mood-roulette">
-              {MOODS.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => handleSpinRoulette(m.id)}
-                  data-testid={`button-mood-${m.id}`}
-                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white/5 border border-white/10 hover-elevate active-elevate-2 transition-all ${m.color} ring-1 ${m.ring} ring-inset`}
-                >
-                  <m.icon className="w-7 h-7" />
-                  <span className="font-display uppercase text-xs tracking-widest">{m.label}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="py-4 flex flex-col items-center justify-center" data-testid="container-spinning-wheel">
+          <div className="py-4 flex flex-col items-center justify-center" data-testid="container-spinning-wheel">
               <div className="relative w-[300px] h-[300px]">
                 {/* Top pointer (pawl) */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-20 pointer-events-none">
@@ -557,7 +541,6 @@ export default function Dashboard() {
                 </svg>
               </div>
             </div>
-          )}
         </DialogContent>
       </Dialog>
 
