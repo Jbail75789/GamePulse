@@ -180,14 +180,14 @@ export function CyberCard(props: CyberCardProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
 
-          {/* AI Vibe Check icon — top-right. Stays flat (with hover glow) on every card so
-              the AI Suggested Hours badge in the body is the only "always on" AI signal. */}
+          {/* AI Vibe Check — the global glowing star. Always-on neon green
+              spotlight on every card via the .ai-vibe-check hard override. */}
           <button
             onClick={onAIVibeCheck}
             disabled={isAILoading}
             data-testid={`button-ai-vibe-${game.id}`}
             title="AI Vibe Check"
-            className="absolute top-2 right-2 w-9 h-9 rounded-full bg-black/70 border border-primary/40 backdrop-blur flex items-center justify-center text-primary hover:bg-primary/20 hover:border-primary hover:shadow-[0_0_12px_rgba(0,255,159,0.6)] transition-all disabled:opacity-50"
+            className="ai-vibe-check absolute top-2 right-2 z-20 w-9 h-9 rounded-full backdrop-blur flex items-center justify-center disabled:opacity-50"
           >
             {isAILoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           </button>
@@ -343,21 +343,19 @@ export function CyberCard(props: CyberCardProps) {
             const needsAttention = isDefault && !!estimate;
             return (
             <div
-              className={`ai-badge flex items-center gap-2 px-2 py-1.5 text-[10px] font-mono ${
-                needsAttention ? "animate-[pulseSync_1.6s_ease-in-out_infinite]" : ""
-              }`}
+              className="flex items-center gap-2 px-1 py-0.5 text-[10px] font-mono text-muted-foreground"
               data-testid={`badge-ai-suggest-${game.id}`}
               title={needsAttention ? `Default target — sync the AI estimate. ${estimate?.note ?? ""}` : estimate?.note}
             >
-              <Sparkles className="w-3 h-3 text-secondary shrink-0" />
+              <Sparkles className="w-3 h-3 shrink-0 opacity-60" />
               {estimateLoading && (
-                <span className="text-secondary/70 animate-pulse uppercase tracking-widest">AI scanning…</span>
+                <span className="opacity-70 animate-pulse uppercase tracking-widest">AI scanning…</span>
               )}
               {estimateError && !estimateLoading && (
                 <button
                   type="button"
                   onClick={() => refetchEstimate()}
-                  className="text-muted-foreground hover:text-secondary uppercase tracking-widest"
+                  className="hover:text-foreground uppercase tracking-widest"
                   data-testid={`button-ai-retry-${game.id}`}
                 >
                   AI estimate failed — retry
@@ -365,28 +363,28 @@ export function CyberCard(props: CyberCardProps) {
               )}
               {estimate && !estimateLoading && (
                 <>
-                  <span className="ai-data uppercase tracking-widest shrink-0">AI:</span>
+                  <span className="uppercase tracking-widest shrink-0 opacity-70">AI:</span>
                   <button
                     type="button"
                     onClick={() => applySuggestion(estimate.main, "Main Story")}
-                    className="group/sync flex items-center gap-1 ai-data hover:opacity-100 transition-opacity"
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     title={`Sync target → ${estimate.main}h (Main Story)`}
                     data-testid={`button-sync-main-${game.id}`}
                   >
-                    <span className="ai-data">{estimate.main}h</span>
-                    <span className="ai-data text-[9px] uppercase">Main</span>
+                    <span>{estimate.main}h</span>
+                    <span className="text-[9px] uppercase opacity-70">Main</span>
                     {target === estimate.main && <Check className="w-3 h-3 text-emerald-400" />}
                   </button>
-                  <span className="ai-data opacity-50">/</span>
+                  <span className="opacity-40">/</span>
                   <button
                     type="button"
                     onClick={() => applySuggestion(estimate.full, "Completionist")}
-                    className="group/sync flex items-center gap-1 ai-data hover:opacity-100 transition-opacity"
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
                     title={`Sync target → ${estimate.full}h (Completionist / 100%)`}
                     data-testid={`button-sync-full-${game.id}`}
                   >
-                    <span className="ai-data">{estimate.full}h</span>
-                    <span className="ai-data text-[9px] uppercase">Full</span>
+                    <span>{estimate.full}h</span>
+                    <span className="text-[9px] uppercase opacity-70">Full</span>
                     {target === estimate.full && <Check className="w-3 h-3 text-emerald-400" />}
                   </button>
                 </>
