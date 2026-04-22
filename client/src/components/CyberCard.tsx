@@ -196,14 +196,19 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute top-2 left-2 flex items-center gap-1.5">
             {isInfinite && (
               <span
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border border-primary bg-black/70 backdrop-blur text-primary animate-[neonPulse_2.4s_ease-in-out_infinite]"
-                style={{ textShadow: "0 0 6px rgba(0,255,159,0.9)" }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border bg-black/70 backdrop-blur"
+                style={{
+                  color: "#7ef9ff",
+                  borderColor: "rgba(0,240,255,0.55)",
+                  boxShadow: "0 0 8px rgba(0,240,255,0.45), inset 0 0 4px rgba(0,240,255,0.25)",
+                  animation: "legacyBreath 3.2s ease-in-out infinite",
+                }}
                 data-testid={`badge-legacy-${game.id}`}
                 title="Legacy / Infinite Mode — playtime keeps climbing"
               >
                 <InfinityIcon
                   className="w-3 h-3"
-                  style={{ filter: "drop-shadow(0 0 4px rgba(0,255,159,0.95))" }}
+                  style={{ color: "#7ef9ff", filter: "drop-shadow(0 0 6px rgba(0,240,255,0.95))" }}
                 />
                 Legacy
               </span>
@@ -222,7 +227,11 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5">
             <span
               className={`font-mono text-[11px] tracking-widest ${
-                isInfinite ? "text-primary" : isOvertime ? "text-yellow-300" : "text-emerald-400"
+                isInfinite
+                  ? "text-white drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]"
+                  : isOvertime
+                  ? "text-yellow-300"
+                  : "text-emerald-400"
               }`}
               data-testid={`text-total-time-${game.id}`}
               title={
@@ -334,8 +343,10 @@ export function CyberCard(props: CyberCardProps) {
             const needsAttention = isDefault && !!estimate;
             return (
             <div
-              className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-[10px] font-mono border-primary/70 bg-primary/10 text-primary animate-[neonPulse_2.4s_ease-in-out_infinite] hover:brightness-150 hover:saturate-150 transition-[filter] ${
-                needsAttention ? "animate-[neonPulse_1.4s_ease-in-out_infinite]" : ""
+              className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-[10px] font-mono !border-primary/70 !bg-primary/10 !text-primary hover:brightness-150 hover:saturate-150 transition-[filter] ${
+                needsAttention
+                  ? "animate-[neonPulse_1.4s_ease-in-out_infinite]"
+                  : "animate-[neonPulse_2.4s_ease-in-out_infinite]"
               }`}
               data-testid={`badge-ai-suggest-${game.id}`}
               title={needsAttention ? `Default target — sync the AI estimate. ${estimate?.note ?? ""}` : estimate?.note}

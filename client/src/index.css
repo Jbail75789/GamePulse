@@ -281,13 +281,24 @@
 /* Neon Pulse — slow box-shadow heartbeat in primary neon (#00ff9f).
    Sized (max 14px outer) to fit within the card body's p-4 padding so the glow
    never gets clipped by the card's overflow-hidden boundary. Universal on every
-   AI Suggested Hours badge; also used by the Legacy badge in Infinite Mode. */
+   AI Suggested Hours badge. Uses !important so the glow can never be overridden. */
 @keyframes neonPulse {
   0%, 100% {
-    box-shadow: 0 0 6px rgba(0, 255, 159, 0.6), 0 0 12px rgba(0, 255, 159, 0.35);
+    box-shadow: 0 0 6px rgba(0, 255, 159, 0.6), 0 0 12px rgba(0, 255, 159, 0.35) !important;
   }
   50% {
-    box-shadow: 0 0 10px rgba(0, 255, 159, 0.95), 0 0 14px rgba(0, 255, 159, 0.6);
+    box-shadow: 0 0 10px rgba(0, 255, 159, 0.95), 0 0 14px rgba(0, 255, 159, 0.6) !important;
+  }
+}
+
+/* Legacy Breath — original cyan heartbeat for the ∞ Legacy badge in Infinite Mode.
+   Restored exactly as first implemented (color #7ef9ff, cyan-cyan glow, 3.2s breath). */
+@keyframes legacyBreath {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.45), inset 0 0 4px rgba(0, 240, 255, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.85), inset 0 0 6px rgba(0, 240, 255, 0.45);
   }
 }
 
