@@ -678,7 +678,7 @@ export default function Dashboard() {
         </div>
 
         {/* === RAWG Search === */}
-        <div className="relative max-w-2xl">
+        <div className="relative max-w-2xl mx-auto w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
           <input
             value={searchQuery}
