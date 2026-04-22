@@ -713,7 +713,7 @@ export default function Dashboard() {
         </div>
 
         {/* === TABS === */}
-        <div className="flex gap-2 border-b border-white/5 pb-2 overflow-x-auto" data-testid="nav-categories">
+        <div className="flex justify-center gap-2 border-b border-white/5 pb-2 overflow-x-auto" data-testid="nav-categories">
           {tabs.map(t => {
             const isActive = activeTab === t.id;
             const count = (games || []).filter(g => g.status === t.id).length;
