@@ -106,8 +106,7 @@ export default function Dashboard() {
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
   const [winnerMode, setWinnerMode] = useState<MoodMode | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [wheelCandidates, setWheelCandidates] = useState<Game[]>([]);
-  const [flashIndex, setFlashIndex] = useState(0);
+  const [spinGame, setSpinGame] = useState<Game | null>(null);
   const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
   const [logHours, setLogHours] = useState<string>("1");
   const [isLoggingTime, setIsLoggingTime] = useState(false);
@@ -242,34 +241,21 @@ export default function Dashboard() {
     }
     if (!isPro) setPulseCharges(c => Math.max(0, c - 1));
     setShowRoulette(true);
-    setWheelCandidates(candidates);
     setIsSpinning(true);
 
-    // Resume audio context (required by browsers after user gesture)
     const actx = getAudioCtx();
     if (actx && actx.state === "suspended") actx.resume().catch(() => {});
 
-    const n = candidates.length;
-    const winnerIdx = Math.floor(Math.random() * n);
-    // Total flashes: enough cycles to feel like a slot, end exactly on winner.
-    const baseFlashes = 22 + Math.floor(Math.random() * 6);
-    const totalSteps = baseFlashes + ((winnerIdx - (baseFlashes % n) + n) % n);
-
-    let i = 0;
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    const step = () => {
-      setFlashIndex(i % n);
+    let ticks = 0;
+    const total = 18 + Math.floor(Math.random() * 8);
+    const interval = setInterval(() => {
+      setSpinGame(candidates[Math.floor(Math.random() * candidates.length)]);
       playClick();
-      i++;
-      if (i <= totalSteps) {
-        // Ease-out: each tick gets progressively slower (45ms → ~260ms)
-        const progress = i / totalSteps;
-        const delay = 45 + Math.pow(progress, 3) * 220;
-        timeoutId = setTimeout(step, delay);
-      } else {
-        const winner = candidates[winnerIdx];
-        setFlashIndex(winnerIdx);
+      ticks++;
+      if (ticks >= total) {
+        clearInterval(interval);
+        const winner = candidates[Math.floor(Math.random() * candidates.length)];
+        setSpinGame(null);
         setIsSpinning(false);
         setShowRoulette(false);
         setWinnerMode(null);
@@ -277,8 +263,7 @@ export default function Dashboard() {
         playWinSound("epic");
         confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
       }
-    };
-    step();
+    }, 80);
   };
 
   // --- UI Helpers ---
@@ -449,53 +434,15 @@ export default function Dashboard() {
         <DialogContent className="bg-[#0a0a0a] border-white/10 max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display uppercase tracking-widest text-center">
-              Spinning the Wheel…
+              Spinning…
             </DialogTitle>
             <DialogDescription className="text-center font-mono text-xs">
-              Locking onto your next mission.
+              {spinGame?.title ?? "Locking onto your next mission."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-6 flex flex-col items-center justify-center gap-4" data-testid="container-flash-roulette">
-            {/* Flashing-name slot panel — cyber-metal styling */}
-            <div
-              className="relative w-full max-w-sm h-32 rounded-lg overflow-hidden border-2 border-primary/40 bg-gradient-to-b from-[#0d1f1a] via-[#0a0a0a] to-[#0d1f1a]"
-              style={{ boxShadow: "0 0 30px rgba(0,255,159,0.25), inset 0 0 20px rgba(0,184,255,0.15)" }}
-            >
-              {/* Scanline overlay */}
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,20,0)_50%,rgba(0,0,0,0.3)_50%)] bg-[length:100%_3px] pointer-events-none opacity-40" />
-
-              {/* Side reticles */}
-              <div className="absolute left-2 top-1/2 -translate-y-1/2 w-2 h-8 border-l-2 border-t-2 border-b-2 border-primary/70" />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-8 border-r-2 border-t-2 border-b-2 border-primary/70" />
-
-              {/* Current flashing name */}
-              <div className="absolute inset-0 flex items-center justify-center px-8">
-                <span
-                  key={flashIndex}
-                  className="font-display uppercase text-2xl tracking-widest text-center text-primary drop-shadow-[0_0_10px_rgba(0,255,159,0.9)] animate-pulse"
-                  style={{
-                    color: WHEEL_PALETTE[flashIndex % WHEEL_PALETTE.length],
-                    textShadow: `0 0 12px ${WHEEL_PALETTE[flashIndex % WHEEL_PALETTE.length]}`,
-                  }}
-                  data-testid="text-flash-name"
-                >
-                  {wheelCandidates[flashIndex]?.title ?? "—"}
-                </span>
-              </div>
-            </div>
-
-            {/* Tick indicator dots */}
-            <div className="flex gap-1.5">
-              {wheelCandidates.map((g, i) => (
-                <span
-                  key={g.id}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    i === flashIndex ? "bg-primary shadow-[0_0_6px_rgba(0,255,159,0.9)] scale-125" : "bg-white/15"
-                  }`}
-                />
-              ))}
-            </div>
+          <div className="py-8 flex items-center justify-center" data-testid="container-spinner">
+            <Dices className="w-16 h-16 text-secondary animate-spin" />
           </div>
         </DialogContent>
       </Dialog>
