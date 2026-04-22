@@ -30,6 +30,8 @@ import { MissionStartOverlay } from "@/components/MissionStartOverlay";
 import { RecommendedNext } from "@/components/RecommendedNext";
 import { AiProcessingBar } from "@/components/AiProcessingBar";
 import { GlitchOverlay } from "@/components/GlitchOverlay";
+import { AI_MOCK_MODE, getMockVibeCheck, mockStream } from "@/lib/aiMock";
+import { getCachedVibe, setCachedVibe } from "@/lib/vibeCache";
 
 interface SearchResult {
   id: number;
@@ -174,6 +176,9 @@ export default function Dashboard() {
   const [showProModal, setShowProModal] = useState(false);
   const [glitchTrigger, setGlitchTrigger] = useState(0);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  // 2-second cooldown guard for spin-style buttons to prevent click-spam.
+  const lastSpinAtRef = useRef<number>(0);
+  const SPIN_COOLDOWN_MS = 2000;
   const { toast } = useToast();
 
   const handleUpdateStatus = async (gameId: number, newStatus: string) => {
@@ -301,6 +306,17 @@ export default function Dashboard() {
   };
 
   const handlePickGame = (mode: string) => {
+    // 2s debounce — protects against spam clicks during spin animations.
+    const now = Date.now();
+    if (now - lastSpinAtRef.current < SPIN_COOLDOWN_MS) {
+      toast({
+        title: "Cooldown Active",
+        description: "Reel is recalibrating — wait a moment.",
+      });
+      return;
+    }
+    lastSpinAtRef.current = now;
+
     if (!isPro && pulseCharges <= 0) {
       toast({ title: "No Charges", variant: "destructive" });
       return;
@@ -431,6 +447,30 @@ export default function Dashboard() {
   const streamChat = async (history: ChatMsg[], game: Game) => {
     setAiStreaming(true);
     setAiMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+    // MOCK MODE — never hit OpenAI. Stream a pre-written cyber-cynic line.
+    if (AI_MOCK_MODE) {
+      try {
+        const isOpening = history.length === 1;
+        const isLegacy = !!game.infiniteMode;
+        const text = isOpening
+          ? getMockVibeCheck(game.title, isLegacy)
+          : `[mock] Codex offline. Toggle VITE_AI_MOCK_MODE=false to engage live AI.`;
+        await mockStream(text, (acc) => {
+          setAiMessages(prev => {
+            const next = [...prev];
+            next[next.length - 1] = { role: "assistant", content: acc };
+            return next;
+          });
+        });
+        if (isOpening) setCachedVibe(game.id, text);
+      } finally {
+        setAiStreaming(false);
+        setAiLoadingId(null);
+      }
+      return;
+    }
+
     try {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
@@ -471,14 +511,33 @@ export default function Dashboard() {
       setAiStreaming(false);
       setAiLoadingId(null);
     }
+    // Persist the just-streamed opening (first assistant message) for free re-opens.
+    if (history.length === 1) {
+      setAiMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant" && last.content && !last.content.startsWith("[Codex error")) {
+          setCachedVibe(game.id, last.content);
+        }
+        return prev;
+      });
+    }
   };
 
   const handleAIVibeCheck = async (game: Game) => {
-    setAiLoadingId(game.id);
     setAiGame(game);
-    setAiMessages([]);
     setAiInput("");
     setAiOpen(true);
+
+    // Cache hit — display instantly, no API call. Saves credits on re-opens.
+    const cached = getCachedVibe(game.id);
+    if (cached) {
+      setAiMessages([{ role: "assistant", content: cached }]);
+      setAiLoadingId(null);
+      return;
+    }
+
+    setAiLoadingId(game.id);
+    setAiMessages([]);
 
     // === OPENING PROMPT ===
     // Infinite Mode → ask for Respect/Concerned tone (overrides overtime snark).
