@@ -222,11 +222,7 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5">
             <span
               className={`font-mono text-[11px] tracking-widest ${
-                isInfinite
-                  ? "text-primary animate-[neonTextPulse_2.4s_ease-in-out_infinite]"
-                  : isOvertime
-                  ? "text-yellow-300 animate-[overtimeText_1.6s_ease-in-out_infinite]"
-                  : "text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
+                isInfinite ? "text-primary" : isOvertime ? "text-yellow-300" : "text-emerald-400"
               }`}
               data-testid={`text-total-time-${game.id}`}
               title={
