@@ -52,6 +52,8 @@ export default function Dashboard() {
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinMode, setSpinMode] = useState<string>("chill");
+  const [spinSource, setSpinSource] = useState<"active" | "backlog" | "both">("both");
+  const [showPickModal, setShowPickModal] = useState(false);
   const [chaosHovered, setChaosHovered] = useState(false);
   const [spinGame, setSpinGame] = useState<Game | null>(null);
   const [isStartingAdventure, setIsStartingAdventure] = useState(false);
@@ -184,8 +186,12 @@ export default function Dashboard() {
       chaos: { filter: () => true, label: 'Chaos Mode' },
     };
 
+    const sourceFilter = (g: Game) =>
+      spinSource === "both" ? (g.status === "active" || g.status === "backlog")
+      : g.status === spinSource;
+
     const eligibleGames = (games || [])
-      .filter(g => g.status === "backlog" || g.status === "active")
+      .filter(sourceFilter)
       .filter(g => moods[mode].filter(g));
 
     if (eligibleGames.length <= 1) {
@@ -310,33 +316,14 @@ export default function Dashboard() {
               <Plus className="mr-2 h-5 w-5" /> Add Game
             </Button>
 
-            {/* SPIN THE PULSE — prominent + mood dropdown */}
-            <DropdownMenu open={showRoulette} onOpenChange={setShowRoulette}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="flex-1 md:flex-none bg-gradient-to-r from-secondary via-accent to-secondary bg-[length:200%_100%] hover:bg-[position:100%_0] text-background font-bold uppercase tracking-wider shadow-[0_0_20px_rgba(0,184,255,0.4)]"
-                  disabled={!isPro && pulseCharges === 0}
-                  data-testid="button-spin-pulse"
-                >
-                  <Dices className="mr-2 h-5 w-5" /> Spin the Pulse
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#0a0a0a] border-secondary/40 w-56 p-2">
-                <p className="px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Choose a Vibe</p>
-                {moodOptions.map(m => (
-                  <DropdownMenuItem
-                    key={m.id}
-                    onClick={() => handlePickGame(m.id)}
-                    className={`cursor-pointer font-mono uppercase tracking-widest text-xs my-1 transition-all ${m.glow} ${m.id === "chaos" ? "animate-[chaosPulse_1.2s_ease-in-out_infinite] text-fuchsia-400 border border-fuchsia-500/40" : ""}`}
-                    onMouseEnter={() => m.id === "chaos" && setChaosHovered(true)}
-                    onMouseLeave={() => m.id === "chaos" && setChaosHovered(false)}
-                    data-testid={`mood-${m.id}`}
-                  >
-                    <m.icon className="w-4 h-4 mr-2" /> {m.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              onClick={() => setShowPickModal(true)}
+              className="flex-1 md:flex-none bg-gradient-to-r from-secondary via-accent to-secondary bg-[length:200%_100%] hover:bg-[position:100%_0] text-background font-bold uppercase tracking-wider shadow-[0_0_20px_rgba(0,184,255,0.4)]"
+              disabled={!isPro && pulseCharges === 0}
+              data-testid="button-pick-game"
+            >
+              <Dices className="mr-2 h-5 w-5" /> Pick a Game
+            </Button>
           </div>
         </div>
 
@@ -480,33 +467,128 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* === Reel / Spinning Dialog === */}
-      <Dialog open={isSpinning} onOpenChange={() => {}}>
-        <DialogContent className="bg-[#0a0a0a] border-secondary/60 max-w-md">
+      {/* === PICK A GAME Selection Modal === */}
+      <Dialog open={showPickModal} onOpenChange={setShowPickModal}>
+        <DialogContent className="bg-[#0a0a0a] border-secondary/50 max-w-lg shadow-[0_0_40px_rgba(0,184,255,0.25)]" data-testid="dialog-pick-game">
           <DialogHeader>
-            <DialogTitle className="font-display uppercase tracking-widest text-center">Spinning the Pulse…</DialogTitle>
-            <DialogDescription className="text-center font-mono text-xs">Locking onto your next mission.</DialogDescription>
+            <DialogTitle className="font-display uppercase tracking-widest text-center text-2xl text-secondary flex items-center justify-center gap-2">
+              <Dices className="w-6 h-6" /> Pick a Game
+            </DialogTitle>
+            <DialogDescription className="text-center font-mono text-xs">
+              Choose your source and your vibe.
+            </DialogDescription>
           </DialogHeader>
-          <div className="py-6 flex items-center justify-center" data-testid="container-reel">
-            <div className="relative w-full max-w-sm h-28 bg-black border-2 border-secondary/60 rounded-md overflow-hidden shadow-[inset_0_0_30px_rgba(0,184,255,0.4),0_0_25px_rgba(0,184,255,0.3)]">
-              <div className="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
-              <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
-              <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary shadow-[0_0_8px_rgba(0,255,159,0.9)] z-10" />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary shadow-[0_0_8px_rgba(0,255,159,0.9)] z-10" />
-              <div className="h-full w-full flex items-center justify-center px-8">
+
+          {/* SOURCE TOGGLE */}
+          <div className="mt-2">
+            <p className="px-1 py-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Source</p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { id: "active",  label: "Active",  icon: Gamepad2 },
+                { id: "backlog", label: "Backlog", icon: Clock },
+                { id: "both",    label: "Both",    icon: Sparkles },
+              ] as const).map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setSpinSource(s.id)}
+                  data-testid={`source-${s.id}`}
+                  className={`flex items-center justify-center gap-2 px-3 py-3 rounded-md border font-mono uppercase tracking-widest text-xs transition-all ${
+                    spinSource === s.id
+                      ? "bg-secondary/15 border-secondary text-secondary shadow-[0_0_12px_rgba(0,184,255,0.4)]"
+                      : "border-white/10 text-muted-foreground hover:text-foreground hover:border-white/30"
+                  }`}
+                >
+                  <s.icon className="w-4 h-4" /> {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* MOOD GRID */}
+          <div className="mt-4">
+            <p className="px-1 py-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Mood</p>
+            <div className="grid grid-cols-2 gap-2">
+              {moodOptions.map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => { setShowPickModal(false); handlePickGame(m.id); }}
+                  data-testid={`mood-${m.id}`}
+                  className={`flex items-center gap-2 px-3 py-3 rounded-md border border-white/10 font-mono uppercase tracking-widest text-xs transition-all hover:border-white/40 ${m.glow} ${
+                    m.id === "chaos"
+                      ? "animate-[chaosPulse_1.2s_ease-in-out_infinite] text-fuchsia-400 border-fuchsia-500/40"
+                      : "text-foreground"
+                  }`}
+                >
+                  <m.icon className="w-4 h-4" /> {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* === FULL-SCREEN REEL === */}
+      <AnimatePresence>
+        {isSpinning && (
+          <motion.div
+            key="fullscreen-reel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center"
+            data-testid="container-reel"
+          >
+            {/* Scanlines */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-30"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0,255,159,0.08) 3px, transparent 4px)",
+              }}
+            />
+
+            <p className="font-display uppercase tracking-[0.4em] text-secondary text-sm mb-6 animate-pulse">
+              Spinning the Pulse…
+            </p>
+
+            {/* Big bracketed reel */}
+            <div className="relative w-[92vw] max-w-5xl h-[42vh] md:h-[48vh] bg-black border-2 border-secondary/60 rounded-xl overflow-hidden shadow-[inset_0_0_80px_rgba(0,184,255,0.4),0_0_60px_rgba(0,184,255,0.4)]">
+              {/* Top/bottom fade */}
+              <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
+              {/* Side selector brackets */}
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 w-2 h-24 bg-primary shadow-[0_0_18px_rgba(0,255,159,1)] z-20" />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-24 bg-primary shadow-[0_0_18px_rgba(0,255,159,1)] z-20" />
+
+              {/* Cover image background */}
+              {spinGame?.coverUrl && (
+                <img
+                  key={`img-${spinGame.id}`}
+                  src={spinGame.coverUrl}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover opacity-30"
+                />
+              )}
+
+              {/* Title */}
+              <div className="absolute inset-0 flex items-center justify-center px-12">
                 <div
                   key={spinGame?.id ?? "init"}
-                  className="font-display uppercase tracking-widest text-2xl text-primary text-center truncate w-full"
-                  style={{ textShadow: "0 0 12px rgba(0,255,159,0.8)" }}
+                  className="font-display uppercase tracking-widest text-4xl md:text-7xl text-primary text-center w-full break-words"
+                  style={{ textShadow: "0 0 24px rgba(0,255,159,0.95)" }}
                   data-testid="text-reel-current"
                 >
                   {spinGame?.title ?? "—"}
                 </div>
               </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+
+            <p className="mt-6 font-mono text-xs text-muted-foreground uppercase tracking-widest">
+              [ {spinMode} mode · {spinSource} ]
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* === Winner Dialog === */}
       <Dialog open={!!winnerGame && !isSpinning} onOpenChange={(o) => !o && setWinnerGame(null)}>
