@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { type Game } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -138,6 +138,20 @@ export function CyberCard(props: CyberCardProps) {
     const [targetDraft, setTargetDraft] = useState<string>(String(target));
     const { toast } = useToast();
 
+    // Brief glow flash on the Infinite bar when new playtime is logged.
+    // Triggered by playtime increases on infinite games; auto-clears after 900ms.
+    const [infiniteFlash, setInfiniteFlash] = useState(false);
+    const prevPlaytimeRef = useRef<number>(playtime);
+    useEffect(() => {
+      if (isInfinite && playtime > prevPlaytimeRef.current) {
+        setInfiniteFlash(true);
+        const t = setTimeout(() => setInfiniteFlash(false), 900);
+        prevPlaytimeRef.current = playtime;
+        return () => clearTimeout(t);
+      }
+      prevPlaytimeRef.current = playtime;
+    }, [playtime, isInfinite]);
+
     // Proactive AI estimate (Main + Full) — auto-fetched once per session per title
     const { data: estimate, isLoading: estimateLoading, isError: estimateError, refetch: refetchEstimate } = useEstimate(game.title, !!onUpdateTarget);
 
@@ -195,19 +209,20 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute top-2 left-2 flex items-center gap-1.5">
             {isInfinite && (
               <span
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border border-white/40 bg-black/70 backdrop-blur bg-clip-text text-transparent"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border bg-black/70 backdrop-blur"
                 style={{
-                  backgroundImage: "linear-gradient(90deg,#00ffff,#ff00ff,#ffff00,#00ff9f,#00ffff)",
-                  backgroundSize: "200% 100%",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  animation: "chromeShift 3s linear infinite",
-                  filter: "drop-shadow(0 0 6px rgba(255,255,255,0.5))",
+                  color: "#7ef9ff",
+                  borderColor: "rgba(0,240,255,0.55)",
+                  boxShadow: "0 0 8px rgba(0,240,255,0.45), inset 0 0 4px rgba(0,240,255,0.25)",
+                  animation: "legacyBreath 3.2s ease-in-out infinite",
                 }}
                 data-testid={`badge-legacy-${game.id}`}
                 title="Legacy / Infinite Mode — playtime keeps climbing"
               >
-                <InfinityIcon className="w-3 h-3 text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]" />
+                <InfinityIcon
+                  className="w-3 h-3"
+                  style={{ color: "#7ef9ff", filter: "drop-shadow(0 0 6px rgba(0,240,255,0.95))" }}
+                />
                 Legacy
               </span>
             )}
@@ -226,7 +241,7 @@ export function CyberCard(props: CyberCardProps) {
             <span
               className={`font-mono text-[11px] tracking-widest ${
                 isInfinite
-                  ? "bg-clip-text text-transparent bg-[linear-gradient(90deg,#00ffff,#ff00ff,#ffff00,#00ff9f,#00ffff)] bg-[length:200%_100%] animate-[chromeShift_3s_linear_infinite] drop-shadow-[0_0_6px_rgba(255,255,255,0.4)]"
+                  ? "text-white drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]"
                   : isOvertime
                   ? "text-yellow-300 animate-[overtimeText_1.6s_ease-in-out_infinite]"
                   : "text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
@@ -403,16 +418,26 @@ export function CyberCard(props: CyberCardProps) {
             );
           })()}
 
-          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
+          <div className={`h-1.5 w-full rounded-full bg-white/5 ${isInfinite ? "" : "overflow-hidden"}`}>
             <div
-              className={`h-full transition-all duration-500 ${
+              className={`h-full rounded-full transition-all duration-500 ${
                 isInfinite
-                  ? "bg-[linear-gradient(90deg,#00ffff,#ff00ff,#ffff00,#00ff9f,#00b8ff,#d600ff,#00ffff)] bg-[length:300%_100%] animate-[chromeShift_3s_linear_infinite] shadow-[0_0_12px_rgba(255,255,255,0.45)]"
+                  ? ""
                   : isOvertime
                   ? "bg-gradient-to-r from-yellow-300 via-amber-400 to-purple-500 animate-[overtimePulse_1.6s_ease-in-out_infinite]"
                   : "bg-gradient-to-r from-primary via-secondary to-accent"
               }`}
-              style={{ width: `${Math.min(100, progress)}%` }}
+              style={
+                isInfinite
+                  ? {
+                      width: "100%",
+                      background: "#00f0ff",
+                      animation: infiniteFlash
+                        ? "infiniteFlash 900ms ease-out forwards"
+                        : "infiniteBreath 3.2s ease-in-out infinite",
+                    }
+                  : { width: `${Math.min(100, progress)}%` }
+              }
               data-testid={`bar-progress-${game.id}`}
             />
           </div>
