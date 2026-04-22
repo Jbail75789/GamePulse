@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useEstimate } from "@/hooks/use-estimate";
 
 type GlowColor = "primary" | "secondary" | "accent" | "none";
 
@@ -103,9 +104,10 @@ export function CyberCard(props: CyberCardProps) {
       : Math.min(100, Math.floor((playtime / target) * 100));
     const [editingTarget, setEditingTarget] = useState(false);
     const [targetDraft, setTargetDraft] = useState<string>(String(target));
-    const [hltbLoading, setHltbLoading] = useState(false);
-    const [hltbSuggestion, setHltbSuggestion] = useState<{ hours: number; note: string } | null>(null);
     const { toast } = useToast();
+
+    // Proactive AI estimate (Main + Full) — auto-fetched once per session per title
+    const { data: estimate, isLoading: estimateLoading, isError: estimateError, refetch: refetchEstimate } = useEstimate(game.title, !!onUpdateTarget);
 
     const commitTarget = (val: string) => {
       const v = parseInt(val, 10);
@@ -113,20 +115,10 @@ export function CyberCard(props: CyberCardProps) {
       setEditingTarget(false);
     };
 
-    const handleHltbCheck = async () => {
+    const applySuggestion = (hrs: number, label: string) => {
       if (!onUpdateTarget) return;
-      setHltbLoading(true);
-      setHltbSuggestion(null);
-      try {
-        const res = await apiRequest("POST", "/api/ai/hltb", { title: game.title });
-        const data = await res.json();
-        if (data?.hours) setHltbSuggestion({ hours: data.hours, note: data.note });
-        else throw new Error(data?.message || "No estimate");
-      } catch (e: any) {
-        toast({ title: "HLTB Lookup Failed", description: e?.message || "Try again later", variant: "destructive" });
-      } finally {
-        setHltbLoading(false);
-      }
+      onUpdateTarget(game.id, hrs);
+      toast({ title: "Pulse Target Synced", description: `${label}: ${hrs}h` });
     };
 
     return (
@@ -268,52 +260,66 @@ export function CyberCard(props: CyberCardProps) {
                   Target: {target}h
                 </button>
               )}
-              {onUpdateTarget && !editingTarget && (
-                <button
-                  type="button"
-                  onClick={handleHltbCheck}
-                  disabled={hltbLoading}
-                  title="Ask AI to estimate (HLTB-style)"
-                  className="w-5 h-5 rounded-sm bg-black/60 border border-secondary/40 flex items-center justify-center text-secondary hover:bg-secondary/20 hover:border-secondary transition-all disabled:opacity-50"
-                  data-testid={`button-hltb-${game.id}`}
-                >
-                  {hltbLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
-                </button>
-              )}
             </div>
           </div>
 
-          {/* HLTB AI suggestion banner */}
-          {hltbSuggestion && onUpdateTarget && (
+          {/* Proactive AI Estimate Badge — Main / Full with one-click sync */}
+          {onUpdateTarget && (
             <div
-              className="flex items-start gap-2 rounded-md border border-secondary/40 bg-secondary/10 p-2 text-[10px] font-mono text-secondary"
-              data-testid={`banner-hltb-${game.id}`}
+              className="flex items-center gap-2 rounded-md border border-secondary/30 bg-secondary/5 px-2 py-1.5 text-[10px] font-mono"
+              data-testid={`badge-ai-suggest-${game.id}`}
+              title={estimate?.note}
             >
-              <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-              <div className="flex-1 leading-snug">
-                <p className="text-foreground uppercase tracking-widest">
-                  AI suggests <span className="text-secondary font-bold">{hltbSuggestion.hours}h</span>
-                </p>
-                <p className="text-muted-foreground normal-case tracking-normal mt-0.5">{hltbSuggestion.note}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => { onUpdateTarget(game.id, hltbSuggestion.hours); setHltbSuggestion(null); }}
-                title="Apply suggestion"
-                className="w-6 h-6 rounded bg-secondary/20 hover:bg-secondary/40 text-secondary flex items-center justify-center"
-                data-testid={`button-hltb-apply-${game.id}`}
-              >
-                <Check className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setHltbSuggestion(null)}
-                title="Dismiss"
-                className="w-6 h-6 rounded bg-white/5 hover:bg-white/10 text-muted-foreground flex items-center justify-center"
-                data-testid={`button-hltb-dismiss-${game.id}`}
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <Sparkles className="w-3 h-3 text-secondary shrink-0" />
+              {estimateLoading && (
+                <span className="text-secondary/70 animate-pulse uppercase tracking-widest">AI scanning…</span>
+              )}
+              {estimateError && !estimateLoading && (
+                <button
+                  type="button"
+                  onClick={() => refetchEstimate()}
+                  className="text-muted-foreground hover:text-secondary uppercase tracking-widest"
+                  data-testid={`button-ai-retry-${game.id}`}
+                >
+                  AI estimate failed — retry
+                </button>
+              )}
+              {estimate && !estimateLoading && (
+                <>
+                  <span className="text-muted-foreground uppercase tracking-widest shrink-0">AI:</span>
+                  <button
+                    type="button"
+                    onClick={() => applySuggestion(estimate.main, "Main Story")}
+                    className={`group/sync flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-secondary/15 transition-all ${target === estimate.main ? "text-secondary" : "text-foreground hover:text-secondary"}`}
+                    title={`Sync target → ${estimate.main}h (Main Story)`}
+                    data-testid={`button-sync-main-${game.id}`}
+                  >
+                    <span className="font-bold">{estimate.main}h</span>
+                    <span className="text-muted-foreground text-[9px] uppercase">Main</span>
+                    {target === estimate.main ? (
+                      <Check className="w-3 h-3 text-emerald-400" />
+                    ) : (
+                      <Check className="w-3 h-3 opacity-50 group-hover/sync:opacity-100 group-hover/sync:text-secondary" />
+                    )}
+                  </button>
+                  <span className="text-muted-foreground/50">/</span>
+                  <button
+                    type="button"
+                    onClick={() => applySuggestion(estimate.full, "Completionist")}
+                    className={`group/sync flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-accent/15 transition-all ${target === estimate.full ? "text-accent" : "text-foreground hover:text-accent"}`}
+                    title={`Sync target → ${estimate.full}h (Completionist / 100%)`}
+                    data-testid={`button-sync-full-${game.id}`}
+                  >
+                    <span className="font-bold">{estimate.full}h</span>
+                    <span className="text-muted-foreground text-[9px] uppercase">Full</span>
+                    {target === estimate.full ? (
+                      <Check className="w-3 h-3 text-emerald-400" />
+                    ) : (
+                      <Check className="w-3 h-3 opacity-50 group-hover/sync:opacity-100 group-hover/sync:text-accent" />
+                    )}
+                  </button>
+                </>
+              )}
             </div>
           )}
 

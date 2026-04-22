@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useGames } from "@/hooks/use-games";
+import { useEstimate } from "@/hooks/use-estimate";
 import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/Layout";
 import { CyberCard } from "@/components/CyberCard";
@@ -33,6 +34,56 @@ interface SearchResult {
   rating: number | null;
   playtime: number | null;
   genres: { name: string }[];
+}
+
+function AiSuggestionBanner({ game, onApply }: { game: Game | null; onApply: (hrs: number, label: string) => void }) {
+  const { data: estimate, isLoading, isError } = useEstimate(game?.title, !!game);
+  if (!game) return null;
+  const target = game.targetHours ?? 0;
+  return (
+    <div className="px-5 py-3 border-b border-primary/20 bg-gradient-to-r from-secondary/10 via-black to-accent/10">
+      <div className="flex items-center gap-3 font-mono text-[11px]">
+        <Sparkles className="w-4 h-4 text-secondary shrink-0" />
+        {isLoading && (
+          <span className="text-secondary/80 animate-pulse uppercase tracking-widest" data-testid="text-banner-loading">
+            AI scanning the codex for HLTB targets…
+          </span>
+        )}
+        {isError && !isLoading && (
+          <span className="text-destructive uppercase tracking-widest">Estimate unavailable.</span>
+        )}
+        {estimate && !isLoading && (
+          <>
+            <span className="text-muted-foreground uppercase tracking-widest">AI Suggests</span>
+            <button
+              type="button"
+              onClick={() => onApply(estimate.main, "Main Story")}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-all ${target === estimate.main ? "border-emerald-400/60 bg-emerald-400/10 text-emerald-300" : "border-secondary/50 bg-secondary/10 text-secondary hover:bg-secondary/25"}`}
+              data-testid="button-banner-sync-main"
+            >
+              <span className="font-bold text-sm">{estimate.main}h</span>
+              <span className="text-[10px] uppercase opacity-80">Main</span>
+              <Check className="w-3 h-3" />
+            </button>
+            <span className="text-muted-foreground/50">/</span>
+            <button
+              type="button"
+              onClick={() => onApply(estimate.full, "Completionist")}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-all ${target === estimate.full ? "border-emerald-400/60 bg-emerald-400/10 text-emerald-300" : "border-accent/50 bg-accent/10 text-accent hover:bg-accent/25"}`}
+              data-testid="button-banner-sync-full"
+            >
+              <span className="font-bold text-sm">{estimate.full}h</span>
+              <span className="text-[10px] uppercase opacity-80">Full</span>
+              <Check className="w-3 h-3" />
+            </button>
+          </>
+        )}
+      </div>
+      {estimate?.note && !isLoading && (
+        <p className="mt-1 ml-7 text-[10px] font-mono text-muted-foreground italic">{estimate.note}</p>
+      )}
+    </div>
+  );
 }
 
 export default function Dashboard() {
@@ -567,6 +618,19 @@ export default function Dashboard() {
               cyber-cynic // mission: <span className="text-primary">{aiGame?.title ?? "—"}</span>
             </DialogDescription>
           </DialogHeader>
+
+          {/* Initial AI Suggestion Banner — first thing user sees */}
+          <AiSuggestionBanner
+            game={aiGame}
+            onApply={(hrs, label) => {
+              if (!aiGame) return;
+              const playtime = aiGame.playtime ?? 0;
+              const newProgress = Math.min(100, Math.floor((playtime / hrs) * 100));
+              updateGame({ id: aiGame.id, targetHours: hrs, progress: newProgress });
+              setAiGame({ ...aiGame, targetHours: hrs });
+              toast({ title: "Pulse Target Synced", description: `${label}: ${hrs}h` });
+            }}
+          />
 
           {/* Terminal scroll body */}
           <div

@@ -152,29 +152,35 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
-        max_tokens: 120,
-        temperature: 0.3,
+        max_tokens: 160,
+        temperature: 0.2,
         response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
             content:
-              "You estimate 'How Long To Beat' main-story hours for video games using publicly known data (HLTB-style averages). Reply ONLY with strict JSON: {\"hours\": <integer>, \"note\": \"<one short sentence>\"}. The hours field MUST be a positive integer between 1 and 300 representing the average main-story playtime. The note must be under 90 characters and reference the source style ('HLTB main story', 'Completionist run', etc.). If unknown, estimate based on genre and reply with your best integer guess — never null.",
+              "You estimate playtime hours for video games using publicly known HLTB-style averages. Reply ONLY with strict JSON: {\"main\": <integer>, \"full\": <integer>, \"note\": \"<one short sentence>\"}. " +
+              "main = average main-story hours. full = completionist / 100% run hours. Both MUST be positive integers between 1 and 500. full should be >= main. " +
+              "note must be under 90 characters and reference the source style (e.g. 'HLTB main vs completionist'). " +
+              "If the title is unknown, estimate based on genre and reply with your best integer guesses — never null, never strings.",
           },
           { role: "user", content: `Game: ${title}` },
         ],
       });
 
       const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
-      let parsed: { hours?: number; note?: string } = {};
+      let parsed: { main?: number; full?: number; hours?: number; note?: string } = {};
       try { parsed = JSON.parse(raw); } catch { parsed = {}; }
-      const hours = Math.max(1, Math.min(300, Math.round(Number(parsed.hours) || 0)));
+      const main = Math.max(1, Math.min(500, Math.round(Number(parsed.main ?? parsed.hours) || 0)));
+      let full = Math.max(1, Math.min(500, Math.round(Number(parsed.full) || 0)));
+      if (!full || full < main) full = Math.round(main * 1.6);
       const note = (parsed.note || "Estimate based on HLTB averages.").toString().slice(0, 120);
 
-      if (!hours) {
+      if (!main) {
         return res.status(500).json({ message: "Could not parse AI estimate" });
       }
-      res.json({ hours, note });
+      // Backwards-compatible: still return `hours` = main
+      res.json({ hours: main, main, full, note });
     } catch (error: any) {
       console.error("[ai/hltb] OpenAI error:", error?.message || error);
       res.status(500).json({ message: `Codex error: ${error?.message ?? "connection failed"}` });
