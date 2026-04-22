@@ -27,7 +27,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import confetti from "canvas-confetti";
 import { MissionStatus } from "@/components/MissionStatus";
 import { MissionStartOverlay } from "@/components/MissionStartOverlay";
-import { RecommendedNext } from "@/components/RecommendedNext";
 import { AiProcessingBar } from "@/components/AiProcessingBar";
 import { GlitchOverlay } from "@/components/GlitchOverlay";
 import { AI_MOCK_MODE, getMockVibeCheck, mockStream } from "@/lib/aiMock";
@@ -1022,17 +1021,6 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-
-          {/* PULSE-SYNC RECOMMENDATION */}
-          <RecommendedNext
-            games={games || []}
-            onPick={(g) => {
-              setShowPickModal(false);
-              setSpinMode("chill");
-              setWinnerGame(g);
-              setLastWinnerId(g.id);
-            }}
-          />
 
           {/* MOOD GRID */}
           <div className="mt-2">
