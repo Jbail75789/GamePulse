@@ -31,6 +31,7 @@ interface SearchResult {
   background_image: string | null;
   released: string | null;
   rating: number | null;
+  playtime: number | null;
   genres: { name: string }[];
 }
 
@@ -41,7 +42,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchAddOpen, setSearchAddOpen] = useState(false);
-  const [searchAddPrefill, setSearchAddPrefill] = useState<{ title: string; coverUrl?: string | null } | undefined>();
+  const [searchAddPrefill, setSearchAddPrefill] = useState<{ title: string; coverUrl?: string | null; targetHours?: number | null } | undefined>();
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -303,7 +304,11 @@ export default function Dashboard() {
   }, [searchQuery]);
 
   const handlePickSearchResult = (r: SearchResult) => {
-    setSearchAddPrefill({ title: r.name, coverUrl: r.background_image });
+    setSearchAddPrefill({
+      title: r.name,
+      coverUrl: r.background_image,
+      targetHours: r.playtime && r.playtime > 0 ? r.playtime : null,
+    });
     setSearchAddOpen(true);
     setSearchQuery("");
     setSearchResults([]);
@@ -434,6 +439,12 @@ export default function Dashboard() {
                     isAILoading={aiLoadingId === game.id}
                     onAIVibeCheck={() => handleAIVibeCheck(game)}
                     onDelete={(id) => deleteGame(id)}
+                    onUpdateTarget={(id, targetHours) => {
+                      const g = games?.find(x => x.id === id);
+                      const playtime = g?.playtime ?? 0;
+                      const newProgress = Math.min(100, Math.floor((playtime / targetHours) * 100));
+                      updateGame({ id, targetHours, progress: newProgress });
+                    }}
                   />
                 </motion.div>
               ))}

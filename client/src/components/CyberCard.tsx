@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
 import { type Game } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ interface CyberCardGameProps extends CyberCardBaseProps {
   isAILoading?: boolean;
   onAIVibeCheck: () => void;
   onDelete?: (id: number) => void;
+  onUpdateTarget?: (id: number, targetHours: number) => void;
 }
 
 type CyberCardProps = CyberCardWrapperProps | CyberCardGameProps;
@@ -88,10 +89,14 @@ export function CyberCard(props: CyberCardProps) {
 
   // === GAME CARD MODE ===
   if ("game" in props && props.game) {
-    const { game, onUpdateStatus, onLogTime, isLogging, isAILoading, onAIVibeCheck, onDelete } = props;
-    const progress = game.progress ?? 0;
+    const { game, onUpdateStatus, onLogTime, isLogging, isAILoading, onAIVibeCheck, onDelete, onUpdateTarget } = props;
     const playtime = game.playtime ?? 0;
-    const target = game.targetHours ?? 20;
+    const target = game.targetHours && game.targetHours > 0 ? game.targetHours : 40;
+    const progress = game.status === "completed"
+      ? 100
+      : Math.min(100, Math.floor((playtime / target) * 100));
+    const [editingTarget, setEditingTarget] = useState(false);
+    const [targetDraft, setTargetDraft] = useState<string>(String(target));
 
     return (
       <div
@@ -188,7 +193,40 @@ export function CyberCard(props: CyberCardProps) {
 
           <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground uppercase tracking-widest">
             <span data-testid={`text-platform-${game.id}`}>{game.platform || "PC"}</span>
-            <span data-testid={`text-target-${game.id}`}>Target: {target}h</span>
+            {editingTarget && onUpdateTarget ? (
+              <span className="flex items-center gap-1">
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  autoFocus
+                  value={targetDraft}
+                  onChange={(e) => setTargetDraft(e.target.value)}
+                  onBlur={() => {
+                    const v = parseInt(targetDraft, 10);
+                    if (!isNaN(v) && v > 0 && v !== target) onUpdateTarget(game.id, v);
+                    setEditingTarget(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                    if (e.key === "Escape") { setTargetDraft(String(target)); setEditingTarget(false); }
+                  }}
+                  className="w-14 bg-black/60 border border-primary/40 rounded px-1 py-0.5 text-right text-primary outline-none focus:border-primary"
+                  data-testid={`input-target-${game.id}`}
+                />
+                <span>h</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onUpdateTarget && setEditingTarget(true)}
+                className={`${onUpdateTarget ? "hover:text-primary" : ""}`}
+                data-testid={`text-target-${game.id}`}
+                title={onUpdateTarget ? "Click to edit target" : undefined}
+              >
+                Target: {target}h
+              </button>
+            )}
           </div>
 
           <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">

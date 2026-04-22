@@ -22,7 +22,7 @@ type AddGameForm = z.infer<typeof addGameFormSchema>;
 interface AddGameModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  prefill?: { title: string; coverUrl?: string | null };
+  prefill?: { title: string; coverUrl?: string | null; targetHours?: number | null };
 }
 
 const PLATFORMS = ["PC", "Steam", "PS5", "Xbox", "Switch", "Other"];
@@ -47,18 +47,23 @@ export function AddGameModal({ open, onOpenChange, prefill }: AddGameModalProps)
 
   const form = useForm<AddGameForm>({
     resolver: zodResolver(addGameFormSchema),
-    defaultValues: { title: "", status: "backlog", playtime: 0 },
+    defaultValues: { title: "", status: "backlog", playtime: 0, targetHours: 40 },
   });
 
   useEffect(() => {
     if (open && prefill) {
-      form.reset({ title: prefill.title, status: "backlog", playtime: 0 });
+      form.reset({
+        title: prefill.title,
+        status: "backlog",
+        playtime: 0,
+        targetHours: prefill.targetHours && prefill.targetHours > 0 ? prefill.targetHours : 40,
+      });
       setSelectedStatus("backlog");
       setSelectedPlatforms(["PC"]);
       setSelectedVibe(null);
     }
     if (!open) {
-      form.reset({ title: "", status: "backlog", playtime: 0 });
+      form.reset({ title: "", status: "backlog", playtime: 0, targetHours: 40 });
       setSelectedStatus("backlog");
       setSelectedPlatforms(["PC"]);
       setSelectedVibe(null);
@@ -194,6 +199,23 @@ export function AddGameModal({ open, onOpenChange, prefill }: AddGameModalProps)
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-2 block">
+                Estimated Time to Beat <span className="opacity-50">(hours)</span>
+              </label>
+              <input
+                type="number"
+                min={1}
+                step={1}
+                {...form.register("targetHours", { valueAsNumber: true })}
+                className="w-full bg-black/50 border border-border/50 rounded-md px-3 py-2 font-mono text-sm focus:border-primary outline-none"
+                data-testid="input-target-hours"
+              />
+              <p className="text-[10px] font-mono text-muted-foreground/60 mt-1">
+                Default 40h. Auto-filled from RAWG when available.
+              </p>
             </div>
 
             <div className="flex justify-end pt-1">

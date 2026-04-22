@@ -22,7 +22,7 @@ export const games = pgTable("games", {
   platform: text("platform").default("PC"),
   vibe: text("vibe", { enum: ["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"] }),
   progress: integer("progress").default(0),
-  targetHours: integer("target_hours").default(20),
+  targetHours: integer("target_hours").default(40),
 });
 
 export const promoCodes = pgTable("promo_codes", {
@@ -41,7 +41,7 @@ export const insertGameSchema = createInsertSchema(games).omit({
   userId: true 
 }).extend({
   playtime: z.number().transform(v => Math.round(v ?? 0)).optional().default(0),
-  targetHours: z.number().int().transform(v => v ?? 20).optional().default(20),
+  targetHours: z.number().int().transform(v => v ?? 40).optional().default(40),
 });
 
 export type User = typeof users.$inferSelect;
