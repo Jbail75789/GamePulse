@@ -285,52 +285,6 @@
   100% { background-position: 200% 50%; }
 }
 
-/* Infinite Mode — slow neon-cyan "breathing" glow on the progress bar.
-   Opacity drifts 0.8 ↔ 1.0 while the outer shadow swells. */
-@keyframes infiniteBreath {
-  0%, 100% {
-    opacity: 0.85;
-    box-shadow:
-      0 0 6px rgba(0, 240, 255, 0.55),
-      0 0 14px rgba(0, 240, 255, 0.35),
-      inset 0 0 4px rgba(255, 255, 255, 0.25);
-  }
-  50% {
-    opacity: 1;
-    box-shadow:
-      0 0 14px rgba(0, 240, 255, 0.95),
-      0 0 28px rgba(0, 240, 255, 0.55),
-      inset 0 0 8px rgba(255, 255, 255, 0.45);
-  }
-}
-
-/* Brief intensity flash when new playtime is logged on an Infinite game.
-   One-shot ~900ms — overrides the breathing rhythm momentarily. */
-@keyframes infiniteFlash {
-  0% {
-    opacity: 1;
-    box-shadow:
-      0 0 28px rgba(0, 240, 255, 1),
-      0 0 56px rgba(0, 240, 255, 0.85),
-      inset 0 0 14px rgba(255, 255, 255, 0.85);
-    filter: brightness(1.5) saturate(1.4);
-  }
-  100% {
-    opacity: 1;
-    box-shadow:
-      0 0 14px rgba(0, 240, 255, 0.95),
-      0 0 28px rgba(0, 240, 255, 0.55),
-      inset 0 0 8px rgba(255, 255, 255, 0.45);
-    filter: brightness(1) saturate(1);
-  }
-}
-
-/* Matching subtle breath for the Legacy badge & HUD text — pure opacity. */
-@keyframes legacyBreath {
-  0%, 100% { opacity: 0.85; text-shadow: 0 0 6px rgba(0,240,255,0.55), 0 0 14px rgba(0,240,255,0.3); }
-  50%      { opacity: 1;    text-shadow: 0 0 12px rgba(0,240,255,0.95), 0 0 24px rgba(0,240,255,0.55); }
-}
-
 @keyframes overtimeText {
   0%, 100% { text-shadow: 0 0 6px rgba(250,204,21,0.85), 0 0 14px rgba(168,85,247,0.4); }
   50%      { text-shadow: 0 0 14px rgba(250,204,21,1),    0 0 28px rgba(168,85,247,0.85); }

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
 import { type Game } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -138,20 +138,6 @@ export function CyberCard(props: CyberCardProps) {
     const [targetDraft, setTargetDraft] = useState<string>(String(target));
     const { toast } = useToast();
 
-    // Brief glow flash on the Infinite bar when new playtime is logged.
-    // Triggered by playtime increases on infinite games; auto-clears after 900ms.
-    const [infiniteFlash, setInfiniteFlash] = useState(false);
-    const prevPlaytimeRef = useRef<number>(playtime);
-    useEffect(() => {
-      if (isInfinite && playtime > prevPlaytimeRef.current) {
-        setInfiniteFlash(true);
-        const t = setTimeout(() => setInfiniteFlash(false), 900);
-        prevPlaytimeRef.current = playtime;
-        return () => clearTimeout(t);
-      }
-      prevPlaytimeRef.current = playtime;
-    }, [playtime, isInfinite]);
-
     // Proactive AI estimate (Main + Full) — auto-fetched once per session per title
     const { data: estimate, isLoading: estimateLoading, isError: estimateError, refetch: refetchEstimate } = useEstimate(game.title, !!onUpdateTarget);
 
@@ -209,20 +195,11 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute top-2 left-2 flex items-center gap-1.5">
             {isInfinite && (
               <span
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border bg-black/70 backdrop-blur"
-                style={{
-                  color: "#7ef9ff",
-                  borderColor: "rgba(0,240,255,0.55)",
-                  boxShadow: "0 0 8px rgba(0,240,255,0.45), inset 0 0 4px rgba(0,240,255,0.25)",
-                  animation: "legacyBreath 3.2s ease-in-out infinite",
-                }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border border-cyan-400/60 bg-black/70 backdrop-blur text-cyan-300"
                 data-testid={`badge-legacy-${game.id}`}
                 title="Legacy / Infinite Mode — playtime keeps climbing"
               >
-                <InfinityIcon
-                  className="w-3 h-3"
-                  style={{ color: "#7ef9ff", filter: "drop-shadow(0 0 6px rgba(0,240,255,0.95))" }}
-                />
+                <InfinityIcon className="w-3 h-3" />
                 Legacy
               </span>
             )}
@@ -240,9 +217,7 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5">
             <span
               className={`font-mono text-[11px] tracking-widest ${
-                isInfinite
-                  ? "text-white drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]"
-                  : isOvertime
+                isOvertime
                   ? "text-yellow-300 animate-[overtimeText_1.6s_ease-in-out_infinite]"
                   : "text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
               }`}
@@ -418,26 +393,14 @@ export function CyberCard(props: CyberCardProps) {
             );
           })()}
 
-          <div className={`h-1.5 w-full rounded-full bg-white/5 ${isInfinite ? "" : "overflow-hidden"}`}>
+          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isInfinite
-                  ? ""
-                  : isOvertime
+              className={`h-full transition-all duration-500 ${
+                isOvertime
                   ? "bg-gradient-to-r from-yellow-300 via-amber-400 to-purple-500 animate-[overtimePulse_1.6s_ease-in-out_infinite]"
                   : "bg-gradient-to-r from-primary via-secondary to-accent"
               }`}
-              style={
-                isInfinite
-                  ? {
-                      width: "100%",
-                      background: "#00f0ff",
-                      animation: infiniteFlash
-                        ? "infiniteFlash 900ms ease-out forwards"
-                        : "infiniteBreath 3.2s ease-in-out infinite",
-                    }
-                  : { width: `${Math.min(100, progress)}%` }
-              }
+              style={{ width: `${Math.min(100, progress)}%` }}
               data-testid={`bar-progress-${game.id}`}
             />
           </div>
