@@ -186,12 +186,9 @@ export default function Dashboard() {
       }
     }
     
-    const updates: any = { status: newStatus };
-    if (currentGame?.status === 'completed' && newStatus !== 'completed') {
-      updates.progress = 0;
-      updates.playtime = 0;
-    }
-    updateGame({ id: gameId, ...updates });
+    // Preserve playtime when moving between lists. Infinite Mode and "Keep in Pulse"
+    // both rely on the total hours surviving the status flip.
+    updateGame({ id: gameId, status: newStatus as Game["status"] });
   };
 
   // Add `decimalHours` to a game's playtime. Returns true on success so callers can toast accurately.
@@ -201,10 +198,15 @@ export default function Dashboard() {
     try {
       const newTotal = Math.round(((game.playtime ?? 0) + decimalHours) * 100) / 100; // 2-decimal precision
       const target = game.targetHours || 40;
-      const newProgress = Math.min(100, Math.floor((newTotal / target) * 100));
+      // Infinite Mode: progress bar permanently chromed at 100%; total keeps climbing.
+      const newProgress = game.infiniteMode
+        ? 100
+        : Math.min(100, Math.floor((newTotal / target) * 100));
       // Auto-promote backlog → active when time logged; never auto-demote completed.
+      // Infinite games stay active no matter what.
       let newStatus = game.status;
-      if (game.status === "backlog" && newTotal > 0) newStatus = "active";
+      if (game.infiniteMode) newStatus = "active";
+      else if (game.status === "backlog" && newTotal > 0) newStatus = "active";
 
       await updateGameAsync({
         id: game.id,
@@ -349,9 +351,23 @@ export default function Dashboard() {
       return;
     }
 
-    let winner = eligibleGames[Math.floor(Math.random() * eligibleGames.length)];
+    // Weighted draw: Infinite/Legacy games are classics, so they roll at half-weight
+    // vs. unbeaten missions. Lets the reel still surface them, just less often.
+    const pickWeighted = (pool: Game[]): Game => {
+      const weights = pool.map(g => (g.infiniteMode ? 0.5 : 1));
+      const total = weights.reduce((a, b) => a + b, 0);
+      let r = Math.random() * total;
+      for (let i = 0; i < pool.length; i++) {
+        r -= weights[i];
+        if (r <= 0) return pool[i];
+      }
+      return pool[pool.length - 1];
+    };
+
+    let winner = pickWeighted(eligibleGames);
     if (lastWinnerId !== null && eligibleGames.length > 1) {
-      winner = eligibleGames.filter(g => g.id !== lastWinnerId)[Math.floor(Math.random() * (eligibleGames.length - 1))];
+      const filtered = eligibleGames.filter(g => g.id !== lastWinnerId);
+      winner = pickWeighted(filtered);
     }
     
     setSpinMode(mode);
@@ -520,7 +536,17 @@ export default function Dashboard() {
   };
 
   // === Filtered Games ===
-  const filteredGames = (games || []).filter(g => g.status === activeTab);
+  // On the active tab, push Infinite/Legacy runs to the bottom so unbeaten missions stay
+  // top-of-mind. All other tabs keep their natural order.
+  const filteredGames = (() => {
+    const list = (games || []).filter(g => g.status === activeTab);
+    if (activeTab !== "active") return list;
+    return [...list].sort((a, b) => {
+      const ai = a.infiniteMode ? 1 : 0;
+      const bi = b.infiniteMode ? 1 : 0;
+      return ai - bi;
+    });
+  })();
 
   const tabs = [
     { id: "active",    label: "My Pulse",    icon: Gamepad2, color: "text-primary"   },
@@ -992,11 +1018,15 @@ export default function Dashboard() {
               <div className="absolute inset-0 flex items-center justify-center px-12">
                 <div
                   key={spinGame?.id ?? "init"}
-                  className="font-display uppercase tracking-widest text-4xl md:text-7xl text-primary text-center w-full break-words"
-                  style={{ textShadow: "0 0 24px rgba(0,255,159,0.95)" }}
+                  className={
+                    spinGame?.infiniteMode
+                      ? "font-display uppercase tracking-widest text-4xl md:text-7xl text-center w-full break-words bg-clip-text text-transparent bg-[linear-gradient(90deg,#00ffff,#ff00ff,#ffff00,#00ff9f,#00ffff)] bg-[length:200%_100%] animate-[chromeShift_3s_linear_infinite] drop-shadow-[0_0_18px_rgba(255,255,255,0.7)]"
+                      : "font-display uppercase tracking-widest text-4xl md:text-7xl text-primary text-center w-full break-words"
+                  }
+                  style={spinGame?.infiniteMode ? undefined : { textShadow: "0 0 24px rgba(0,255,159,0.95)" }}
                   data-testid="text-reel-current"
                 >
-                  {spinGame?.title ?? "—"}
+                  {spinGame?.infiniteMode ? "∞ " : ""}{spinGame?.title ?? "—"}
                 </div>
               </div>
             </div>

@@ -8,8 +8,8 @@ export function useAuth() {
 
   // FORCE PRO GLOBAL — every authenticated session is treated as Pro client-side.
   // This unlocks: infinite spins, no charge consumption, no Free Mode caps.
-  const forcePro = <T extends { isPro?: boolean | null } | null>(u: T): T =>
-    (u ? { ...u, isPro: true } : u) as T;
+  const forcePro = <T,>(u: T): T =>
+    (u ? { ...(u as any), isPro: true } : u) as T;
 
   const userQuery = useQuery({
     queryKey: [api.auth.user.path],

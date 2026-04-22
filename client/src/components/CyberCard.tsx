@@ -22,6 +22,7 @@ import {
   Wand2,
   Check,
   X,
+  Infinity as InfinityIcon,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -124,10 +125,12 @@ export function CyberCard(props: CyberCardProps) {
       : game.status === "completed"
       ? 100
       : Math.min(100, Math.floor((playtime / target) * 100));
-    // GO INFINITE eligibility: hit 100% of target on an active game, no completion or infinite yet.
+    // GO INFINITE eligibility: any non-infinite game that's hit its target — including
+    // vaulted (completed) ones. Lets the user resurrect a classic from The Vault into
+    // Infinite Mode without losing accumulated playtime.
     const canGoInfinite =
       !isInfinite &&
-      game.status === "active" &&
+      (game.status === "active" || game.status === "completed") &&
       !!onGoInfinite &&
       target > 0 &&
       playtime >= target;
@@ -188,15 +191,35 @@ export function CyberCard(props: CyberCardProps) {
             {isAILoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           </button>
 
-          {/* Vibe pill — top-left */}
-          {game.vibe && (
-            <span
-              className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border bg-black/70 backdrop-blur ${VIBE_COLOR[game.vibe] ?? "text-white border-white/30"}`}
-              data-testid={`badge-vibe-${game.id}`}
-            >
-              {game.vibe}
-            </span>
-          )}
+          {/* Top-left badges: Legacy (Infinite) marker first, then vibe pill */}
+          <div className="absolute top-2 left-2 flex items-center gap-1.5">
+            {isInfinite && (
+              <span
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border border-white/40 bg-black/70 backdrop-blur bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: "linear-gradient(90deg,#00ffff,#ff00ff,#ffff00,#00ff9f,#00ffff)",
+                  backgroundSize: "200% 100%",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  animation: "chromeShift 3s linear infinite",
+                  filter: "drop-shadow(0 0 6px rgba(255,255,255,0.5))",
+                }}
+                data-testid={`badge-legacy-${game.id}`}
+                title="Legacy / Infinite Mode — playtime keeps climbing"
+              >
+                <InfinityIcon className="w-3 h-3 text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]" />
+                Legacy
+              </span>
+            )}
+            {game.vibe && (
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border bg-black/70 backdrop-blur ${VIBE_COLOR[game.vibe] ?? "text-white border-white/30"}`}
+                data-testid={`badge-vibe-${game.id}`}
+              >
+                {game.vibe}
+              </span>
+            )}
+          </div>
 
           {/* HUD-style playtime / target — bottom-left, with edit pencil */}
           <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5">
