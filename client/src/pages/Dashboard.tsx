@@ -25,7 +25,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import confetti from "canvas-confetti";
-import { MissionStatus } from "@/components/MissionStatus";
 import { MissionStartOverlay } from "@/components/MissionStartOverlay";
 import { AiProcessingBar } from "@/components/AiProcessingBar";
 import { GlitchOverlay } from "@/components/GlitchOverlay";
@@ -659,9 +658,6 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
-
-        {/* === MISSION STATUS BRIEFING + ROI === */}
-        <MissionStatus games={games || []} isPro={isPro} />
 
         {/* === RAWG Search === */}
         <div className="relative max-w-2xl">
