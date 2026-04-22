@@ -56,24 +56,24 @@ export function RecommendedNext({ games, onPick }: RecommendedNextProps) {
   if (!rec) return null;
 
   return (
-    <div className="mt-4">
-      <p className="px-1 py-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+    <div className="mt-2">
+      <p className="px-1 py-0.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
         Recommended Next
       </p>
       <button
         type="button"
         onClick={() => onPick(rec.game)}
         data-testid={`button-recommended-${rec.game.id}`}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-primary/40 bg-primary/5 hover:bg-primary/15 hover:border-primary/70 transition-all text-left group"
+        className="w-full flex items-center gap-3 px-3 py-2 rounded-md border border-primary/40 bg-primary/5 hover:bg-primary/15 hover:border-primary/70 transition-all text-left group"
       >
         {rec.game.coverUrl ? (
           <img
             src={rec.game.coverUrl}
             alt=""
-            className="w-10 h-10 rounded object-cover shrink-0 border border-primary/30"
+            className="w-9 h-9 rounded object-cover shrink-0 border border-primary/30"
           />
         ) : (
-          <div className="w-10 h-10 rounded bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
             <Target className="w-4 h-4 text-primary" />
           </div>
         )}

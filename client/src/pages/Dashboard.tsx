@@ -988,7 +988,7 @@ export default function Dashboard() {
 
       {/* === PICK A GAME Selection Modal === */}
       <Dialog open={showPickModal} onOpenChange={setShowPickModal}>
-        <DialogContent className="bg-[#0a0a0a] border-secondary/50 max-w-lg shadow-[0_0_40px_rgba(0,184,255,0.25)] max-h-[90vh] overflow-y-auto" data-testid="dialog-pick-game">
+        <DialogContent className="bg-[#0a0a0a] border-secondary/50 max-w-lg shadow-[0_0_40px_rgba(0,184,255,0.25)] max-h-[95vh] overflow-y-auto" data-testid="dialog-pick-game">
           <DialogHeader>
             <DialogTitle className="font-display uppercase tracking-widest text-center text-2xl text-secondary flex items-center justify-center gap-2">
               <Dices className="w-6 h-6" /> Pick a Game
@@ -999,8 +999,8 @@ export default function Dashboard() {
           </DialogHeader>
 
           {/* SOURCE TOGGLE */}
-          <div className="mt-2">
-            <p className="px-1 py-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Source</p>
+          <div className="mt-1">
+            <p className="px-1 py-0.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Source</p>
             <div className="grid grid-cols-3 gap-2">
               {([
                 { id: "active",  label: "Active",  icon: Gamepad2 },
@@ -1011,7 +1011,7 @@ export default function Dashboard() {
                   key={s.id}
                   onClick={() => setSpinSource(s.id)}
                   data-testid={`source-${s.id}`}
-                  className={`flex items-center justify-center gap-2 px-3 py-3 rounded-md border font-mono uppercase tracking-widest text-xs transition-all ${
+                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md border font-mono uppercase tracking-widest text-xs transition-all ${
                     spinSource === s.id
                       ? "bg-secondary/15 border-secondary text-secondary shadow-[0_0_12px_rgba(0,184,255,0.4)]"
                       : "border-white/10 text-muted-foreground hover:text-foreground hover:border-white/30"
@@ -1035,15 +1035,15 @@ export default function Dashboard() {
           />
 
           {/* MOOD GRID */}
-          <div className="mt-4">
-            <p className="px-1 py-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Mood</p>
+          <div className="mt-2">
+            <p className="px-1 py-0.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Mood</p>
             <div className="grid grid-cols-2 gap-2">
               {moodOptions.map(m => (
                 <button
                   key={m.id}
                   onClick={() => { setShowPickModal(false); handlePickGame(m.id); }}
                   data-testid={`mood-${m.id}`}
-                  className={`flex items-center gap-2 px-3 py-3 rounded-md border border-white/10 font-mono uppercase tracking-widest text-xs transition-all hover:border-white/40 ${m.glow} ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md border border-white/10 font-mono uppercase tracking-widest text-xs transition-all hover:border-white/40 ${m.glow} ${
                     m.id === "chaos"
                       ? "animate-[chaosPulse_1.2s_ease-in-out_infinite] text-fuchsia-400 border-fuchsia-500/40"
                       : "text-foreground"
