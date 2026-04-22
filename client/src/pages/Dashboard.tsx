@@ -107,7 +107,7 @@ export default function Dashboard() {
   const [winnerMode, setWinnerMode] = useState<MoodMode | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelCandidates, setWheelCandidates] = useState<Game[]>([]);
-  const [wheelAngle, setWheelAngle] = useState(0);
+  const [reelGame, setReelGame] = useState<Game | null>(null);
   const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
   const [logHours, setLogHours] = useState<string>("1");
   const [isLoggingTime, setIsLoggingTime] = useState(false);
@@ -243,48 +243,35 @@ export default function Dashboard() {
     if (!isPro) setPulseCharges(c => Math.max(0, c - 1));
     setShowRoulette(true);
     setWheelCandidates(candidates);
-    setWheelAngle(0);
     setIsSpinning(true);
+    setReelGame(candidates[0]);
 
     const actx = getAudioCtx();
     if (actx && actx.state === "suspended") actx.resume().catch(() => {});
 
-    const n = candidates.length;
-    const sliceAngle = 360 / n;
-    const winnerIdx = Math.floor(Math.random() * n);
-    const fullTurns = 5 + Math.floor(Math.random() * 3);
-    const alignment = (360 - winnerIdx * sliceAngle) % 360;
-    const endRotation = fullTurns * 360 + alignment;
+    const maxIterations = 20;
+    let iter = 0;
+    const winner = candidates[Math.floor(Math.random() * candidates.length)];
 
-    const startTime = performance.now();
-    const duration = 4200;
-    let lastTickIndex = -1;
-
-    const step = (now: number) => {
-      const t = Math.min(1, (now - startTime) / duration);
-      const eased = 1 - Math.pow(1 - t, 4);
-      const angle = eased * endRotation;
-      setWheelAngle(angle);
-
-      const tickIdx = Math.floor(angle / sliceAngle);
-      if (tickIdx !== lastTickIndex) {
-        lastTickIndex = tickIdx;
+    const interval = setInterval(() => {
+      iter++;
+      if (iter >= maxIterations) {
+        clearInterval(interval);
+        setReelGame(winner);
+        playClick();
+        setTimeout(() => {
+          setIsSpinning(false);
+          setShowRoulette(false);
+          setWinnerMode(null);
+          setWinnerGame(winner);
+          playWinSound("epic");
+          confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+        }, 350);
+      } else {
+        setReelGame(candidates[Math.floor(Math.random() * candidates.length)]);
         playClick();
       }
-
-      if (t < 1) {
-        requestAnimationFrame(step);
-      } else {
-        const winner = candidates[winnerIdx];
-        setIsSpinning(false);
-        setShowRoulette(false);
-        setWinnerMode(null);
-        setWinnerGame(winner);
-        playWinSound("epic");
-        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
-      }
-    };
-    requestAnimationFrame(step);
+    }, 110);
   };
 
   // --- UI Helpers ---
@@ -549,76 +536,40 @@ export default function Dashboard() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4 flex flex-col items-center justify-center" data-testid="container-spinning-wheel">
-            <div className="relative w-[300px] h-[300px]">
-              {/* Top pointer (pawl) */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-20 pointer-events-none">
+          <div className="py-6 flex flex-col items-center justify-center gap-4" data-testid="container-reel">
+            {/* Mechanical reel window */}
+            <div className="relative w-full max-w-sm h-28 bg-black border-2 border-secondary/60 rounded-md overflow-hidden shadow-[inset_0_0_30px_rgba(0,184,255,0.4),0_0_25px_rgba(0,184,255,0.3)]">
+              {/* Top + bottom blur masks */}
+              <div className="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
+              {/* Side bracket markers */}
+              <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary shadow-[0_0_8px_rgba(0,255,159,0.9)] z-10" />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary shadow-[0_0_8px_rgba(0,255,159,0.9)] z-10" />
+
+              {/* Reel slot */}
+              <div className="h-full w-full flex items-center justify-center px-8">
                 <div
-                  className="w-0 h-0"
-                  style={{
-                    borderLeft: "12px solid transparent",
-                    borderRight: "12px solid transparent",
-                    borderTop: "20px solid #00ff9f",
-                    filter: "drop-shadow(0 0 8px rgba(0,255,159,0.9))",
-                  }}
-                />
+                  key={reelGame?.id ?? "init"}
+                  className="font-display uppercase tracking-widest text-2xl text-primary text-center truncate w-full animate-[reel_110ms_ease-out]"
+                  style={{ textShadow: "0 0 12px rgba(0,255,159,0.8), 0 0 24px rgba(0,255,159,0.4)" }}
+                  data-testid="text-reel-current"
+                >
+                  {reelGame?.title ?? "—"}
+                </div>
               </div>
 
-              <svg
-                viewBox="-110 -110 220 220"
-                className="w-full h-full"
-                style={{ filter: "drop-shadow(0 0 20px rgba(0,184,255,0.35))" }}
-              >
-                <circle r="105" fill="none" stroke="#1f2937" strokeWidth="3" />
-                <circle r="102" fill="none" stroke="#00b8ff" strokeWidth="0.5" opacity="0.6" />
-
-                <g style={{ transform: `rotate(${wheelAngle}deg)`, transformOrigin: "0px 0px" }}>
-                  {wheelCandidates.map((g, i) => {
-                    const n = wheelCandidates.length;
-                    const slice = 360 / n;
-                    const startDeg = -90 - slice / 2 + i * slice;
-                    const endDeg = startDeg + slice;
-                    const r = 100;
-                    const sx = r * Math.cos((startDeg * Math.PI) / 180);
-                    const sy = r * Math.sin((startDeg * Math.PI) / 180);
-                    const ex = r * Math.cos((endDeg * Math.PI) / 180);
-                    const ey = r * Math.sin((endDeg * Math.PI) / 180);
-                    const large = slice > 180 ? 1 : 0;
-                    const fill = WHEEL_PALETTE[i % WHEEL_PALETTE.length];
-                    const labelDeg = -90 + i * slice;
-                    const lx = 65 * Math.cos((labelDeg * Math.PI) / 180);
-                    const ly = 65 * Math.sin((labelDeg * Math.PI) / 180);
-                    const short = g.title.length > 12 ? g.title.slice(0, 10) + "…" : g.title;
-                    return (
-                      <g key={g.id}>
-                        <path
-                          d={`M0,0 L${sx},${sy} A${r},${r} 0 ${large} 1 ${ex},${ey} Z`}
-                          fill={fill}
-                          stroke="#0a0a0a"
-                          strokeWidth="1.5"
-                          opacity="0.92"
-                        />
-                        <text
-                          x={lx}
-                          y={ly}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fontSize="7"
-                          fill="#0a0a0a"
-                          fontWeight="800"
-                          transform={`rotate(${labelDeg + 90} ${lx} ${ly})`}
-                          style={{ fontFamily: "monospace", letterSpacing: "0.5px" }}
-                        >
-                          {short}
-                        </text>
-                      </g>
-                    );
-                  })}
-                  <circle r="16" fill="#0a0a0a" stroke="#00ff9f" strokeWidth="2" />
-                  <circle r="4" fill="#00ff9f" />
-                </g>
-              </svg>
+              {/* Scanline overlay */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-30"
+                style={{
+                  backgroundImage: "repeating-linear-gradient(0deg, transparent 0, transparent 2px, rgba(0,184,255,0.15) 2px, rgba(0,184,255,0.15) 3px)",
+                }}
+              />
             </div>
+
+            <p className="font-mono text-xs text-muted-foreground tracking-widest uppercase">
+              {wheelCandidates.length} candidates locked in
+            </p>
           </div>
         </DialogContent>
       </Dialog>
