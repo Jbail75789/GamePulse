@@ -99,7 +99,11 @@ export function CyberCard(props: CyberCardProps) {
     const { game, onUpdateStatus, onLogTime, isLogging, isAILoading, onAIVibeCheck, onDelete, onUpdateTarget } = props;
     const playtime = game.playtime ?? 0;
     const target = game.targetHours && game.targetHours > 0 ? game.targetHours : 40;
-    const progress = game.status === "completed"
+    const overtimeHours = Math.max(0, playtime - target);
+    const isOvertime = overtimeHours > 0;
+    const progress = isOvertime
+      ? 100
+      : game.status === "completed"
       ? 100
       : Math.min(100, Math.floor((playtime / target) * 100));
     const [editingTarget, setEditingTarget] = useState(false);
@@ -172,10 +176,15 @@ export function CyberCard(props: CyberCardProps) {
           {/* HUD-style playtime / target — bottom-left, with edit pencil */}
           <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5">
             <span
-              className="font-mono text-[11px] tracking-widest text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
+              className={`font-mono text-[11px] tracking-widest ${
+                isOvertime
+                  ? "text-yellow-300 animate-[overtimeText_1.6s_ease-in-out_infinite]"
+                  : "text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
+              }`}
               data-testid={`text-total-time-${game.id}`}
+              title={isOvertime ? `Played ${playtime}h vs ${target}h target` : undefined}
             >
-              {playtime} / {target}h
+              {isOvertime ? `OVERTIME +${overtimeHours}h` : `${playtime} / ${target}h`}
             </span>
             {onUpdateTarget && (
               <button
@@ -334,7 +343,11 @@ export function CyberCard(props: CyberCardProps) {
 
           <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-primary via-secondary to-accent transition-all duration-500"
+              className={`h-full transition-all duration-500 ${
+                isOvertime
+                  ? "bg-gradient-to-r from-yellow-300 via-amber-400 to-purple-500 animate-[overtimePulse_1.6s_ease-in-out_infinite]"
+                  : "bg-gradient-to-r from-primary via-secondary to-accent"
+              }`}
               style={{ width: `${Math.min(100, progress)}%` }}
               data-testid={`bar-progress-${game.id}`}
             />
@@ -390,6 +403,19 @@ export function CyberCard(props: CyberCardProps) {
               >
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
                 {isLogging ? "Logging…" : "Log Time"}
+              </Button>
+            )}
+            {game.status === "completed" && (
+              <Button
+                onClick={() => onUpdateStatus(game.id, "active")}
+                variant="outline"
+                size="sm"
+                className="flex-1 font-mono text-xs uppercase tracking-widest border-yellow-300/60 text-yellow-300 hover:bg-yellow-300/10 hover:text-yellow-200 shadow-[0_0_10px_rgba(250,204,21,0.25)]"
+                data-testid={`button-keep-pulse-${game.id}`}
+                title="Push it back into your active rotation — overtime visuals enabled"
+              >
+                <Gamepad2 className="w-3.5 h-3.5 mr-1.5" />
+                Keep in Pulse
               </Button>
             )}
             {onDelete && (

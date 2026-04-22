@@ -389,6 +389,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           gameTitle: game.title,
           currentTarget: game.targetHours ?? null,
+          currentPlaytime: game.playtime ?? null,
           messages: history,
         }),
       });
@@ -427,8 +428,25 @@ export default function Dashboard() {
     setAiMessages([]);
     setAiInput("");
     setAiOpen(true);
-    // Kick off opening Vibe Check as the first assistant message
-    streamChat([{ role: "user", content: "Give me your opening vibe check on this game in 2 punchy sentences." }], game);
+
+    // === OVERTIME MILESTONE SNARK ===
+    // Every 10h past target → snarky "Touch Grass" / "Legendary Status" verdict
+    const playtime = game.playtime ?? 0;
+    const target = game.targetHours && game.targetHours > 0 ? game.targetHours : 40;
+    const overtime = Math.max(0, playtime - target);
+    const tier = Math.floor(overtime / 10);
+
+    let openingPrompt = "Give me your opening vibe check on this game in 2 punchy sentences.";
+    if (tier >= 1) {
+      const milestone = tier * 10;
+      openingPrompt =
+        `I'm now ${overtime}h past my target of ${target}h on this game (overtime milestone: +${milestone}h). ` +
+        `Hit me with one of two snarky verdicts: either a 'TOUCH GRASS' roast if I'm clearly obsessed (tier ${tier}), ` +
+        `or a 'LEGENDARY STATUS' badge of honor if you respect the grind. ` +
+        `Open with the verdict in ALL CAPS, then 1-2 sentences of cyber-cynic commentary. No emojis.`;
+    }
+
+    streamChat([{ role: "user", content: openingPrompt }], game);
   };
 
   const handleSendAi = () => {

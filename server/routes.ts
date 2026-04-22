@@ -190,9 +190,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // === Cyber-Cynic streaming chat (Deep Pulse) ===
   app.post("/api/ai/chat", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const { gameTitle, currentTarget, messages } = req.body as {
+    const { gameTitle, currentTarget, currentPlaytime, messages } = req.body as {
       gameTitle?: string;
       currentTarget?: number | null;
+      currentPlaytime?: number | null;
       messages?: { role: "user" | "assistant"; content: string }[];
     };
     if (!gameTitle || !Array.isArray(messages)) {
@@ -217,7 +218,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             role: "system",
             content:
               `You are the Cyber-Cynic, a jaded neon-soaked gaming oracle holding a terse chat with the user about ONE specific game. ` +
-              `Current mission: "${gameTitle}". Saved target hours: ${currentTarget ?? "unknown"}. ` +
+              `Current mission: "${gameTitle}". Saved target hours: ${currentTarget ?? "unknown"}. Player's logged playtime: ${currentPlaytime ?? "unknown"}h. ` +
+              (typeof currentPlaytime === "number" && typeof currentTarget === "number" && currentPlaytime > currentTarget
+                ? `STATUS: OVERTIME (+${currentPlaytime - currentTarget}h past target). Treat the player like a confirmed addict — drop snarky 'TOUCH GRASS' or 'LEGENDARY STATUS' verdicts when relevant. `
+                : ``) +
               `Mix gamer slang ('goated', 'mid', 'sweaty', 'comfy') with dry cyberpunk wit. Keep replies under 4 short sentences. ` +
               `If the user asks anything about playtime, length, "how long to beat", or completion time, ALWAYS include a concrete integer estimate in the exact form "~XXh" (e.g. "~45h") so the interface can extract and offer to update their target. ` +
               `Never use emojis. Never hedge with vague words like "depends".`,
