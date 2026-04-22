@@ -180,18 +180,14 @@ export function CyberCard(props: CyberCardProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
 
-          {/* AI Vibe Check icon — top-right. In Infinite Mode: matches the Legacy/Playtime
-              neon green and pulses in sync. z-20 keeps the glow above the cover gradient. */}
+          {/* AI Vibe Check icon — top-right. Stays flat (with hover glow) on every card so
+              the AI Suggested Hours badge in the body is the only "always on" AI signal. */}
           <button
             onClick={onAIVibeCheck}
             disabled={isAILoading}
             data-testid={`button-ai-vibe-${game.id}`}
             title="AI Vibe Check"
-            className={
-              isInfinite
-                ? "absolute top-2 right-2 z-20 w-9 h-9 rounded-full bg-black/70 backdrop-blur flex items-center justify-center text-primary border border-primary animate-[neonPulse_2.4s_ease-in-out_infinite] hover:bg-primary/20 transition-colors disabled:opacity-50"
-                : "absolute top-2 right-2 w-9 h-9 rounded-full bg-black/70 border border-primary/40 backdrop-blur flex items-center justify-center text-primary hover:bg-primary/20 hover:border-primary hover:shadow-[0_0_12px_rgba(0,255,159,0.6)] transition-all disabled:opacity-50"
-            }
+            className="absolute top-2 right-2 w-9 h-9 rounded-full bg-black/70 border border-primary/40 backdrop-blur flex items-center justify-center text-primary hover:bg-primary/20 hover:border-primary hover:shadow-[0_0_12px_rgba(0,255,159,0.6)] transition-all disabled:opacity-50"
           >
             {isAILoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           </button>
@@ -342,12 +338,8 @@ export function CyberCard(props: CyberCardProps) {
             const needsAttention = isDefault && !!estimate;
             return (
             <div
-              className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-[10px] font-mono transition-all ${
-                isInfinite
-                  ? "border-primary bg-primary/10 text-primary animate-[neonPulse_2.4s_ease-in-out_infinite]"
-                  : needsAttention
-                  ? "border-secondary/70 bg-secondary/15 shadow-[0_0_14px_rgba(0,184,255,0.5)] animate-[pulseSync_1.6s_ease-in-out_infinite]"
-                  : "border-secondary/30 bg-secondary/5"
+              className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-[10px] font-mono border-primary/70 bg-primary/10 text-primary animate-[neonPulse_2.4s_ease-in-out_infinite] hover:brightness-150 hover:saturate-150 transition-[filter] ${
+                needsAttention ? "animate-[neonPulse_1.4s_ease-in-out_infinite]" : ""
               }`}
               data-testid={`badge-ai-suggest-${game.id}`}
               title={needsAttention ? `Default target — sync the AI estimate. ${estimate?.note ?? ""}` : estimate?.note}

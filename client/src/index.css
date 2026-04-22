@@ -278,15 +278,16 @@
   }
 }
 
-/* Neon Pulse — slow box-shadow heartbeat for Infinite Mode badges.
-   Color matches the standard progress bar's primary neon (#00ff9f).
-   Used by the Legacy logo, the AI Suggested Hours badge, and the AI Vibe Check button. */
+/* Neon Pulse — slow box-shadow heartbeat in primary neon (#00ff9f).
+   Sized (max 14px outer) to fit within the card body's p-4 padding so the glow
+   never gets clipped by the card's overflow-hidden boundary. Universal on every
+   AI Suggested Hours badge; also used by the Legacy badge in Infinite Mode. */
 @keyframes neonPulse {
   0%, 100% {
-    box-shadow: 0 0 8px rgba(0, 255, 159, 0.7), 0 0 16px rgba(0, 255, 159, 0.4);
+    box-shadow: 0 0 6px rgba(0, 255, 159, 0.6), 0 0 12px rgba(0, 255, 159, 0.35);
   }
   50% {
-    box-shadow: 0 0 12px rgba(0, 255, 159, 1), 0 0 24px rgba(0, 255, 159, 0.7);
+    box-shadow: 0 0 10px rgba(0, 255, 159, 0.95), 0 0 14px rgba(0, 255, 159, 0.6);
   }
 }
 
