@@ -39,21 +39,46 @@ const MOODS: { id: MoodMode; label: string; icon: any; color: string; ring: stri
   { id: "chaos",       label: "Chaos",       icon: Zap,       color: "text-orange-500",  ring: "ring-orange-500/60" },
 ];
 
-function playWinSound(_mode: MoodMode) {
+let _audioCtx: AudioContext | null = null;
+function getAudioCtx(): AudioContext | null {
   try {
     const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.frequency.value = 660;
-    g.gain.setValueAtTime(0.0001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
-    o.start(); o.stop(ctx.currentTime + 0.45);
-  } catch {}
+    if (!Ctx) return null;
+    if (!_audioCtx) _audioCtx = new Ctx();
+    return _audioCtx;
+  } catch { return null; }
 }
+
+function playClick() {
+  const ctx = getAudioCtx(); if (!ctx) return;
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "square";
+  o.frequency.setValueAtTime(1500, t);
+  o.frequency.exponentialRampToValueAtTime(900, t + 0.04);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.08, t + 0.003);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(t); o.stop(t + 0.06);
+}
+
+function playWinSound(_mode: MoodMode) {
+  const ctx = getAudioCtx(); if (!ctx) return;
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.frequency.setValueAtTime(440, t);
+  o.frequency.exponentialRampToValueAtTime(880, t + 0.18);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+  o.start(t); o.stop(t + 0.55);
+}
+
+const WHEEL_PALETTE = ["#00ff9f", "#00b8ff", "#d600ff", "#facc15", "#ef4444", "#a78bfa", "#f97316", "#22d3ee"];
 
 interface SearchResult {
   id: number;
@@ -81,7 +106,8 @@ export default function Dashboard() {
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
   const [winnerMode, setWinnerMode] = useState<MoodMode | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [spinGame, setSpinGame] = useState<Game | null>(null);
+  const [wheelCandidates, setWheelCandidates] = useState<Game[]>([]);
+  const [wheelAngle, setWheelAngle] = useState(0);
   const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
   const [logHours, setLogHours] = useState<string>("1");
   const [isLoggingTime, setIsLoggingTime] = useState(false);
@@ -217,16 +243,44 @@ export default function Dashboard() {
     }
     if (!isPro) setPulseCharges(c => Math.max(0, c - 1));
     setSelectedMood(mood);
+    setWheelCandidates(candidates);
+    setWheelAngle(0);
     setIsSpinning(true);
-    let ticks = 0;
-    const total = 18 + Math.floor(Math.random() * 8);
-    const interval = setInterval(() => {
-      setSpinGame(candidates[Math.floor(Math.random() * candidates.length)]);
-      ticks++;
-      if (ticks >= total) {
-        clearInterval(interval);
-        const winner = candidates[Math.floor(Math.random() * candidates.length)];
-        setSpinGame(null);
+
+    // Resume audio context (required by browsers after user gesture)
+    const actx = getAudioCtx();
+    if (actx && actx.state === "suspended") actx.resume().catch(() => {});
+
+    const n = candidates.length;
+    const sliceAngle = 360 / n;
+    const winnerIdx = Math.floor(Math.random() * n);
+    // End rotation: many full turns, then align so winner sits under the top pointer.
+    const fullTurns = 5 + Math.floor(Math.random() * 3);
+    const alignment = (360 - winnerIdx * sliceAngle) % 360;
+    const endRotation = fullTurns * 360 + alignment;
+
+    const startTime = performance.now();
+    const duration = 4200;
+    let lastTickIndex = -1;
+
+    const step = (now: number) => {
+      const t = Math.min(1, (now - startTime) / duration);
+      // easeOutQuart — strong, mechanical deceleration
+      const eased = 1 - Math.pow(1 - t, 4);
+      const angle = eased * endRotation;
+      setWheelAngle(angle);
+
+      // Perfectly synced click: fire exactly when a slice boundary crosses the pointer.
+      const tickIdx = Math.floor(angle / sliceAngle);
+      if (tickIdx !== lastTickIndex) {
+        lastTickIndex = tickIdx;
+        playClick();
+      }
+
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        const winner = candidates[winnerIdx];
         setIsSpinning(false);
         setShowRoulette(false);
         setWinnerMode(mood);
@@ -234,7 +288,8 @@ export default function Dashboard() {
         playWinSound(mood);
         if (mood !== "chaos") confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
       }
-    }, 80);
+    };
+    requestAnimationFrame(step);
   };
 
   // --- UI Helpers ---
@@ -408,7 +463,7 @@ export default function Dashboard() {
               {isSpinning ? "Spinning…" : "Pick Your Mood"}
             </DialogTitle>
             <DialogDescription className="text-center font-mono text-xs">
-              {isSpinning ? (spinGame?.title ?? "...") : "We'll roll a backlog game that matches the vibe."}
+              {isSpinning ? "Hold on to your seat." : "We'll roll a backlog game that matches the vibe."}
             </DialogDescription>
           </DialogHeader>
 
@@ -427,8 +482,80 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="py-8 flex items-center justify-center">
-              <Dices className="w-16 h-16 text-secondary animate-spin" />
+            <div className="py-4 flex flex-col items-center justify-center" data-testid="container-spinning-wheel">
+              <div className="relative w-[300px] h-[300px]">
+                {/* Top pointer (pawl) */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-20 pointer-events-none">
+                  <div
+                    className="w-0 h-0"
+                    style={{
+                      borderLeft: "12px solid transparent",
+                      borderRight: "12px solid transparent",
+                      borderTop: "20px solid #00ff9f",
+                      filter: "drop-shadow(0 0 8px rgba(0,255,159,0.9))",
+                    }}
+                  />
+                </div>
+
+                {/* Wheel */}
+                <svg
+                  viewBox="-110 -110 220 220"
+                  className="w-full h-full"
+                  style={{ filter: "drop-shadow(0 0 20px rgba(0,184,255,0.35))" }}
+                >
+                  {/* Outer rim */}
+                  <circle r="105" fill="none" stroke="#1f2937" strokeWidth="3" />
+                  <circle r="102" fill="none" stroke="#00b8ff" strokeWidth="0.5" opacity="0.6" />
+
+                  <g style={{ transform: `rotate(${wheelAngle}deg)`, transformOrigin: "0px 0px", transformBox: "fill-box" as any }}>
+                    {wheelCandidates.map((g, i) => {
+                      const n = wheelCandidates.length;
+                      const slice = 360 / n;
+                      // Slice 0 centered at top (-90deg in SVG)
+                      const startDeg = -90 - slice / 2 + i * slice;
+                      const endDeg = startDeg + slice;
+                      const r = 100;
+                      const sx = r * Math.cos((startDeg * Math.PI) / 180);
+                      const sy = r * Math.sin((startDeg * Math.PI) / 180);
+                      const ex = r * Math.cos((endDeg * Math.PI) / 180);
+                      const ey = r * Math.sin((endDeg * Math.PI) / 180);
+                      const large = slice > 180 ? 1 : 0;
+                      const fill = WHEEL_PALETTE[i % WHEEL_PALETTE.length];
+                      const labelDeg = -90 + i * slice;
+                      const lx = 65 * Math.cos((labelDeg * Math.PI) / 180);
+                      const ly = 65 * Math.sin((labelDeg * Math.PI) / 180);
+                      const short = g.title.length > 12 ? g.title.slice(0, 10) + "…" : g.title;
+                      return (
+                        <g key={g.id}>
+                          <path
+                            d={`M0,0 L${sx},${sy} A${r},${r} 0 ${large} 1 ${ex},${ey} Z`}
+                            fill={fill}
+                            stroke="#0a0a0a"
+                            strokeWidth="1.5"
+                            opacity="0.92"
+                          />
+                          <text
+                            x={lx}
+                            y={ly}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fontSize="7"
+                            fill="#0a0a0a"
+                            fontWeight="800"
+                            transform={`rotate(${labelDeg + 90} ${lx} ${ly})`}
+                            style={{ fontFamily: "monospace", letterSpacing: "0.5px" }}
+                          >
+                            {short}
+                          </text>
+                        </g>
+                      );
+                    })}
+                    {/* Hub */}
+                    <circle r="16" fill="#0a0a0a" stroke="#00ff9f" strokeWidth="2" />
+                    <circle r="4" fill="#00ff9f" />
+                  </g>
+                </svg>
+              </div>
             </div>
           )}
         </DialogContent>
