@@ -6,7 +6,7 @@ import { CyberCard } from "@/components/CyberCard";
 import { AddGameModal } from "@/components/AddGameModal";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search, Plus, Dices, Share2, Settings, AlertTriangle, Info, Sword, Sofa, Bolt, Hourglass, Zap, Check } from "lucide-react";
+import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search, Plus, Dices, Share2, Settings, AlertTriangle, Info, Sword, Sofa, Bolt, Hourglass, Zap, Check, Sparkles, Loader2 } from "lucide-react";
 import { type Game } from "@shared/schema";
 import {
   DropdownMenu,
