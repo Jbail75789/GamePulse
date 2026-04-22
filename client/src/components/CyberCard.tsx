@@ -102,6 +102,11 @@ export function CyberCard(props: CyberCardProps) {
     const { game, onUpdateStatus, onLogTime, isLogging, isAILoading, onAIVibeCheck, onDelete, onUpdateTarget, onGoInfinite, onRemoveTarget } = props;
     const playtime = game.playtime ?? 0;
     const isInfinite = !!game.infiniteMode;
+    // Vault games inherit the Legacy visual treatment automatically — same badge,
+    // same gradient HUD as Infinite/Legacy runs. Functional Infinite Mode logic
+    // (progress pinning, auto-promote, Go Infinite eligibility) stays gated by
+    // isInfinite and is unaffected.
+    const displayAsLegacy = isInfinite || game.status === "completed";
     const noTarget = isInfinite && (game.targetHours == null);
     const target = game.targetHours && game.targetHours > 0 ? game.targetHours : 40;
     // Overtime visuals are suppressed when Infinite Mode is active.
@@ -194,7 +199,7 @@ export function CyberCard(props: CyberCardProps) {
 
           {/* Top-left badges: Legacy (Infinite) marker first, then vibe pill */}
           <div className="absolute top-2 left-2 flex items-center gap-1.5">
-            {isInfinite && (
+            {displayAsLegacy && (
               <span
                 className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono bg-black/70 backdrop-blur"
                 style={{
@@ -234,14 +239,14 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5">
             <span
               className={`font-mono text-[11px] tracking-widest ${
-                isInfinite
+                displayAsLegacy
                   ? "bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent"
                   : isOvertime
                   ? "text-yellow-300"
                   : "text-emerald-400"
               }`}
               style={
-                isInfinite
+                displayAsLegacy
                   ? { filter: "drop-shadow(0 0 8px rgba(0,240,255,0.9))" }
                   : undefined
               }
@@ -249,6 +254,8 @@ export function CyberCard(props: CyberCardProps) {
               title={
                 isInfinite
                   ? `Infinite Mode — original target ${target}h, played ${fmtHM(playtime)}`
+                  : game.status === "completed"
+                  ? `Vault — ${fmtHM(playtime)} logged`
                   : isOvertime
                   ? `Played ${fmtHM(playtime)} vs ${target}h target`
                   : undefined
@@ -258,6 +265,8 @@ export function CyberCard(props: CyberCardProps) {
                 ? noTarget
                   ? `PLAYTIME: ${fmtHM(playtime)} (INFINITE)`
                   : `PLAYTIME: ${fmtHM(playtime)} / ${target}h (INFINITE)`
+                : game.status === "completed"
+                ? `PLAYTIME: ${fmtHM(playtime)} / ${target}h`
                 : isOvertime
                 ? `OVERTIME +${fmtHM(overtimeHours)}`
                 : `${fmtHM(playtime)} / ${target}h`}
