@@ -25,6 +25,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import confetti from "canvas-confetti";
+import { MissionStatus } from "@/components/MissionStatus";
+import { MissionStartOverlay } from "@/components/MissionStartOverlay";
+import { RecommendedNext } from "@/components/RecommendedNext";
+import { AiProcessingBar } from "@/components/AiProcessingBar";
+import { GlitchOverlay } from "@/components/GlitchOverlay";
 
 interface SearchResult {
   id: number;
@@ -167,10 +172,15 @@ export default function Dashboard() {
 
   const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
   const [showProModal, setShowProModal] = useState(false);
+  const [glitchTrigger, setGlitchTrigger] = useState(0);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
 
   const handleUpdateStatus = async (gameId: number, newStatus: string) => {
+    const before = games?.find(g => g.id === gameId);
+    if (before && before.status !== newStatus) {
+      setGlitchTrigger(t => t + 1);
+    }
     const activeGamesCount = games?.filter(g => g.status === 'active').length || 0;
     const backlogGamesCount = games?.filter(g => g.status === 'backlog').length || 0;
     const currentGame = games?.find(g => g.id === gameId);
@@ -565,7 +575,10 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className={`p-4 md:p-8 space-y-8 ${spinMode === "chaos" && winnerGame ? "animate-[chaosShake_0.4s_ease-in-out_infinite]" : ""}`}>
+      <MissionStartOverlay />
+      <AiProcessingBar active={aiLoadingId !== null || aiStreaming} />
+      <GlitchOverlay trigger={glitchTrigger} />
+      <div className={`p-4 md:p-8 space-y-6 ${spinMode === "chaos" && winnerGame ? "animate-[chaosShake_0.4s_ease-in-out_infinite]" : ""}`}>
         {/* === HEADER === */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -596,6 +609,9 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
+
+        {/* === MISSION STATUS BRIEFING + ROI === */}
+        <MissionStatus games={games || []} isPro={isPro} />
 
         {/* === RAWG Search === */}
         <div className="relative max-w-2xl">
@@ -947,6 +963,17 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+
+          {/* PULSE-SYNC RECOMMENDATION */}
+          <RecommendedNext
+            games={games || []}
+            onPick={(g) => {
+              setShowPickModal(false);
+              setSpinMode("chill");
+              setWinnerGame(g);
+              setLastWinnerId(g.id);
+            }}
+          />
 
           {/* MOOD GRID */}
           <div className="mt-4">

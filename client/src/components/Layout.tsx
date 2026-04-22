@@ -34,6 +34,8 @@ export function Layout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Grid Background Overlay */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0" />
+      {/* Slow drifting digital grid for depth */}
+      <div className="digital-grid" />
       
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-4">
