@@ -365,37 +365,29 @@ export function CyberCard(props: CyberCardProps) {
               )}
               {estimate && !estimateLoading && (
                 <>
-                  <span className="text-muted-foreground uppercase tracking-widest shrink-0">AI:</span>
+                  <span className="ai-data uppercase tracking-widest shrink-0">AI:</span>
                   <button
                     type="button"
                     onClick={() => applySuggestion(estimate.main, "Main Story")}
-                    className={`group/sync flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-secondary/15 transition-all ${target === estimate.main ? "text-secondary" : "text-foreground hover:text-secondary"}`}
+                    className="group/sync flex items-center gap-1 ai-data hover:opacity-100 transition-opacity"
                     title={`Sync target → ${estimate.main}h (Main Story)`}
                     data-testid={`button-sync-main-${game.id}`}
                   >
-                    <span className="font-bold">{estimate.main}h</span>
-                    <span className="text-muted-foreground text-[9px] uppercase">Main</span>
-                    {target === estimate.main ? (
-                      <Check className="w-3 h-3 text-emerald-400" />
-                    ) : (
-                      <Check className="w-3 h-3 opacity-50 group-hover/sync:opacity-100 group-hover/sync:text-secondary" />
-                    )}
+                    <span className="ai-data">{estimate.main}h</span>
+                    <span className="ai-data text-[9px] uppercase">Main</span>
+                    {target === estimate.main && <Check className="w-3 h-3 text-emerald-400" />}
                   </button>
-                  <span className="text-muted-foreground/50">/</span>
+                  <span className="ai-data opacity-50">/</span>
                   <button
                     type="button"
                     onClick={() => applySuggestion(estimate.full, "Completionist")}
-                    className={`group/sync flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-accent/15 transition-all ${target === estimate.full ? "text-accent" : "text-foreground hover:text-accent"}`}
+                    className="group/sync flex items-center gap-1 ai-data hover:opacity-100 transition-opacity"
                     title={`Sync target → ${estimate.full}h (Completionist / 100%)`}
                     data-testid={`button-sync-full-${game.id}`}
                   >
-                    <span className="font-bold">{estimate.full}h</span>
-                    <span className="text-muted-foreground text-[9px] uppercase">Full</span>
-                    {target === estimate.full ? (
-                      <Check className="w-3 h-3 text-emerald-400" />
-                    ) : (
-                      <Check className="w-3 h-3 opacity-50 group-hover/sync:opacity-100 group-hover/sync:text-accent" />
-                    )}
+                    <span className="ai-data">{estimate.full}h</span>
+                    <span className="ai-data text-[9px] uppercase">Full</span>
+                    {target === estimate.full && <Check className="w-3 h-3 text-emerald-400" />}
                   </button>
                 </>
               )}
