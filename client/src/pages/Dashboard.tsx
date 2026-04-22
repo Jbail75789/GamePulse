@@ -91,7 +91,7 @@ export default function Dashboard() {
   const { games, updateGame, deleteGame } = useGames();
   const { toast } = useToast();
   // --- States ---
-  const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog" | "wishlist">("active");
+  const [activeTab, setActiveTab] = useState<"missions" | "completed" | "wishlist">("missions");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchAddOpen, setSearchAddOpen] = useState(false);
@@ -289,13 +289,14 @@ export default function Dashboard() {
 
   // --- UI Helpers ---
   const tabData = [
-    { id: "active",    label: "My Pulse",    icon: Gamepad2, color: "text-primary",    hover: "hover:text-primary" },
-    { id: "completed", label: "The Vault",   icon: Trophy,   color: "text-secondary",  hover: "hover:text-secondary" },
-    { id: "backlog",   label: "The Backlog", icon: Clock,    color: "text-accent",     hover: "hover:text-accent" },
-    { id: "wishlist",  label: "Wish List",   icon: Sword,    color: "text-foreground", hover: "hover:text-foreground" },
+    { id: "missions",  label: "Mission Control", icon: Gamepad2, color: "text-primary",    hover: "hover:text-primary" },
+    { id: "completed", label: "The Vault",       icon: Trophy,   color: "text-secondary",  hover: "hover:text-secondary" },
+    { id: "wishlist",  label: "Wish List",       icon: Sword,    color: "text-foreground", hover: "hover:text-foreground" },
   ] as const;
 
-  const filteredGames = games?.filter(game => game.status === activeTab) || [];
+  const activeMissions = games?.filter(g => g.status === "active") || [];
+  const backlogGames   = games?.filter(g => g.status === "backlog") || [];
+  const filteredGames  = games?.filter(g => g.status === activeTab) || [];
 
   return (
     <Layout>
@@ -416,32 +417,118 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* 5. Game Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <AnimatePresence mode="popLayout">
-            {filteredGames.map((game) => (
-              <motion.div key={game.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <CyberCard
-                  game={game}
-                  onUpdateStatus={handleUpdateStatus}
-                  onLogTime={() => setLoggingTimeId(game.id)}
-                  isLogging={loggingTimeId === game.id}
-                  isAILoading={isAILoading === game.id}
-                  onAIVibeCheck={() => handleAIVibeCheck(game.title, game.id)}
-                  onDelete={(id) => deleteGame(id)}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+        {/* 5. Game Sections */}
+        {activeTab === "missions" ? (
+          <div className="space-y-12">
+            {/* === ACTIVE MISSIONS === */}
+            <section data-testid="section-active-missions">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-primary/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-8 bg-primary rounded-sm shadow-[0_0_10px_rgba(0,255,159,0.7)]" />
+                  <div>
+                    <h2 className="text-xl font-display font-bold uppercase tracking-widest text-primary">
+                      Active Missions
+                    </h2>
+                    <p className="text-xs font-mono text-muted-foreground">Currently in your pulse.</p>
+                  </div>
+                </div>
+                <span className="font-mono text-xs px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/30" data-testid="badge-active-count">
+                  {activeMissions.length} ACTIVE
+                </span>
+              </div>
 
-          {/* Empty State */}
-          {filteredGames.length === 0 && (
-            <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-xl">
-              <Plus className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
-              <p className="text-muted-foreground font-mono">No data found in {activeTab}.</p>
-            </div>
-          )}
-        </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <AnimatePresence mode="popLayout">
+                  {activeMissions.map((game) => (
+                    <motion.div key={game.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <CyberCard
+                        game={game}
+                        onUpdateStatus={handleUpdateStatus}
+                        onLogTime={() => setLoggingTimeId(game.id)}
+                        isLogging={loggingTimeId === game.id}
+                        isAILoading={isAILoading === game.id}
+                        onAIVibeCheck={() => handleAIVibeCheck(game.title, game.id)}
+                        onDelete={(id) => deleteGame(id)}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                {activeMissions.length === 0 && (
+                  <div className="col-span-full py-12 text-center border-2 border-dashed border-primary/15 rounded-xl">
+                    <Gamepad2 className="w-10 h-10 text-primary/20 mx-auto mb-3" />
+                    <p className="text-muted-foreground font-mono text-sm">No active missions. Toggle a backlog game to start.</p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* === BACKLOG === */}
+            <section data-testid="section-backlog">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-accent/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-8 bg-accent rounded-sm shadow-[0_0_10px_rgba(214,0,255,0.7)]" />
+                  <div>
+                    <h2 className="text-xl font-display font-bold uppercase tracking-widest text-accent">
+                      The Backlog
+                    </h2>
+                    <p className="text-xs font-mono text-muted-foreground">Queued for future play.</p>
+                  </div>
+                </div>
+                <span className="font-mono text-xs px-3 py-1 rounded-full bg-accent/10 text-accent border border-accent/30" data-testid="badge-backlog-count">
+                  {backlogGames.length} QUEUED
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <AnimatePresence mode="popLayout">
+                  {backlogGames.map((game) => (
+                    <motion.div key={game.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <CyberCard
+                        game={game}
+                        onUpdateStatus={handleUpdateStatus}
+                        onLogTime={() => setLoggingTimeId(game.id)}
+                        isLogging={loggingTimeId === game.id}
+                        isAILoading={isAILoading === game.id}
+                        onAIVibeCheck={() => handleAIVibeCheck(game.title, game.id)}
+                        onDelete={(id) => deleteGame(id)}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                {backlogGames.length === 0 && (
+                  <div className="col-span-full py-12 text-center border-2 border-dashed border-accent/15 rounded-xl">
+                    <Clock className="w-10 h-10 text-accent/20 mx-auto mb-3" />
+                    <p className="text-muted-foreground font-mono text-sm">Backlog empty. Add games to queue them up.</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence mode="popLayout">
+              {filteredGames.map((game) => (
+                <motion.div key={game.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <CyberCard
+                    game={game}
+                    onUpdateStatus={handleUpdateStatus}
+                    onLogTime={() => setLoggingTimeId(game.id)}
+                    isLogging={loggingTimeId === game.id}
+                    isAILoading={isAILoading === game.id}
+                    onAIVibeCheck={() => handleAIVibeCheck(game.title, game.id)}
+                    onDelete={(id) => deleteGame(id)}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {filteredGames.length === 0 && (
+              <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-xl">
+                <Plus className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+                <p className="text-muted-foreground font-mono">No data found in {activeTab}.</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <AddGameModal
