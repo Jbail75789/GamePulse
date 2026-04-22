@@ -196,10 +196,12 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute top-2 left-2 flex items-center gap-1.5">
             {isInfinite && (
               <span
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono border bg-black/70 backdrop-blur"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-mono bg-black/70 backdrop-blur"
                 style={{
-                  color: "#7ef9ff",
-                  borderColor: "rgba(0,240,255,0.55)",
+                  // Border + text use the same primary→secondary→accent gradient as the
+                  // progress bar (green → cyan-blue → magenta). Glow stays cyan.
+                  border: "2px solid transparent",
+                  borderImage: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--accent))) 1",
                   boxShadow: "0 0 8px rgba(0,240,255,0.45), inset 0 0 4px rgba(0,240,255,0.25)",
                   animation: "legacyBreath 3.2s ease-in-out infinite",
                 }}
@@ -207,10 +209,15 @@ export function CyberCard(props: CyberCardProps) {
                 title="Legacy / Infinite Mode — playtime keeps climbing"
               >
                 <InfinityIcon
-                  className="w-3 h-3"
-                  style={{ color: "#7ef9ff", filter: "drop-shadow(0 0 6px rgba(0,240,255,0.95))" }}
+                  className="w-3 h-3 text-primary"
+                  style={{ filter: "drop-shadow(0 0 6px rgba(0,240,255,0.95))" }}
                 />
-                Legacy
+                <span
+                  className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent"
+                  style={{ filter: "drop-shadow(0 0 6px rgba(0,240,255,0.85))" }}
+                >
+                  Legacy
+                </span>
               </span>
             )}
             {game.vibe && (
@@ -228,11 +235,16 @@ export function CyberCard(props: CyberCardProps) {
             <span
               className={`font-mono text-[11px] tracking-widest ${
                 isInfinite
-                  ? "text-white drop-shadow-[0_0_8px_rgba(0,240,255,0.9)]"
+                  ? "bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent"
                   : isOvertime
                   ? "text-yellow-300"
                   : "text-emerald-400"
               }`}
+              style={
+                isInfinite
+                  ? { filter: "drop-shadow(0 0 8px rgba(0,240,255,0.9))" }
+                  : undefined
+              }
               data-testid={`text-total-time-${game.id}`}
               title={
                 isInfinite
