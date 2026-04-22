@@ -278,6 +278,22 @@
   }
 }
 
+/* HARD OVERRIDE — Universal AI Badge.
+   Forced cyan glow + 2px solid cyan border on every .ai-badge across the app.
+   !important on every declaration so no parent theme, transition, or utility class
+   can win against it. If you can see this rule in DevTools, the file is loading. */
+.ai-badge {
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.8) !important;
+  border: 2px solid cyan !important;
+  border-radius: 6px !important;
+  background: rgba(0, 255, 255, 0.08) !important;
+  color: #b8feff !important;
+  transition: filter 0.2s ease !important;
+}
+.ai-badge:hover {
+  filter: brightness(1.4) saturate(1.4) !important;
+}
+
 /* Neon Pulse — slow box-shadow heartbeat in primary neon (#00ff9f).
    Sized (max 14px outer) to fit within the card body's p-4 padding so the glow
    never gets clipped by the card's overflow-hidden boundary. Universal on every

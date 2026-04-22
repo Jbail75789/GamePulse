@@ -343,10 +343,8 @@ export function CyberCard(props: CyberCardProps) {
             const needsAttention = isDefault && !!estimate;
             return (
             <div
-              className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-[10px] font-mono !border-primary/70 !bg-primary/10 !text-primary hover:brightness-150 hover:saturate-150 transition-[filter] ${
-                needsAttention
-                  ? "animate-[neonPulse_1.4s_ease-in-out_infinite]"
-                  : "animate-[neonPulse_2.4s_ease-in-out_infinite]"
+              className={`ai-badge flex items-center gap-2 px-2 py-1.5 text-[10px] font-mono ${
+                needsAttention ? "animate-[pulseSync_1.6s_ease-in-out_infinite]" : ""
               }`}
               data-testid={`badge-ai-suggest-${game.id}`}
               title={needsAttention ? `Default target — sync the AI estimate. ${estimate?.note ?? ""}` : estimate?.note}
