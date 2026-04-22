@@ -181,5 +181,58 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // === Cyber-Cynic streaming chat (Deep Pulse) ===
+  app.post("/api/ai/chat", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const { gameTitle, currentTarget, messages } = req.body as {
+      gameTitle?: string;
+      currentTarget?: number | null;
+      messages?: { role: "user" | "assistant"; content: string }[];
+    };
+    if (!gameTitle || !Array.isArray(messages)) {
+      return res.status(400).json({ message: "Missing gameTitle or messages" });
+    }
+    if (!openai.apiKey) {
+      return res.status(500).json({ message: "AI link severed. (Missing OpenAI key)" });
+    }
+
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("X-Accel-Buffering", "no");
+
+    try {
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o",
+        stream: true,
+        temperature: 0.8,
+        max_tokens: 320,
+        messages: [
+          {
+            role: "system",
+            content:
+              `You are the Cyber-Cynic, a jaded neon-soaked gaming oracle holding a terse chat with the user about ONE specific game. ` +
+              `Current mission: "${gameTitle}". Saved target hours: ${currentTarget ?? "unknown"}. ` +
+              `Mix gamer slang ('goated', 'mid', 'sweaty', 'comfy') with dry cyberpunk wit. Keep replies under 4 short sentences. ` +
+              `If the user asks anything about playtime, length, "how long to beat", or completion time, ALWAYS include a concrete integer estimate in the exact form "~XXh" (e.g. "~45h") so the interface can extract and offer to update their target. ` +
+              `Never use emojis. Never hedge with vague words like "depends".`,
+          },
+          ...messages.slice(-10).map(m => ({ role: m.role, content: String(m.content || "") })),
+        ],
+      });
+      for await (const chunk of stream as any) {
+        const delta = chunk?.choices?.[0]?.delta?.content;
+        if (delta) res.write(delta);
+      }
+      res.end();
+    } catch (e: any) {
+      console.error("[ai/chat] OpenAI error:", e?.message || e);
+      if (!res.headersSent) {
+        res.status(500).json({ message: `Codex error: ${e?.message ?? "connection failed"}` });
+      } else {
+        res.end(`\n\n[Codex error: ${e?.message ?? "connection failed"}]`);
+      }
+    }
+  });
+
   return httpServer;
 }

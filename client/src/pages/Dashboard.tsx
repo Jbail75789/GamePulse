@@ -263,26 +263,90 @@ export default function Dashboard() {
     setShowRoulette(false);
   };
 
-  // === AI Vibe Check ===
+  // === AI Deep Pulse Chat ===
+  type ChatMsg = { role: "user" | "assistant"; content: string };
   const [aiOpen, setAiOpen] = useState(false);
-  const [aiTitle, setAiTitle] = useState<string>("");
-  const [aiVibe, setAiVibe] = useState<string>("");
+  const [aiGame, setAiGame] = useState<Game | null>(null);
+  const [aiMessages, setAiMessages] = useState<ChatMsg[]>([]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiStreaming, setAiStreaming] = useState(false);
   const [aiLoadingId, setAiLoadingId] = useState<number | null>(null);
+  const aiScrollRef = useRef<HTMLDivElement>(null);
+
+  // Extract integer hours from "~45h" or "45 hours" patterns
+  const extractHours = (text: string): number | null => {
+    const m = text.match(/~?\s*(\d{1,3})\s*(?:h\b|hours?\b|hrs?\b)/i);
+    if (!m) return null;
+    const n = parseInt(m[1], 10);
+    return n > 0 && n <= 300 ? n : null;
+  };
+
+  useEffect(() => {
+    if (aiScrollRef.current) {
+      aiScrollRef.current.scrollTop = aiScrollRef.current.scrollHeight;
+    }
+  }, [aiMessages, aiStreaming]);
+
+  const streamChat = async (history: ChatMsg[], game: Game) => {
+    setAiStreaming(true);
+    setAiMessages(prev => [...prev, { role: "assistant", content: "" }]);
+    try {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          gameTitle: game.title,
+          currentTarget: game.targetHours ?? null,
+          messages: history,
+        }),
+      });
+      if (!res.ok || !res.body) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(errText || `HTTP ${res.status}`);
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let acc = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        acc += decoder.decode(value, { stream: true });
+        setAiMessages(prev => {
+          const next = [...prev];
+          next[next.length - 1] = { role: "assistant", content: acc };
+          return next;
+        });
+      }
+    } catch (e: any) {
+      setAiMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = { role: "assistant", content: `[Codex error: ${e?.message || "connection failed"}]` };
+        return next;
+      });
+    } finally {
+      setAiStreaming(false);
+      setAiLoadingId(null);
+    }
+  };
 
   const handleAIVibeCheck = async (game: Game) => {
     setAiLoadingId(game.id);
-    setAiTitle(game.title);
-    setAiVibe("");
+    setAiGame(game);
+    setAiMessages([]);
+    setAiInput("");
     setAiOpen(true);
-    try {
-      const res = await apiRequest("POST", "/api/ai/vibe", { title: game.title });
-      const data = await res.json();
-      setAiVibe(data.vibe ?? "Signal lost.");
-    } catch {
-      setAiVibe("Codex error: connection failed.");
-    } finally {
-      setAiLoadingId(null);
-    }
+    // Kick off opening Vibe Check as the first assistant message
+    streamChat([{ role: "user", content: "Give me your opening vibe check on this game in 2 punchy sentences." }], game);
+  };
+
+  const handleSendAi = () => {
+    const text = aiInput.trim();
+    if (!text || aiStreaming || !aiGame) return;
+    const next: ChatMsg[] = [...aiMessages, { role: "user", content: text }];
+    setAiMessages(next);
+    setAiInput("");
+    streamChat(next, aiGame);
   };
 
   // === RAWG Search debounce ===
@@ -489,25 +553,113 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* === AI Vibe Dialog (centered modal) === */}
+      {/* === Deep Pulse Chat Modal (centered terminal) === */}
       <Dialog open={aiOpen} onOpenChange={setAiOpen}>
-        <DialogContent className="bg-[#0a0a0a] border-primary/50 max-w-md shadow-[0_0_40px_rgba(0,255,159,0.25)]" data-testid="dialog-ai-vibe">
-          <DialogHeader>
+        <DialogContent
+          className="bg-black border-primary/60 max-w-lg shadow-[0_0_50px_rgba(0,255,159,0.35)] p-0 overflow-hidden"
+          data-testid="dialog-ai-vibe"
+        >
+          <DialogHeader className="px-5 pt-5 pb-2 border-b border-primary/20">
             <DialogTitle className="font-display uppercase tracking-widest text-primary flex items-center gap-2">
-              <Sparkles className="w-5 h-5" /> Vibe Check
+              <Sparkles className="w-5 h-5" /> Deep Pulse
             </DialogTitle>
-            <DialogDescription className="font-mono text-xs text-muted-foreground">
-              Cyber-Cynic on <span className="text-foreground">{aiTitle}</span>
+            <DialogDescription className="font-mono text-[10px] text-emerald-400/80 uppercase tracking-widest">
+              cyber-cynic // mission: <span className="text-primary">{aiGame?.title ?? "—"}</span>
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 min-h-[80px] flex items-center justify-center text-center">
-            {aiLoadingId !== null ? (
-              <p className="font-mono text-sm text-secondary animate-pulse">Pinging the codex…</p>
-            ) : (
-              <p className="font-display text-lg leading-snug text-foreground" data-testid="text-ai-vibe-result">
-                "{aiVibe}"
-              </p>
+
+          {/* Terminal scroll body */}
+          <div
+            ref={aiScrollRef}
+            className="px-5 py-4 max-h-[55vh] min-h-[260px] overflow-y-auto font-mono text-[13px] leading-relaxed bg-black"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0,255,159,0.04) 3px, transparent 4px)",
+            }}
+            data-testid="ai-chat-log"
+          >
+            {aiMessages.length === 0 && (
+              <p className="text-emerald-400/60 animate-pulse">{">"} jacking into the codex...</p>
             )}
+            {aiMessages.map((m, i) => {
+              const isAssistant = m.role === "assistant";
+              const isLast = i === aiMessages.length - 1;
+              const hours = isAssistant && !aiStreaming
+                ? extractHours(m.content)
+                : isAssistant && aiStreaming && isLast ? null : extractHours(m.content);
+              const showApply = isAssistant && hours !== null && aiGame && hours !== (aiGame.targetHours ?? null);
+              return (
+                <div key={i} className="mb-3" data-testid={`ai-msg-${i}`}>
+                  {isAssistant ? (
+                    <p className="text-emerald-400" style={{ textShadow: "0 0 6px rgba(0,255,159,0.5)" }}>
+                      <span className="text-primary/80">CYNIC{">"}</span>{" "}
+                      {m.content}
+                      {aiStreaming && isLast && (
+                        <span className="inline-block w-2 h-3.5 ml-0.5 bg-primary animate-pulse align-middle" />
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-cyan-300">
+                      <span className="text-cyan-500/80">USER{">"}</span> {m.content}
+                    </p>
+                  )}
+                  {showApply && (
+                    <button
+                      onClick={() => {
+                        if (!aiGame) return;
+                        const playtime = aiGame.playtime ?? 0;
+                        const newProgress = Math.min(100, Math.floor((playtime / hours!) * 100));
+                        updateGame({ id: aiGame.id, targetHours: hours!, progress: newProgress });
+                        setAiGame({ ...aiGame, targetHours: hours! });
+                        toast({ title: "Pulse Target Updated", description: `Set to ${hours}h` });
+                      }}
+                      className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-secondary/60 bg-secondary/15 text-secondary hover:bg-secondary/30 transition-all uppercase tracking-widest text-[11px] font-bold"
+                      data-testid={`button-apply-target-${i}`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Update Pulse Target → {hours}h
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Input row */}
+          <div className="border-t border-primary/20 bg-black p-3 flex items-center gap-2">
+            <span className="text-primary font-mono text-sm pl-1">{">"}</span>
+            <input
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendAi();
+                }
+              }}
+              disabled={aiStreaming}
+              placeholder="Ask the Cyber-Cynic more about this mission..."
+              className="flex-1 bg-transparent font-mono text-sm text-emerald-400 placeholder:text-emerald-400/30 outline-none border-none"
+              data-testid="input-ai-chat"
+            />
+            <Button
+              onClick={handleSendAi}
+              disabled={aiStreaming || !aiInput.trim()}
+              size="sm"
+              className="bg-primary text-background font-bold uppercase font-mono text-xs h-8 px-3 hover:bg-primary/90"
+              data-testid="button-send-ai"
+            >
+              {aiStreaming ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Send"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAiOpen(false)}
+              className="font-mono text-xs h-8 px-3 uppercase border-white/20"
+              data-testid="button-close-ai"
+            >
+              Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
