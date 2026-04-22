@@ -59,9 +59,9 @@ interface CyberCardGameProps extends CyberCardBaseProps {
 type CyberCardProps = CyberCardWrapperProps | CyberCardGameProps;
 
 const GLOWS: Record<GlowColor, string> = {
-  primary: "hover:border-primary/50 hover:shadow-[0_0_30px_rgba(0,255,159,0.15)]",
-  secondary: "hover:border-secondary/50 hover:shadow-[0_0_30px_rgba(0,184,255,0.15)]",
-  accent: "hover:border-accent/50 hover:shadow-[0_0_30px_rgba(214,0,255,0.15)]",
+  primary: "shadow-[0_0_18px_rgba(0,255,159,0.18)] hover:border-primary/50 hover:shadow-[0_0_32px_rgba(0,255,159,0.28)]",
+  secondary: "shadow-[0_0_18px_rgba(0,184,255,0.18)] hover:border-secondary/50 hover:shadow-[0_0_32px_rgba(0,184,255,0.28)]",
+  accent: "shadow-[0_0_18px_rgba(214,0,255,0.18)] hover:border-accent/50 hover:shadow-[0_0_32px_rgba(214,0,255,0.28)]",
   none: "",
 };
 
