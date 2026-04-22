@@ -264,11 +264,19 @@ export function CyberCard(props: CyberCardProps) {
           </div>
 
           {/* Proactive AI Estimate Badge — Main / Full with one-click sync */}
-          {onUpdateTarget && (
+          {onUpdateTarget && (() => {
+            // "Still on default" = user has never customized target (null OR equal to schema default 40)
+            const isDefault = game.targetHours == null || game.targetHours === 40;
+            const needsAttention = isDefault && !!estimate;
+            return (
             <div
-              className="flex items-center gap-2 rounded-md border border-secondary/30 bg-secondary/5 px-2 py-1.5 text-[10px] font-mono"
+              className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-[10px] font-mono transition-all ${
+                needsAttention
+                  ? "border-secondary/70 bg-secondary/15 shadow-[0_0_14px_rgba(0,184,255,0.5)] animate-[pulseSync_1.6s_ease-in-out_infinite]"
+                  : "border-secondary/30 bg-secondary/5"
+              }`}
               data-testid={`badge-ai-suggest-${game.id}`}
-              title={estimate?.note}
+              title={needsAttention ? `Default target — sync the AI estimate. ${estimate?.note ?? ""}` : estimate?.note}
             >
               <Sparkles className="w-3 h-3 text-secondary shrink-0" />
               {estimateLoading && (
@@ -321,7 +329,8 @@ export function CyberCard(props: CyberCardProps) {
                 </>
               )}
             </div>
-          )}
+            );
+          })()}
 
           <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
             <div

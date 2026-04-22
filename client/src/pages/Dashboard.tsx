@@ -86,6 +86,46 @@ function AiSuggestionBanner({ game, onApply }: { game: Game | null; onApply: (hr
   );
 }
 
+function ReelEstimate({ game, onApply }: { game: Game | null; onApply: (hrs: number, label: string) => void }) {
+  const { data: estimate, isLoading } = useEstimate(game?.title, !!game);
+  if (!game) return null;
+  return (
+    <div
+      className="rounded-md border border-secondary/40 bg-secondary/10 px-3 py-2 font-mono text-[11px] flex items-center justify-center gap-2 flex-wrap"
+      data-testid="reel-estimate"
+    >
+      <Sparkles className="w-3.5 h-3.5 text-secondary shrink-0" />
+      {isLoading && <span className="text-secondary/80 animate-pulse uppercase tracking-widest">AI scanning…</span>}
+      {estimate && (
+        <>
+          <span className="text-muted-foreground uppercase tracking-widest">AI Estimate</span>
+          <button
+            onClick={() => onApply(estimate.main, "Main Story")}
+            className="flex items-center gap-1 px-2 py-0.5 rounded border border-secondary/50 bg-secondary/15 text-secondary hover:bg-secondary/30 transition-all"
+            data-testid="button-reel-sync-main"
+            title={`Sync target → ${estimate.main}h (Main Story)`}
+          >
+            <span className="font-bold">{estimate.main}h</span>
+            <span className="text-[9px] uppercase opacity-80">Main</span>
+            <Check className="w-3 h-3" />
+          </button>
+          <span className="text-muted-foreground/50">/</span>
+          <button
+            onClick={() => onApply(estimate.full, "Completionist")}
+            className="flex items-center gap-1 px-2 py-0.5 rounded border border-accent/50 bg-accent/15 text-accent hover:bg-accent/30 transition-all"
+            data-testid="button-reel-sync-full"
+            title={`Sync target → ${estimate.full}h (Completionist)`}
+          >
+            <span className="font-bold">{estimate.full}h</span>
+            <span className="text-[9px] uppercase opacity-80">Full</span>
+            <Check className="w-3 h-3" />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { games, isLoading, deleteGame, updateGame, createGame } = useGames();
@@ -879,6 +919,17 @@ export default function Dashboard() {
               <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest">
                 {winnerGame.platform || "PC"} · {winnerGame.vibe || "—"}
               </p>
+              <ReelEstimate
+                game={winnerGame}
+                onApply={(hrs, label) => {
+                  if (!winnerGame) return;
+                  const playtime = winnerGame.playtime ?? 0;
+                  const newProgress = Math.min(100, Math.floor((playtime / hrs) * 100));
+                  updateGame({ id: winnerGame.id, targetHours: hrs, progress: newProgress });
+                  setWinnerGame({ ...winnerGame, targetHours: hrs });
+                  toast({ title: "Pulse Target Synced", description: `${label}: ${hrs}h` });
+                }}
+              />
               <div className="flex gap-2">
                 <Button
                   onClick={() => { handleUpdateStatus(winnerGame.id, "active"); setWinnerGame(null); }}
