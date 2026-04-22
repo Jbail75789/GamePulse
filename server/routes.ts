@@ -190,10 +190,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // === Cyber-Cynic streaming chat (Deep Pulse) ===
   app.post("/api/ai/chat", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const { gameTitle, currentTarget, currentPlaytime, messages } = req.body as {
+    const { gameTitle, currentTarget, currentPlaytime, infiniteMode, messages } = req.body as {
       gameTitle?: string;
       currentTarget?: number | null;
       currentPlaytime?: number | null;
+      infiniteMode?: boolean;
       messages?: { role: "user" | "assistant"; content: string }[];
     };
     if (!gameTitle || !Array.isArray(messages)) {
@@ -219,7 +220,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
             content:
               `You are the Cyber-Cynic, a jaded neon-soaked gaming oracle holding a terse chat with the user about ONE specific game. ` +
               `Current mission: "${gameTitle}". Saved target hours: ${currentTarget ?? "unknown"}. Player's logged playtime: ${currentPlaytime ?? "unknown"}h. ` +
-              (typeof currentPlaytime === "number" && typeof currentTarget === "number" && currentPlaytime > currentTarget
+              (infiniteMode
+                ? `STATUS: INFINITE MODE. The player has chosen to live in this simulation past completion (${currentPlaytime ?? "?"}h logged). ` +
+                  `Drop the snark and shift to a tone of cyberpunk RESPECT mixed with genuine CONCERN — like a ghost-in-the-shell observing a Commander who refuses to disconnect. ` +
+                  `Examples: "System Analysis: You've lived in this simulation for ${currentPlaytime ?? "X"} hours. Are you still in there, Commander?", "Respect, runner. Most flatline before this. Keep the signal alive.", "Concerning telemetry. Touch the analog world soon." `
+                : (typeof currentPlaytime === "number" && typeof currentTarget === "number" && currentPlaytime > currentTarget)
                 ? `STATUS: OVERTIME (+${currentPlaytime - currentTarget}h past target). Treat the player like a confirmed addict — drop snarky 'TOUCH GRASS' or 'LEGENDARY STATUS' verdicts when relevant. `
                 : ``) +
               `Mix gamer slang ('goated', 'mid', 'sweaty', 'comfy') with dry cyberpunk wit. Keep replies under 4 short sentences. ` +

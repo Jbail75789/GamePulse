@@ -414,6 +414,7 @@ export default function Dashboard() {
           gameTitle: game.title,
           currentTarget: game.targetHours ?? null,
           currentPlaytime: game.playtime ?? null,
+          infiniteMode: !!game.infiniteMode,
           messages: history,
         }),
       });
@@ -453,15 +454,22 @@ export default function Dashboard() {
     setAiInput("");
     setAiOpen(true);
 
-    // === OVERTIME MILESTONE SNARK ===
-    // Every 10h past target → snarky "Touch Grass" / "Legendary Status" verdict
+    // === OPENING PROMPT ===
+    // Infinite Mode → ask for Respect/Concerned tone (overrides overtime snark).
+    // Otherwise: every 10h past target → snarky "Touch Grass" / "Legendary Status" verdict.
     const playtime = game.playtime ?? 0;
     const target = game.targetHours && game.targetHours > 0 ? game.targetHours : 40;
     const overtime = Math.max(0, playtime - target);
     const tier = Math.floor(overtime / 10);
 
     let openingPrompt = "Give me your opening vibe check on this game in 2 punchy sentences.";
-    if (tier >= 1) {
+    if (game.infiniteMode) {
+      openingPrompt =
+        `I'm in Infinite Mode on this game with ${playtime}h logged. ` +
+        `Drop the snark — give me a System Analysis line in your Respect/Concerned tone, ` +
+        `like a ghost in the shell observing a Commander who refuses to disconnect. ` +
+        `2-3 sentences max. No emojis.`;
+    } else if (tier >= 1) {
       const milestone = tier * 10;
       openingPrompt =
         `I'm now ${overtime}h past my target of ${target}h on this game (overtime milestone: +${milestone}h). ` +
@@ -641,6 +649,24 @@ export default function Dashboard() {
                       const playtime = g?.playtime ?? 0;
                       const newProgress = Math.min(100, Math.floor((playtime / targetHours) * 100));
                       updateGame({ id, targetHours, progress: newProgress });
+                    }}
+                    onGoInfinite={(id) => {
+                      // Lock into Infinite Mode — stays in Active tab, no auto-completion.
+                      updateGame({ id, infiniteMode: true, status: "active", progress: 100 });
+                      toast({
+                        title: "INFINITE MODE ENGAGED",
+                        description: "The simulation has no end. Playtime counts up forever.",
+                        className: "border-cyan-400 text-cyan-300 font-mono",
+                      });
+                    }}
+                    onRemoveTarget={(id) => {
+                      // Drop the target hours entirely — pure forever-counter.
+                      updateGame({ id, targetHours: null as any });
+                      toast({
+                        title: "Target Removed",
+                        description: "Pure infinite — let it ride.",
+                        className: "border-cyan-400 text-cyan-300 font-mono",
+                      });
                     }}
                   />
                 </motion.div>

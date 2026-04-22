@@ -51,6 +51,8 @@ interface CyberCardGameProps extends CyberCardBaseProps {
   onAIVibeCheck: () => void;
   onDelete?: (id: number) => void;
   onUpdateTarget?: (id: number, targetHours: number) => void;
+  onGoInfinite?: (id: number) => void;
+  onRemoveTarget?: (id: number) => void;
 }
 
 type CyberCardProps = CyberCardWrapperProps | CyberCardGameProps;
@@ -96,11 +98,14 @@ export function CyberCard(props: CyberCardProps) {
 
   // === GAME CARD MODE ===
   if ("game" in props && props.game) {
-    const { game, onUpdateStatus, onLogTime, isLogging, isAILoading, onAIVibeCheck, onDelete, onUpdateTarget } = props;
+    const { game, onUpdateStatus, onLogTime, isLogging, isAILoading, onAIVibeCheck, onDelete, onUpdateTarget, onGoInfinite, onRemoveTarget } = props;
     const playtime = game.playtime ?? 0;
+    const isInfinite = !!game.infiniteMode;
+    const noTarget = isInfinite && (game.targetHours == null);
     const target = game.targetHours && game.targetHours > 0 ? game.targetHours : 40;
+    // Overtime visuals are suppressed when Infinite Mode is active (chrome takes over).
     const overtimeHours = Math.max(0, playtime - target);
-    const isOvertime = overtimeHours > 0;
+    const isOvertime = !isInfinite && overtimeHours > 0;
 
     // Format decimal hours → "45m" (<1h) | "1h 30m" (with mins) | "2h" (whole)
     const fmtHM = (decH: number) => {
@@ -110,11 +115,22 @@ export function CyberCard(props: CyberCardProps) {
       const m = totalMins % 60;
       return m === 0 ? `${h}h` : `${h}h ${m}m`;
     };
-    const progress = isOvertime
+    // Progress: completed/overtime/infinite peg the bar; otherwise standard ratio.
+    // In Infinite Mode the bar is purely cosmetic (chrome shimmer at 100%).
+    const progress = isInfinite
+      ? 100
+      : isOvertime
       ? 100
       : game.status === "completed"
       ? 100
       : Math.min(100, Math.floor((playtime / target) * 100));
+    // GO INFINITE eligibility: hit 100% of target on an active game, no completion or infinite yet.
+    const canGoInfinite =
+      !isInfinite &&
+      game.status === "active" &&
+      !!onGoInfinite &&
+      target > 0 &&
+      playtime >= target;
     const [editingTarget, setEditingTarget] = useState(false);
     const [targetDraft, setTargetDraft] = useState<string>(String(target));
     const { toast } = useToast();
@@ -186,14 +202,28 @@ export function CyberCard(props: CyberCardProps) {
           <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5">
             <span
               className={`font-mono text-[11px] tracking-widest ${
-                isOvertime
+                isInfinite
+                  ? "bg-clip-text text-transparent bg-[linear-gradient(90deg,#00ffff,#ff00ff,#ffff00,#00ff9f,#00ffff)] bg-[length:200%_100%] animate-[chromeShift_3s_linear_infinite] drop-shadow-[0_0_6px_rgba(255,255,255,0.4)]"
+                  : isOvertime
                   ? "text-yellow-300 animate-[overtimeText_1.6s_ease-in-out_infinite]"
                   : "text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,159,0.85)]"
               }`}
               data-testid={`text-total-time-${game.id}`}
-              title={isOvertime ? `Played ${fmtHM(playtime)} vs ${target}h target` : undefined}
+              title={
+                isInfinite
+                  ? `Infinite Mode — original target ${target}h, played ${fmtHM(playtime)}`
+                  : isOvertime
+                  ? `Played ${fmtHM(playtime)} vs ${target}h target`
+                  : undefined
+              }
             >
-              {isOvertime ? `OVERTIME +${fmtHM(overtimeHours)}` : `${fmtHM(playtime)} / ${target}h`}
+              {isInfinite
+                ? noTarget
+                  ? `PLAYTIME: ${fmtHM(playtime)} (INFINITE)`
+                  : `PLAYTIME: ${fmtHM(playtime)} / ${target}h (INFINITE)`
+                : isOvertime
+                ? `OVERTIME +${fmtHM(overtimeHours)}`
+                : `${fmtHM(playtime)} / ${target}h`}
             </span>
             {onUpdateTarget && (
               <button
@@ -353,7 +383,9 @@ export function CyberCard(props: CyberCardProps) {
           <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
             <div
               className={`h-full transition-all duration-500 ${
-                isOvertime
+                isInfinite
+                  ? "bg-[linear-gradient(90deg,#00ffff,#ff00ff,#ffff00,#00ff9f,#00b8ff,#d600ff,#00ffff)] bg-[length:300%_100%] animate-[chromeShift_3s_linear_infinite] shadow-[0_0_12px_rgba(255,255,255,0.45)]"
+                  : isOvertime
                   ? "bg-gradient-to-r from-yellow-300 via-amber-400 to-purple-500 animate-[overtimePulse_1.6s_ease-in-out_infinite]"
                   : "bg-gradient-to-r from-primary via-secondary to-accent"
               }`}
@@ -425,6 +457,30 @@ export function CyberCard(props: CyberCardProps) {
               >
                 <Gamepad2 className="w-3.5 h-3.5 mr-1.5" />
                 Keep in Pulse
+              </Button>
+            )}
+            {canGoInfinite && (
+              <Button
+                onClick={() => onGoInfinite!(game.id)}
+                size="sm"
+                className="flex-1 font-mono text-xs uppercase tracking-widest text-black bg-[linear-gradient(90deg,#00ffff,#ff00ff,#ffff00,#00ff9f,#00ffff)] bg-[length:200%_100%] animate-[chromeShift_3s_linear_infinite] border-0 shadow-[0_0_18px_rgba(255,255,255,0.55)] hover:brightness-110 font-bold"
+                data-testid={`button-go-infinite-${game.id}`}
+                title="Lock this run into Infinite Mode — chrome bar, counts up forever"
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                Go Infinite
+              </Button>
+            )}
+            {isInfinite && onRemoveTarget && !noTarget && (
+              <Button
+                onClick={() => onRemoveTarget(game.id)}
+                variant="outline"
+                size="sm"
+                className="flex-1 font-mono text-xs uppercase tracking-widest border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/10"
+                data-testid={`button-remove-target-${game.id}`}
+                title="Drop the target — let playtime count up forever"
+              >
+                ∞ Remove Target
               </Button>
             )}
             {onDelete && (

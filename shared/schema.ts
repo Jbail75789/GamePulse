@@ -23,6 +23,7 @@ export const games = pgTable("games", {
   vibe: text("vibe", { enum: ["Chill", "Epic", "Gritty", "Quick Fix", "Competitive"] }),
   progress: integer("progress").default(0),
   targetHours: integer("target_hours").default(40),
+  infiniteMode: boolean("infinite_mode").default(false),
 });
 
 // Declared so drizzle-kit doesn't try to drop the connect-pg-simple session table
@@ -50,7 +51,7 @@ export const insertGameSchema = createInsertSchema(games).omit({
   userId: true 
 }).extend({
   playtime: z.number().transform(v => Math.max(0, v ?? 0)).optional().default(0),
-  targetHours: z.number().int().transform(v => v ?? 40).optional().default(40),
+  targetHours: z.number().int().nullable().optional(),
 });
 
 export type User = typeof users.$inferSelect;
