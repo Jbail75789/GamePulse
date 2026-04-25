@@ -14,6 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import confetti from "canvas-confetti";
@@ -29,7 +31,10 @@ interface SearchResult {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { games, updateGame } = useGames();
+  const { games, updateGame, deleteGame, isUpdating } = useGames();
+  const [logTimeGame, setLogTimeGame] = useState<Game | null>(null);
+  const [logHrs, setLogHrs] = useState("1");
+  const [logMins, setLogMins] = useState("0");
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog" | "wishlist">("active");
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -131,9 +136,151 @@ export default function Dashboard() {
 
   const filteredGames = games?.filter(game => game.status === activeTab) || [];
 
+  // === GAME CARD HANDLERS ===
+  const handleUpdateStatus = (id: number, status: string) => {
+    const before = games?.find(g => g.id === id);
+    // Vault → anywhere else = permanent Legacy upgrade.
+    const earnsLegacy =
+      !!before &&
+      before.status === "completed" &&
+      status !== "completed" &&
+      !before.infiniteMode;
+    updateGame({
+      id,
+      status: status as Game["status"],
+      ...(earnsLegacy ? { infiniteMode: true } : {}),
+    });
+    if (earnsLegacy) {
+      toast({
+        title: "Legacy Status Earned",
+        description: `${before?.title ?? "Mission"} carries the Legacy badge from now on.`,
+      });
+    }
+  };
+
+  const handleDelete = (id: number) => {
+    deleteGame(id);
+  };
+
+  const handleUpdateTarget = (id: number, hours: number) => {
+    updateGame({ id, targetHours: hours });
+  };
+
+  const handleGoInfinite = (id: number) => {
+    updateGame({ id, infiniteMode: true, status: "active" });
+    toast({ title: "Infinite Mode Engaged", description: "Playtime now counts up forever." });
+  };
+
+  const handleRemoveTarget = (id: number) => {
+    updateGame({ id, targetHours: null as any });
+  };
+
+  const openLogTime = (game: Game) => {
+    setLogTimeGame(game);
+    setLogHrs("1");
+    setLogMins("0");
+  };
+
+  const submitLogTime = () => {
+    if (!logTimeGame) return;
+    const h = Math.max(0, parseInt(logHrs || "0", 10) || 0);
+    const m = Math.max(0, Math.min(59, parseInt(logMins || "0", 10) || 0));
+    const decH = h + m / 60;
+    if (decH <= 0) {
+      toast({ title: "Nothing to log", description: "Enter at least 1 minute.", variant: "destructive" });
+      return;
+    }
+    const newPlaytime = Math.round(((logTimeGame.playtime ?? 0) + decH) * 100) / 100;
+    // Auto-promote backlog entries to active when time is logged.
+    const nextStatus = logTimeGame.status === "backlog" ? "active" : logTimeGame.status;
+    updateGame({ id: logTimeGame.id, playtime: newPlaytime, status: nextStatus as Game["status"] });
+    toast({
+      title: "Playtime Logged",
+      description: `+${h > 0 ? `${h}h ` : ""}${m > 0 ? `${m}m` : ""} on ${logTimeGame.title}`.trim(),
+    });
+    setLogTimeGame(null);
+  };
+
   return (
     <Layout>
       <AddGameModal open={searchAddOpen} onOpenChange={setSearchAddOpen} prefill={searchAddPrefill} />
+
+      {/* LOG TIME MODAL */}
+      <Dialog open={!!logTimeGame} onOpenChange={(o) => !o && setLogTimeGame(null)}>
+        <DialogContent className="bg-black/95 border-primary/30 text-white font-mono max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-primary uppercase tracking-widest text-center text-lg">
+              Log Playtime
+            </DialogTitle>
+            <DialogDescription className="text-center text-muted-foreground font-mono text-xs uppercase tracking-widest">
+              {logTimeGame?.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <label className="flex flex-col gap-2">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Hours</span>
+              <Input
+                type="number"
+                min={0}
+                step={1}
+                value={logHrs}
+                onChange={(e) => setLogHrs(e.target.value)}
+                className="font-mono text-2xl text-center bg-black/40 border-primary/30 focus-visible:ring-primary"
+                data-testid="input-log-hrs"
+              />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Minutes</span>
+              <Input
+                type="number"
+                min={0}
+                max={59}
+                step={5}
+                value={logMins}
+                onChange={(e) => setLogMins(e.target.value)}
+                className="font-mono text-2xl text-center bg-black/40 border-primary/30 focus-visible:ring-primary"
+                data-testid="input-log-mins"
+              />
+            </label>
+          </div>
+          <div className="flex flex-wrap gap-2 pb-2">
+            {[
+              { label: "+15m", h: 0, m: 15 },
+              { label: "+30m", h: 0, m: 30 },
+              { label: "+1h", h: 1, m: 0 },
+              { label: "+2h", h: 2, m: 0 },
+            ].map(p => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => { setLogHrs(String(p.h)); setLogMins(String(p.m)); }}
+                className="flex-1 px-3 py-2 text-xs font-mono uppercase tracking-widest border border-primary/30 text-primary hover:bg-primary/10 rounded-sm"
+                data-testid={`preset-${p.label}`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setLogTimeGame(null)}
+              className="flex-1 font-mono uppercase tracking-widest"
+              data-testid="button-cancel-log"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={submitLogTime}
+              disabled={isUpdating}
+              className="flex-1 bg-primary text-background font-mono font-bold uppercase tracking-widest hover:brightness-110"
+              data-testid="button-confirm-log"
+            >
+              {isUpdating ? "Logging…" : "Log Time"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="p-4 md:p-8 space-y-10">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
@@ -196,7 +343,17 @@ export default function Dashboard() {
         {/* GAMES GRID - UPDATED SPACING */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 py-4">
           {filteredGames.map(game => (
-            <CyberCard key={game.id} game={game} />
+            <CyberCard
+              key={game.id}
+              game={game}
+              onUpdateStatus={handleUpdateStatus}
+              onLogTime={() => openLogTime(game)}
+              isLogging={isUpdating && logTimeGame?.id === game.id}
+              onDelete={handleDelete}
+              onUpdateTarget={handleUpdateTarget}
+              onGoInfinite={handleGoInfinite}
+              onRemoveTarget={handleRemoveTarget}
+            />
           ))}
         </div>
       </div>
