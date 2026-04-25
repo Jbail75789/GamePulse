@@ -323,20 +323,7 @@
   100% { background: transparent; transform: translateX(0); }
 }
 
-/* HARD OVERRIDE — AI Vibe Check button (top-right Sparkles on every card cover).
-   Matches the progress bar's primary neon green (#00ff9f). 2px solid neon border,
-   heavy outer glow, and a dark semi-transparent green fill so the button reads as
-   the high-priority HUD signal on every card across every section. */
-.ai-vibe-check {
-  box-shadow: 0 0 15px rgba(0, 255, 159, 0.85), 0 0 4px rgba(0, 255, 159, 0.6) inset !important;
-  border: 2px solid #00ff9f !important;
-  background: rgba(0, 40, 25, 0.85) !important;
-  color: #b8ffd9 !important;
-  transition: filter 0.2s ease !important;
-}
-.ai-vibe-check:hover {
-  filter: brightness(1.4) saturate(1.4) !important;
-}
+
 
 /* Neon Pulse — slow box-shadow heartbeat in primary neon (#00ff9f).
    Sized (max 14px outer) to fit within the card body's p-4 padding so the glow
@@ -391,20 +378,16 @@
   47%         { opacity: 0.65; transform: translateX(-3px); }
 }
 
-/* AI Vibe Check Animations */
-@keyframes ai-glow {
-  0% { box-shadow: 0 0 5px rgba(168, 85, 247, 0.4); border-color: rgba(168, 85, 247, 0.4); }
-  50% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.8); border-color: rgba(168, 85, 247, 0.8); }
-  100% { box-shadow: 0 0 5px rgba(168, 85, 247, 0.4); border-color: rgba(168, 85, 247, 0.4); }
-}
 
-.ai-loading-glow {
-  animation: ai-glow 1.5s infinite ease-in-out;
-  background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), rgba(139, 92, 246, 0.1));
-}  
-  .vibe-text-gradient {
-  background: linear-gradient(to right, #a855f7, #ec4899);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: bold;
+ 
+  @keyframes chaosShake {
+  0% { transform: translate(0, 0) rotate(0deg); filter: hue-rotate(0deg); }
+  25% { transform: translate(2px, -2px) rotate(1deg); filter: hue-rotate(90deg); }
+  50% { transform: translate(-2px, 2px) rotate(-1deg); filter: hue-rotate(180deg); }
+  75% { transform: translate(2px, 2px) rotate(1deg); filter: hue-rotate(270deg); }
+  100% { transform: translate(0, 0) rotate(0deg); filter: hue-rotate(360deg); }
 }
+.chaos-active {
+  animation: chaosShake 0.1s ease-in-out infinite !important;
+}
+  

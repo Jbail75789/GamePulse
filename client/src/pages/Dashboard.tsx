@@ -1,20 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useGames } from "@/hooks/use-games";
-import { useEstimate } from "@/hooks/use-estimate";
 import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/Layout";
 import { CyberCard } from "@/components/CyberCard";
 import { AddGameModal } from "@/components/AddGameModal";
-import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Gamepad2, Trophy, AlertCircle, Trash2, CheckCircle2, Search, Plus, Dices, Share2, Settings, AlertTriangle, Info, Sword, Sofa, Bolt, Hourglass, Zap, Check, Sparkles, Loader2 } from "lucide-react";
+import { Clock, Gamepad2, Trophy, Search, Dices, Settings, Zap, Loader2, Sword, Sofa, Bolt, AlertTriangle } from "lucide-react";
 import { type Game } from "@shared/schema";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -25,40 +17,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import confetti from "canvas-confetti";
-import { MissionStartOverlay } from "@/components/MissionStartOverlay";
-import { AiProcessingBar } from "@/components/AiProcessingBar";
-import { GlitchOverlay } from "@/components/GlitchOverlay";
-import { AI_MOCK_MODE, getMockVibeCheck, mockStream } from "@/lib/aiMock";
-import { getCachedVibe, setCachedVibe } from "@/lib/vibeCache";
-
-// --- ELITE DEMO DATA FOR JUDGES ---
-const DEMO_BACKLOG = [
-  { title: "Skyrim", status: "active", progress: 85, vibe: "Quick Fix", targetHours: 100, playtime: 85, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tnw.jpg" },
-  { title: "Elden Ring", status: "backlog", progress: 2, vibe: "Epic", targetHours: 120, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co4ni8.jpg" },
-  { title: "Baldur's Gate 3", status: "backlog", progress: 10, vibe: "Epic", targetHours: 150, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co670h.jpg" },
-  { title: "Hades", status: "backlog", progress: 45, vibe: "Quick Fix", targetHours: 50, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v9x.jpg" },
-  { title: "Cyberpunk 2077", status: "backlog", progress: 0, vibe: "Epic", targetHours: 80, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2mdf.jpg" },
-  { title: "Stardew Valley", status: "backlog", progress: 60, vibe: "Chill", targetHours: 200, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1qc8.jpg" },
-  { title: "Vampire Survivors", status: "backlog", progress: 90, vibe: "Quick Fix", targetHours: 20, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co4p9r.jpg" },
-  { title: "Hollow Knight", status: "backlog", progress: 0, vibe: "Epic", targetHours: 40, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1r77.jpg" },
-  { title: "The Witcher 3", status: "backlog", progress: 5, vibe: "Epic", targetHours: 150, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1w95.jpg" },
-  { title: "Red Dead Redemption 2", status: "active", progress: 30, vibe: "Epic", targetHours: 100, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1q1f.jpg" },
-  { title: "Celeste", status: "backlog", progress: 0, vibe: "Quick Fix", targetHours: 15, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1u72.jpg" },
-  { title: "Balatro", status: "active", progress: 20, vibe: "Quick Fix", targetHours: 100, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co7u61.jpg" },
-  { title: "Doom Eternal", status: "backlog", progress: 0, vibe: "Competitive", targetHours: 20, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co20p3.jpg" },
-  { title: "Outer Wilds", status: "backlog", progress: 0, vibe: "Epic", targetHours: 25, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v6o.jpg" },
-  { title: "Minecraft", status: "active", progress: 99, vibe: "Chill", targetHours: 1000, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co260r.jpg" },
-  { title: "Slay the Spire", status: "backlog", progress: 15, vibe: "Quick Fix", targetHours: 100, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1vdf.jpg" },
-  { title: "Helldivers 2", status: "backlog", progress: 40, vibe: "Competitive", targetHours: 100, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co7idm.jpg" },
-  { title: "Resident Evil 4", status: "backlog", progress: 0, vibe: "Epic", targetHours: 20, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5v8f.jpg" },
-  { title: "Fallout 4", status: "backlog", progress: 12, vibe: "Epic", targetHours: 80, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1rj3.jpg" },
-  { title: "Mass Effect", status: "backlog", progress: 0, vibe: "Epic", targetHours: 120, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2vpk.jpg" },
-  { title: "Apex Legends", status: "backlog", progress: 0, vibe: "Competitive", targetHours: 500, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2v6y.jpg" },
-  { title: "Civilization VI", status: "backlog", progress: 5, vibe: "Chill", targetHours: 300, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v99.jpg" },
-  { title: "God of War Ragnarök", status: "backlog", progress: 0, vibe: "Epic", targetHours: 50, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5s5v.jpg" },
-  { title: "Cult of the Lamb", status: "backlog", progress: 0, vibe: "Chill", targetHours: 25, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co4x7a.jpg" },
-  { title: "Starfield", status: "backlog", progress: 2, vibe: "Epic", targetHours: 100, coverUrl: "https://images.igdb.com/igdb/image/upload/t_cover_big/co66t8.jpg" }
-];
 
 interface SearchResult {
   id: number;
@@ -66,223 +24,222 @@ interface SearchResult {
   background_image: string | null;
   released: string | null;
   rating: number | null;
-  playtime: number | null;
   genres: { name: string }[];
-}
-
-function AiSuggestionBanner({ game, onApply }: { game: Game | null; onApply: (hrs: number, label: string) => void }) {
-  const { data: estimate, isLoading, isError } = useEstimate(game?.title, !!game);
-  if (!game) return null;
-  const target = game.targetHours ?? 0;
-  return (
-    <div className="px-5 py-3 border-b border-primary/20 bg-gradient-to-r from-secondary/10 via-black to-accent/10">
-      <div className="flex items-center gap-3 font-mono text-[11px]">
-        <Sparkles className="w-4 h-4 text-secondary shrink-0" />
-        {isLoading && (
-          <span className="text-secondary/80 animate-pulse uppercase tracking-widest" data-testid="text-banner-loading">
-            AI scanning the codex for HLTB targets…
-          </span>
-        )}
-        {isError && !isLoading && (
-          <span className="text-destructive uppercase tracking-widest">Estimate unavailable.</span>
-        )}
-        {estimate && !isLoading && (
-          <>
-            <span className="text-muted-foreground uppercase tracking-widest">AI Suggests</span>
-            <button
-              type="button"
-              onClick={() => onApply(estimate.main, "Main Story")}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-all ${target === estimate.main ? "border-emerald-400/60 bg-emerald-400/10 text-emerald-300" : "border-secondary/50 bg-secondary/10 text-secondary hover:bg-secondary/25"}`}
-              data-testid="button-banner-sync-main"
-            >
-              <span className="font-bold text-sm">{estimate.main}h</span>
-              <span className="text-[10px] uppercase opacity-80">Main</span>
-              <Check className="w-3 h-3" />
-            </button>
-            <span className="text-muted-foreground/50">/</span>
-            <button
-              type="button"
-              onClick={() => onApply(estimate.full, "Completionist")}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-all ${target === estimate.full ? "border-emerald-400/60 bg-emerald-400/10 text-emerald-300" : "border-accent/50 bg-accent/10 text-accent hover:bg-accent/25"}`}
-              data-testid="button-banner-sync-full"
-            >
-              <span className="font-bold text-sm">{estimate.full}h</span>
-              <span className="text-[10px] uppercase opacity-80">Full</span>
-              <Check className="w-3 h-3" />
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-    );
-}
-
-function ReelEstimate({ game, onApply }: { game: Game | null; onApply: (hrs: number, label: string) => void }) {
-  const { data: estimate, isLoading } = useEstimate(game?.title, !!game);
-  if (!game) return null;
-  return (
-    <div className="rounded-md border border-secondary/40 bg-secondary/10 px-3 py-2 font-mono text-[11px] flex items-center justify-center gap-2 flex-wrap" data-testid="reel-estimate">
-      <Sparkles className="w-3.5 h-3.5 text-secondary shrink-0" />
-      {isLoading && <span className="text-secondary/80 animate-pulse uppercase tracking-widest">AI scanning…</span>}
-      {estimate && (
-        <>
-          <span className="text-muted-foreground uppercase tracking-widest">AI Estimate</span>
-          <button onClick={() => onApply(estimate.main, "Main Story")} className="flex items-center gap-1 px-2 py-0.5 rounded border border-secondary/50 bg-secondary/15 text-secondary hover:bg-secondary/30 transition-all">
-            <span className="font-bold">{estimate.main}h</span>
-            <Check className="w-3 h-3" />
-          </button>
-        </>
-      )}
-    </div>
-  );
 }
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { games, isLoading, deleteGame, updateGame, updateGameAsync, createGame } = useGames();
-  
-  // --- JUDGE READY POPULATION ---
-  useEffect(() => {
-    if (!isLoading && games && games.length === 0) {
-      console.log("Empty library. Injecting 25 demo games...");
-      DEMO_BACKLOG.forEach(game => {
-        createGame(game as any);
-      });
-    }
-  }, [games, isLoading, createGame]);
-
+  const { games, updateGame } = useGames();
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "backlog" | "wishlist">("active");
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [searchAddOpen, setSearchAddOpen] = useState(false);
-  const [searchAddPrefill, setSearchAddPrefill] = useState<{ title: string; coverUrl?: string | null; targetHours?: number | null } | undefined>();
+  const [searchAddPrefill, setSearchAddPrefill] = useState<{ title: string; coverUrl?: string | null } | undefined>();
+  
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [redeemCode, setRedeemCode] = useState("");
   const [showRoulette, setShowRoulette] = useState(false);
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [spinMode, setSpinMode] = useState<string>("chill");
-  const [spinSource, setSpinSource] = useState<"active" | "backlog" | "both">("both");
-  const [showPickModal, setShowPickModal] = useState(false);
   const [spinGame, setSpinGame] = useState<Game | null>(null);
-  const [loggingTimeId, setLoggingTimeId] = useState<number | null>(null);
-  const [logHrs, setLogHrs] = useState<string>("1");
-  const [logMins, setLogMins] = useState<string>("0");
-  const [isLoggingTime, setIsLoggingTime] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [pulseCharges, setPulseCharges] = useState(3);
   const [isPro, setIsPro] = useState(user?.isPro ?? false);
-  const [lastWinnerId, setLastWinnerId] = useState<number | null>(null);
-  const [showProModal, setShowProModal] = useState(false);
-  const [glitchTrigger, setGlitchTrigger] = useState(0);
+  
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  const lastSpinAtRef = useRef<number>(0);
-  const SPIN_COOLDOWN_MS = 2000;
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) setIsPro(user.isPro);
+  }, [user]);
+
+  // RAWG Search
+  useEffect(() => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    if (searchQuery.trim()) {
+      setIsSearching(true);
+      searchTimeoutRef.current = setTimeout(async () => {
+        const apiKey = import.meta.env.VITE_RAWG_API_KEY;
+        try {
+          const response = await fetch(
+            `https://api.rawg.io/api/games?search=${encodeURIComponent(searchQuery)}&key=${apiKey}&page_size=6`
+          );
+          const data = await response.json();
+          setSearchResults(data.results || []);
+        } catch {
+          setSearchResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 400);
+    } else {
+      setSearchResults([]);
+      setIsSearching(false);
+    }
+    return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
+  }, [searchQuery]);
+
+  const handleGameSelect = (game: SearchResult) => {
+    setSearchAddPrefill({ title: game.name, coverUrl: game.background_image });
+    setSearchAddOpen(true);
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+  // Original Pick A Game Logic
   const handlePickGame = (mode: string) => {
-    const now = Date.now();
-    if (now - lastSpinAtRef.current < SPIN_COOLDOWN_MS) return;
-    lastSpinAtRef.current = now;
+    const moods: Record<string, { filter: (g: Game) => boolean }> = {
+      chill: { filter: (g: Game) => g.vibe?.toLowerCase() === 'chill' },
+      epic: { filter: (g: Game) => g.vibe?.toLowerCase() === 'epic' },
+      quickfix: { filter: (g: Game) => g.vibe?.toLowerCase() === 'quick fix' },
+      competitive: { filter: (g: Game) => g.vibe?.toLowerCase() === 'competitive' },
+      chaos: { filter: () => true },
+    };
 
-    const sourceFilter = (g: Game) => spinSource === "both" ? (g.status === "active" || g.status === "backlog") : g.status === spinSource;
-    const sourcePool = (games || []).filter(sourceFilter);
+    const eligibleGames = (games || [])
+      .filter(g => g.status === "backlog" || g.status === "active")
+      .filter(g => moods[mode].filter(g));
+    
+    if (eligibleGames.length < 2) {
+      toast({ title: "Insufficient Variety", description: `Add more ${mode} games!`, variant: "destructive" });
+      return;
+    }
 
-    if (sourcePool.length === 0) return;
-
-    // --- RIGGED LOGIC FOR THE DEMO ---
-    const skyrim = sourcePool.find(g => g.title === "Skyrim");
-    let winner = (mode === "quickfix" && skyrim) ? skyrim : sourcePool[Math.floor(Math.random() * sourcePool.length)];
-
-    setSpinMode(mode);
+    setShowRoulette(false);
     setIsSpinning(true);
+    
     let iterations = 0;
-    const maxIterations = 20;
     const interval = setInterval(() => {
-      setSpinGame(sourcePool[Math.floor(Math.random() * sourcePool.length)]);
+      setSpinGame(eligibleGames[Math.floor(Math.random() * eligibleGames.length)]);
       iterations++;
-      if (iterations >= maxIterations) {
+      if (iterations >= 20) {
         clearInterval(interval);
+        const winner = eligibleGames[Math.floor(Math.random() * eligibleGames.length)];
         setWinnerGame(winner);
-        setLastWinnerId(winner.id);
         setIsSpinning(false);
         setSpinGame(null);
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
       }
-    }, 150);
-    setShowRoulette(false);
+    }, 100);
   };
 
-  const filteredGames = (() => {
-    const list = (games || []).filter(g => g.status === activeTab);
-    if (activeTab !== "active") return list;
-    return [...list].sort((a, b) => (a.infiniteMode ? 1 : 0) - (b.infiniteMode ? 1 : 0));
-  })();
-
-  const tabs = [
+  const tabData = [
     { id: "active", label: "My Pulse", icon: Gamepad2, color: "text-primary" },
     { id: "completed", label: "The Vault", icon: Trophy, color: "text-secondary" },
     { id: "backlog", label: "The Backlog", icon: Clock, color: "text-accent" },
     { id: "wishlist", label: "Wish List", icon: Sword, color: "text-foreground" },
   ] as const;
 
+  const filteredGames = games?.filter(game => game.status === activeTab) || [];
+
   return (
     <Layout>
-      <MissionStartOverlay />
-      <AiProcessingBar active={isSpinning} />
-      <GlitchOverlay trigger={glitchTrigger} />
-      <div className={`p-4 md:p-8 space-y-6 ${spinMode === "chaos" && winnerGame ? "animate-pulse" : ""}`}>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-display font-bold uppercase tracking-wider text-primary">GamePulse Elite</h1>
-            <p className="text-sm text-muted-foreground font-mono">System Online. Managing {games?.length || 0} Missions.</p>
+      <AddGameModal open={searchAddOpen} onOpenChange={setSearchAddOpen} prefill={searchAddPrefill} />
+
+      <div className="p-4 md:p-8 space-y-10">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <div className="flex-1 w-full max-w-2xl">
+            {/* BIGGER HEADER */}
+            <h1 className="text-4xl md:text-5xl font-display font-black uppercase tracking-tighter mb-4 text-primary italic leading-none">
+              Mission Control
+            </h1>
+            
+            <div className="relative group z-50">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary">
+                {isSearching ? <Loader2 className="h-6 w-6 animate-spin" /> : <Search className="h-6 w-6" />}
+              </div>
+              <input
+                type="text"
+                placeholder="ADD A NEW GAME TO PULSE..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-16 pl-14 pr-4 bg-black/40 border border-primary/20 rounded-sm font-mono text-sm uppercase tracking-widest focus:border-primary outline-none transition-all"
+              />
+
+              <AnimatePresence>
+                {searchResults.length > 0 && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    className="absolute w-full mt-2 p-2 bg-[#0a0a0a] border border-primary/30 rounded-sm shadow-2xl z-50 backdrop-blur-xl">
+                    {searchResults.map((game) => (
+                      <button key={game.id} onClick={() => handleGameSelect(game)} className="flex items-center gap-4 w-full p-3 hover:bg-primary/10 transition-all text-left group/item">
+                        <img src={game.background_image || ""} className="w-14 h-16 object-cover rounded-sm border border-white/10" />
+                        <span className="font-mono text-xs uppercase text-white group-hover/item:text-primary">{game.name}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-          <Button onClick={() => setShowPickModal(true)} className="bg-primary text-background font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(var(--primary),0.5)]">
-            <Dices className="mr-2 h-5 w-5" /> Execute Selection
-          </Button>
+
+          <div className="flex items-center gap-3 w-full lg:w-auto">
+            <button onClick={() => setShowRoulette(true)}
+              className="flex-1 lg:flex-none flex items-center justify-center gap-3 h-16 px-10 bg-gradient-to-r from-secondary via-accent to-secondary text-background font-black uppercase tracking-widest text-sm shadow-[0_0_25px_rgba(0,184,255,0.3)] hover:scale-105 transition-all">
+              <Dices className="w-6 h-6" /> PICK A GAME
+            </button>
+            <button onClick={() => setShowSettingsModal(true)} className="h-16 w-16 flex items-center justify-center bg-black/40 border border-white/10 text-muted-foreground hover:text-primary">
+              <Settings className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex justify-center gap-2 border-b border-white/5 pb-2" data-testid="nav-categories">
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={`px-4 py-2 text-xs uppercase tracking-widest transition-all ${activeTab === t.id ? `${t.color} border-b-2 border-current` : "text-muted-foreground"}`}>
-              {t.label}
+        {/* TABS - MORE READABLE FONT */}
+        <div className="flex justify-center flex-wrap gap-4 md:gap-8 border-b border-white/5 pb-6">
+          {tabData.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} 
+              className={`px-4 py-2 text-xs md:text-sm font-mono font-bold uppercase tracking-[0.25em] transition-all relative ${activeTab === tab.id ? tab.color : "text-muted-foreground hover:text-white"}`}>
+              {tab.label}
+              {activeTab === tab.id && <motion.div layoutId="activeTab" className="absolute bottom-[-25px] left-0 right-0 h-1 bg-current shadow-[0_0_10px_rgba(var(--primary),0.5)]" />}
             </button>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* GAMES GRID - UPDATED SPACING */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 py-4">
           {filteredGames.map(game => (
             <CyberCard key={game.id} game={game} />
           ))}
         </div>
       </div>
 
-      {/* --- MODALS --- */}
-      <Dialog open={showPickModal} onOpenChange={setShowPickModal}>
-        <DialogContent className="bg-black/95 border-primary/30 text-white font-mono">
-          <DialogHeader>
-            <DialogTitle className="text-primary uppercase tracking-tighter">Selection Protocol</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
-            <Button onClick={() => handlePickGame("chill")} className="border-emerald-500/50 hover:bg-emerald-500/10">Chill</Button>
-            <Button onClick={() => handlePickGame("quickfix")} className="border-secondary/50 hover:bg-secondary/10">Quick Fix</Button>
-            <Button onClick={() => handlePickGame("epic")} className="border-amber-500/50 hover:bg-amber-500/10">Epic</Button>
-            <Button onClick={() => handlePickGame("chaos")} className="border-red-500/50 hover:bg-red-500/10">Chaos Mode</Button>
+      {/* ROULETTE MODAL */}
+      <Dialog open={showRoulette} onOpenChange={setShowRoulette}>
+        <DialogContent className="bg-black/95 border-primary/20 text-white font-mono max-w-sm">
+          <DialogHeader><DialogTitle className="uppercase tracking-widest text-center text-primary text-xl font-black italic">Select Vibe</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-1 gap-3 py-6">
+            {['Chill', 'Epic', 'Quick Fix', 'Competitive'].map(v => (
+              <button key={v} onClick={() => handlePickGame(v.toLowerCase().replace(' ', ''))} className="p-4 border border-white/10 hover:bg-primary/10 transition-all uppercase text-sm font-bold tracking-widest">{v}</button>
+            ))}
+            <button onClick={() => handlePickGame('chaos')} className="p-5 border border-secondary/40 bg-secondary/5 hover:bg-secondary/20 transition-all uppercase text-sm text-secondary font-black tracking-[0.3em]">Chaos Mode</button>
           </div>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!winnerGame} onOpenChange={() => setWinnerGame(null)}>
-        <DialogContent className="bg-black/95 border-secondary text-white text-center">
-          <h2 className="text-2xl font-display text-secondary uppercase italic">Target Acquired</h2>
-          <div className="text-4xl font-bold py-6">{winnerGame?.title}</div>
-          <Button onClick={() => setWinnerGame(null)} className="bg-secondary text-black">Acknowledge</Button>
-        </DialogContent>
-      </Dialog>
-
+      {/* SPINNING SCREEN */}
       <AnimatePresence>
         {isSpinning && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
-             <div className="text-secondary text-2xl font-mono animate-pulse uppercase tracking-[0.5em]">Scanning Codex: {spinGame?.title}</div>
-          </motion.div>
+          <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center backdrop-blur-xl">
+            <div className="text-center">
+              <div className="w-56 h-72 border-4 border-primary/50 mx-auto mb-6 overflow-hidden rounded shadow-[0_0_50px_rgba(0,255,159,0.2)]">
+                <img src={spinGame?.coverUrl || ""} className="w-full h-full object-cover" />
+              </div>
+              <h2 className="text-3xl font-black uppercase text-primary animate-pulse italic tracking-tighter">{spinGame?.title}</h2>
+            </div>
+          </div>
         )}
       </AnimatePresence>
+
+      {/* WINNER MODAL */}
+      <Dialog open={!!winnerGame} onOpenChange={() => setWinnerGame(null)}>
+        <DialogContent className="bg-black border-secondary/50 text-white text-center max-w-md">
+          <DialogHeader><DialogTitle className="text-secondary font-mono uppercase tracking-[0.4em] text-sm">Target Locked</DialogTitle></DialogHeader>
+          <img src={winnerGame?.coverUrl || ""} className="w-48 h-64 mx-auto my-6 object-cover border-2 border-secondary shadow-[0_0_40px_rgba(0,184,255,0.3)] rounded-sm" />
+          <div className="text-4xl font-black uppercase mb-8 italic tracking-tighter leading-tight">{winnerGame?.title}</div>
+          <button onClick={() => { updateGame({ id: winnerGame!.id, status: 'active' }); setWinnerGame(null); setActiveTab('active'); }} 
+            className="w-full py-5 bg-secondary text-black font-black uppercase tracking-widest hover:scale-105 transition-all text-sm">
+            Initialize Mission
+          </button>
+          </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

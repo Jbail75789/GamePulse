@@ -181,17 +181,7 @@ export function CyberCard(props: CyberCardProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
 
-          {/* AI Vibe Check — the global glowing star. Always-on neon green
-              spotlight on every card via the .ai-vibe-check hard override. */}
-          <button
-            onClick={onAIVibeCheck}
-            disabled={isAILoading}
-            data-testid={`button-ai-vibe-${game.id}`}
-            title="AI Vibe Check"
-            className="ai-vibe-check absolute top-2 right-2 z-20 w-9 h-9 rounded-full backdrop-blur flex items-center justify-center disabled:opacity-50"
-          >
-            {isAILoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          </button>
+         
 
           {/* Top-left badges: Legacy (Infinite) marker first, then vibe pill */}
           <div className="absolute top-2 left-2 flex items-center gap-1.5">
