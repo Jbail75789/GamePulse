@@ -123,6 +123,15 @@ export default function Dashboard() {
         setIsSpinning(false);
         setSpinGame(null);
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        // CHAOS MODE → camera shake the whole screen
+        if (mode === 'chaos') {
+          const root = document.getElementById('app-shake-root') ?? document.body;
+          root.classList.remove('chaos-shake');
+          // force reflow so the animation can replay if triggered again
+          void root.offsetWidth;
+          root.classList.add('chaos-shake');
+          window.setTimeout(() => root.classList.remove('chaos-shake'), 850);
+        }
       }
     }, 100);
   };
