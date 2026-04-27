@@ -47,6 +47,7 @@ export default function Dashboard() {
   const [redeemCode, setRedeemCode] = useState("");
   const [showRoulette, setShowRoulette] = useState(false);
   const [winnerGame, setWinnerGame] = useState<Game | null>(null);
+  const [winnerMode, setWinnerMode] = useState<string | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinGame, setSpinGame] = useState<Game | null>(null);
   const [isPro, setIsPro] = useState(user?.isPro ?? false);
@@ -119,19 +120,11 @@ export default function Dashboard() {
       if (iterations >= 20) {
         clearInterval(interval);
         const winner = eligibleGames[Math.floor(Math.random() * eligibleGames.length)];
+        setWinnerMode(mode);
         setWinnerGame(winner);
         setIsSpinning(false);
         setSpinGame(null);
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-        // CHAOS MODE → camera shake the whole screen
-        if (mode === 'chaos') {
-          const root = document.getElementById('app-shake-root') ?? document.body;
-          root.classList.remove('chaos-shake');
-          // force reflow so the animation can replay if triggered again
-          void root.offsetWidth;
-          root.classList.add('chaos-shake');
-          window.setTimeout(() => root.classList.remove('chaos-shake'), 850);
-        }
       }
     }, 100);
   };
@@ -395,16 +388,44 @@ export default function Dashboard() {
       </AnimatePresence>
 
       {/* WINNER MODAL */}
-      <Dialog open={!!winnerGame} onOpenChange={() => setWinnerGame(null)}>
-        <DialogContent className="bg-black border-secondary/50 text-white text-center max-w-md">
-          <DialogHeader><DialogTitle className="text-secondary font-mono uppercase tracking-[0.4em] text-sm">Target Locked</DialogTitle></DialogHeader>
-          <img src={winnerGame?.coverUrl || ""} className="w-48 h-64 mx-auto my-6 object-cover border-2 border-secondary shadow-[0_0_40px_rgba(0,184,255,0.3)] rounded-sm" />
-          <div className="text-4xl font-black uppercase mb-8 italic tracking-tighter leading-tight">{winnerGame?.title}</div>
-          <button onClick={() => { updateGame({ id: winnerGame!.id, status: 'active' }); setWinnerGame(null); setActiveTab('active'); }} 
-            className="w-full py-5 bg-secondary text-black font-black uppercase tracking-widest hover:scale-105 transition-all text-sm">
+      <Dialog open={!!winnerGame} onOpenChange={(o) => { if (!o) { setWinnerGame(null); setWinnerMode(null); } }}>
+        <DialogContent
+          key={winnerGame?.id ?? "none"}
+          className={`top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black text-white text-center max-w-md ${
+            winnerMode === 'chaos'
+              ? 'border-fuchsia-400/70 shadow-[0_0_60px_rgba(232,121,249,0.45)] chaos-shake'
+              : 'border-secondary/50'
+          }`}
+        >
+          <DialogHeader>
+            <DialogTitle
+              className={`font-mono uppercase tracking-[0.4em] text-sm ${
+                winnerMode === 'chaos' ? 'text-fuchsia-300' : 'text-secondary'
+              }`}
+            >
+              {winnerMode === 'chaos' ? 'Chaos Lock' : 'Target Locked'}
+            </DialogTitle>
+          </DialogHeader>
+          <img
+            src={winnerGame?.coverUrl || ""}
+            className={`w-48 h-64 mx-auto my-6 object-cover border-2 rounded-sm ${
+              winnerMode === 'chaos'
+                ? 'border-fuchsia-400 shadow-[0_0_40px_rgba(232,121,249,0.5)]'
+                : 'border-secondary shadow-[0_0_40px_rgba(0,184,255,0.3)]'
+            }`}
+          />
+          <div className="text-4xl font-black uppercase mb-8 italic tracking-tighter leading-tight">
+            {winnerGame?.title}
+          </div>
+          <button
+            onClick={() => { updateGame({ id: winnerGame!.id, status: 'active' }); setWinnerGame(null); setWinnerMode(null); setActiveTab('active'); }}
+            className={`w-full py-5 font-black uppercase tracking-widest hover:scale-105 transition-all text-sm ${
+              winnerMode === 'chaos' ? 'bg-fuchsia-400 text-black' : 'bg-secondary text-black'
+            }`}
+          >
             Initialize Mission
           </button>
-          </DialogContent>
+        </DialogContent>
       </Dialog>
     </Layout>
   );
