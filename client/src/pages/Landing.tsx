@@ -2,16 +2,41 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { CyberButton } from "@/components/CyberButton";
 import { motion } from "framer-motion";
-import { Cpu, Trophy, Zap, Gamepad2 } from "lucide-react";
+import { Cpu, Trophy, Zap, Gamepad2, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Landing() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [demoLoading, setDemoLoading] = useState(false);
 
   if (user) {
     setLocation("/dashboard");
     return null;
   }
+
+  const handleInitializeSystem = async () => {
+    if (demoLoading) return;
+    setDemoLoading(true);
+    try {
+      const res = await fetch("/api/demo-login", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to initialize demo session");
+      // Refresh the cached user so the redirect to /dashboard sees an authed Pro user.
+      await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      setLocation("/dashboard");
+    } catch (err: any) {
+      toast({
+        title: "System Boot Failed",
+        description: err?.message ?? "Try again in a moment.",
+        variant: "destructive",
+      });
+      setDemoLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden relative font-body">
@@ -57,11 +82,21 @@ export default function Landing() {
             transition={{ delay: 0.8, duration: 0.5 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8"
           >
-            <Link href="/auth?mode=register">
-              <CyberButton variant="primary" className="text-lg px-12 py-6 h-auto">
-                Initialize System
-              </CyberButton>
-            </Link>
+            <CyberButton
+              variant="primary"
+              className="text-lg px-12 py-6 h-auto"
+              onClick={handleInitializeSystem}
+              disabled={demoLoading}
+              data-testid="button-initialize-system"
+            >
+              {demoLoading ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" /> Booting…
+                </span>
+              ) : (
+                "Initialize System"
+              )}
+            </CyberButton>
             <Link href="/auth">
               <CyberButton variant="ghost" className="text-lg px-8 py-6 h-auto">
                 Existing User

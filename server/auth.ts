@@ -81,6 +81,33 @@ export function setupAuth(app: Express) {
     res.status(200).json(req.user);
   });
 
+  // Demo Pro login — creates a brand-new ephemeral Pro account each time so no
+  // existing user's data is exposed to the visitor. The visitor lands on a
+  // fresh, empty Pro profile.
+  app.post("/api/demo-login", async (req, res, next) => {
+    try {
+      const suffix = randomBytes(5).toString("hex");
+      const username = `demo_${suffix}`;
+      const rawPassword = randomBytes(18).toString("hex");
+      const hashedPassword = await hashPassword(rawPassword);
+
+      const user = await storage.createUser({
+        username,
+        password: hashedPassword,
+      } as any);
+
+      // Force Pro tier on the demo account.
+      const proUser = await storage.updateUserProStatus(user.id, true).catch(() => user);
+
+      req.login(proUser ?? user, (err) => {
+        if (err) return next(err);
+        res.status(201).json(proUser ?? user);
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   app.post("/api/logout", (req, res, next) => {
     req.logout((err) => {
       if (err) return next(err);
