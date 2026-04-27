@@ -20,6 +20,10 @@ Persistent Glow Interface: A custom-designed "Cyber-Cynic" aesthetic with enhanc
 
 Professional Audio: AI narration mastered and polished in Adobe Audition for a fully immersive "OS" experience.
 
+Domain:https://game-pulse-mikebailey75789.replit.app
+
+YouTube:https://youtu.be/Xp74yuCHdHM
+
 🛠️ Tech Stack
 Frontend: React, Vite, TypeScript, Tailwind CSS.
 
