@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { DEMO_GAMES } from "./demo-seed";
 
 const scryptAsync = promisify(scrypt);
 
@@ -98,6 +99,12 @@ export function setupAuth(app: Express) {
 
       // Force Pro tier on the demo account.
       const proUser = await storage.updateUserProStatus(user.id, true).catch(() => user);
+
+      // Seed the curated demo library so the visitor lands on a populated
+      // dashboard. Failures here are non-fatal — they still get logged in.
+      await Promise.all(
+        DEMO_GAMES.map(g => storage.createGame(user.id, g as any).catch(() => null)),
+      );
 
       req.login(proUser ?? user, (err) => {
         if (err) return next(err);
